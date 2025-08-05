@@ -1,0 +1,270 @@
+# 백엔드 폴더 구조
+
+```
+backend/
+├── app/                              # Flask 애플리케이션 메인 디렉토리
+│   ├── __init__.py                   # Flask 앱 팩토리 함수
+│   ├── config/                       # 설정 파일들
+│   │   ├── __init__.py
+│   │   ├── base.py                   # 기본 설정
+│   │   ├── development.py            # 개발 환경 설정
+│   │   ├── production.py             # 운영 환경 설정
+│   │   └── testing.py                # 테스트 환경 설정
+│   ├── models/                       # 데이터베이스 모델
+│   │   ├── __init__.py
+│   │   ├── user/                     # 사용자 관련 모델들
+│   │   │   ├── __init__.py
+│   │   │   ├── user.py               # 기본 사용자 모델
+│   │   │   ├── auth_token.py         # 인증 토큰 모델
+│   │   │   └── user_progress.py      # 사용자 진행 상태 모델
+│   │   ├── learning/                 # 학습 관련 모델들
+│   │   │   ├── __init__.py
+│   │   │   ├── session.py            # 학습 세션 모델
+│   │   │   ├── conversation.py       # 대화 기록 모델
+│   │   │   └── quiz.py               # 퀴즈 관련 모델
+│   │   └── chapter/                  # 챕터 관련 모델들
+│   │       ├── __init__.py
+│   │       └── chapter.py            # 챕터 모델
+│   ├── routes/                       # API 라우트 (Blueprint)
+│   │   ├── __init__.py
+│   │   ├── auth/                     # 인증 관련 라우트
+│   │   │   ├── __init__.py
+│   │   │   ├── login.py              # 로그인/로그아웃
+│   │   │   ├── register.py           # 회원가입
+│   │   │   └── token.py              # 토큰 관리
+│   │   ├── diagnosis/                # 사용자 진단 라우트
+│   │   │   ├── __init__.py
+│   │   │   ├── questions.py          # 진단 문항
+│   │   │   └── submit.py             # 진단 결과 제출
+│   │   ├── dashboard/                # 대시보드 라우트
+│   │   │   ├── __init__.py
+│   │   │   ├── overview.py           # 대시보드 개요
+│   │   │   └── statistics.py         # 통계 정보
+│   │   ├── learning/                 # 학습 세션 라우트
+│   │   │   ├── __init__.py
+│   │   │   ├── session/              # 세션 관리
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── start.py          # 세션 시작
+│   │   │   │   ├── message.py        # 메시지 처리
+│   │   │   │   └── status.py         # 세션 상태
+│   │   │   ├── quiz/                 # 퀴즈 관리
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── submit.py         # 답변 제출
+│   │   │   │   └── hint.py           # 힌트 요청
+│   │   │   └── history/              # 학습 기록
+│   │   │       ├── __init__.py
+│   │   │       ├── list.py           # 기록 목록
+│   │   │       └── details.py        # 상세 조회
+│   │   └── system/                   # 시스템 관리 라우트
+│   │       ├── __init__.py
+│   │       ├── health.py             # 헬스 체크
+│   │       └── version.py            # 버전 정보
+│   ├── services/                     # 비즈니스 로직 서비스
+│   │   ├── __init__.py
+│   │   ├── auth/                     # 인증 서비스
+│   │   │   ├── __init__.py
+│   │   │   ├── login_service.py      # 로그인 처리
+│   │   │   ├── register_service.py   # 회원가입 처리
+│   │   │   └── token_service.py      # 토큰 관리
+│   │   ├── user/                     # 사용자 관리 서비스
+│   │   │   ├── __init__.py
+│   │   │   ├── profile_service.py    # 프로필 관리
+│   │   │   └── progress_service.py   # 진행 상태 관리
+│   │   ├── learning/                 # 학습 진행 서비스
+│   │   │   ├── __init__.py
+│   │   │   ├── session_service.py    # 세션 관리 서비스
+│   │   │   ├── content_service.py    # 컨텐츠 처리 서비스
+│   │   │   └── quiz_service.py       # 퀴즈 처리 서비스
+│   │   └── statistics/               # 통계 처리 서비스
+│   │       ├── __init__.py
+│   │       ├── dashboard_service.py  # 대시보드 통계
+│   │       └── report_service.py     # 리포트 생성
+│   ├── agents/                       # LangGraph 에이전트 시스템
+│   │   ├── __init__.py
+│   │   ├── base/                     # 기본 에이전트 구성 요소
+│   │   │   ├── __init__.py
+│   │   │   ├── base_agent.py         # 기본 에이전트 클래스
+│   │   │   └── agent_config.py       # 에이전트 설정
+│   │   ├── session_manager/          # 세션 관리 에이전트
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py              # SessionManager 에이전트
+│   │   │   └── handlers.py           # 세션 처리 핸들러
+│   │   ├── learning_supervisor/      # 학습 감독 에이전트
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py              # LearningSupervisor 에이전트
+│   │   │   ├── router.py             # 라우팅 로직
+│   │   │   └── response_generator.py # 응답 생성기
+│   │   ├── theory_educator/          # 이론 교육 에이전트
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py              # TheoryEducator 에이전트
+│   │   │   └── content_generator.py  # 컨텐츠 생성기
+│   │   ├── quiz_generator/           # 퀴즈 생성 에이전트
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py              # QuizGenerator 에이전트
+│   │   │   ├── question_generator.py # 문제 생성기
+│   │   │   └── hint_generator.py     # 힌트 생성기
+│   │   ├── evaluation_feedback/      # 평가 피드백 에이전트
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py              # EvaluationFeedbackAgent
+│   │   │   ├── evaluator.py          # 답변 평가기
+│   │   │   └── feedback_generator.py # 피드백 생성기
+│   │   └── qna_resolver/             # 질문 답변 에이전트
+│   │       ├── __init__.py
+│   │       ├── agent.py              # QnAResolver 에이전트
+│   │       ├── query_processor.py    # 질문 처리기
+│   │       └── answer_generator.py   # 답변 생성기
+│   ├── tools/                        # LangGraph 도구 함수들
+│   │   ├── __init__.py
+│   │   ├── content/                  # 컨텐츠 생성 도구
+│   │   │   ├── __init__.py
+│   │   │   ├── theory_tools.py       # 이론 설명 생성
+│   │   │   ├── quiz_tools.py         # 퀴즈 생성 도구
+│   │   │   └── feedback_tools.py     # 피드백 생성 도구
+│   │   ├── external/                 # 외부 연동 도구
+│   │   │   ├── __init__.py
+│   │   │   ├── chatgpt_tools.py      # ChatGPT API 연동
+│   │   │   ├── vector_search_tools.py # ChromaDB 벡터 검색
+│   │   │   └── web_search_tools.py   # 웹 검색 도구
+│   │   ├── analysis/                 # 분석/평가 도구
+│   │   │   ├── __init__.py
+│   │   │   ├── evaluation_tools.py   # 답변 평가 도구
+│   │   │   ├── intent_analysis_tools.py # 의도 분석 도구
+│   │   │   └── context_tools.py      # 맥락 통합 도구
+│   │   └── session/                  # 세션 관리 도구
+│   │       ├── __init__.py
+│   │       ├── session_init_tools.py # 세션 초기화 도구
+│   │       └── session_completion_tools.py # 세션 완료 분석 도구
+│   ├── utils/                        # 유틸리티 함수
+│   │   ├── __init__.py
+│   │   ├── database/                 # 데이터베이스 유틸리티
+│   │   │   ├── __init__.py
+│   │   │   ├── connection.py         # DB 연결 관리
+│   │   │   ├── query_builder.py      # 쿼리 빌더
+│   │   │   └── transaction.py        # 트랜잭션 관리
+│   │   ├── auth/                     # 인증 유틸리티
+│   │   │   ├── __init__.py
+│   │   │   ├── jwt_handler.py        # JWT 토큰 처리
+│   │   │   └── password_handler.py   # 비밀번호 처리
+│   │   ├── validation/               # 검증 유틸리티
+│   │   │   ├── __init__.py
+│   │   │   ├── input_validators.py   # 입력 검증
+│   │   │   └── business_validators.py # 비즈니스 룰 검증
+│   │   ├── response/                 # 응답 처리 유틸리티
+│   │   │   ├── __init__.py
+│   │   │   ├── formatter.py          # 응답 포맷터
+│   │   │   └── error_formatter.py    # 에러 응답 포맷터
+│   │   └── common/                   # 공통 유틸리티
+│   │       ├── __init__.py
+│   │       ├── exceptions.py         # 커스텀 예외 클래스
+│   │       ├── constants.py          # 상수 정의
+│   │       └── helpers.py            # 헬퍼 함수들
+│   ├── core/                         # 핵심 시스템 구성 요소
+│   │   ├── __init__.py
+│   │   ├── langraph/                 # LangGraph 관련
+│   │   │   ├── __init__.py
+│   │   │   ├── workflow.py           # 워크플로우 정의
+│   │   │   ├── state_manager.py      # State 관리 시스템
+│   │   │   └── graph_builder.py      # 그래프 빌더
+│   │   ├── database/                 # 데이터베이스 관련
+│   │   │   ├── __init__.py
+│   │   │   ├── mysql_client.py       # MySQL 클라이언트
+│   │   │   └── migration_runner.py   # 마이그레이션 실행기
+│   │   ├── external/                 # 외부 서비스 연동
+│   │   │   ├── __init__.py
+│   │   │   ├── vector_db.py          # ChromaDB 연동
+│   │   │   └── chatgpt_client.py     # ChatGPT API 클라이언트
+│   │   └── cache/                    # 캐시 관련
+│   │       ├── __init__.py
+│   │       └── redis_client.py       # Redis 클라이언트 (선택사항)
+│   └── middleware/                   # 미들웨어
+│       ├── __init__.py
+│       ├── auth/                     # 인증 미들웨어
+│       │   ├── __init__.py
+│       │   ├── jwt_middleware.py     # JWT 검증 미들웨어
+│       │   └── session_middleware.py # 세션 관리 미들웨어
+│       ├── request/                  # 요청 처리 미들웨어
+│       │   ├── __init__.py
+│       │   ├── cors_middleware.py    # CORS 처리
+│       │   ├── rate_limit_middleware.py # 속도 제한
+│       │   └── request_validator.py  # 요청 검증
+│       └── error/                    # 에러 처리 미들웨어
+│           ├── __init__.py
+│           ├── error_handler.py      # 전역 에러 핸들러
+│           └── exception_mapper.py   # 예외 매핑
+├── tests/                            # 테스트 코드
+│   ├── __init__.py
+│   ├── test_auth.py                  # 인증 테스트
+│   ├── test_agents.py                # 에이전트 테스트
+│   ├── test_services.py              # 서비스 테스트
+│   └── test_tools.py                 # 도구 테스트
+├── migrations/                       # 데이터베이스 마이그레이션
+│   ├── 001_initial_schema.sql        # 초기 스키마
+│   ├── 002_add_indexes.sql           # 인덱스 추가
+│   └── 003_user_progress.sql         # 사용자 진행 상태
+├── data/                            # 정적 데이터
+│   ├── diagnosis_questions.json      # 진단 퀴즈 문항
+│   ├── chapter_contents.json         # 챕터 내용
+│   └── quiz_templates.json           # 퀴즈 템플릿
+├── logs/                            # 로그 파일
+│   ├── app.log                      # 애플리케이션 로그
+│   ├── error.log                    # 에러 로그
+│   └── access.log                   # 액세스 로그
+├── scripts/                         # 스크립트
+│   ├── init_db.py                   # DB 초기화 스크립트
+│   ├── seed_data.py                 # 시드 데이터 생성
+│   └── backup_db.py                 # DB 백업 스크립트
+├── requirements.txt                  # Python 패키지 의존성
+├── .env.example                     # 환경변수 예시 파일
+├── .env                            # 환경변수 파일 (gitignore)
+├── .gitignore                      # Git 무시 파일
+├── Dockerfile                      # Docker 컨테이너 설정
+├── docker-compose.yml              # Docker Compose 설정
+├── README.md                       # 프로젝트 설명
+└── run.py                         # Flask 애플리케이션 실행 파일
+```
+
+## 주요 디렉토리 설명
+
+### `/app` - 메인 애플리케이션
+- **config/**: 환경별 설정 파일 분리 (개발/운영/테스트)
+- **models/**: 도메인별로 분리된 SQLAlchemy 모델
+- **routes/**: 기능별로 세분화된 Flask Blueprint API
+- **services/**: 도메인별 비즈니스 로직 처리
+- **agents/**: 각 에이전트별 디렉토리로 관련 로직 그룹화
+- **tools/**: 기능별로 분류된 LangGraph 도구 함수
+- **utils/**: 목적별로 분리된 유틸리티 함수
+- **core/**: 시스템 핵심 구성 요소들을 역할별로 분리
+- **middleware/**: 처리 단계별로 분리된 미들웨어
+
+### 파일 크기 최적화 원칙
+- **각 파일 100-200줄 내외** 유지
+- **단일 책임 원칙** 적용 (한 파일 = 한 가지 기능)
+- **관련 기능끼리 디렉토리로 그룹화**
+- **복잡한 로직은 별도 파일로 분리**
+
+### 예상 파일 크기
+- **라우트 파일**: 50-100줄 (단일 엔드포인트)
+- **서비스 파일**: 100-200줄 (단일 도메인 로직)
+- **에이전트 파일**: 150-250줄 (핵심 로직만)
+- **도구 파일**: 50-150줄 (단일 도구 기능)
+- **모델 파일**: 50-100줄 (단일 테이블)
+
+### `/tests` - 테스트 코드
+- 각 모듈별 단위 테스트 및 통합 테스트
+
+### `/migrations` - 데이터베이스 스키마
+- SQL 파일로 버전 관리되는 DB 스키마
+
+### `/data` - 정적 데이터
+- JSON 형태의 설정 및 초기 데이터
+
+### `/scripts` - 관리 스크립트
+- DB 초기화, 시드 데이터 생성 등
+
+## 핵심 파일 역할
+
+- **run.py**: Flask 애플리케이션 실행 진입점
+- **app/__init__.py**: Flask 앱 팩토리 함수
+- **app/config.py**: 환경별 설정 관리
+- **core/langraph_workflow.py**: 멀티에이전트 워크플로우 정의
+- **core/state_manager.py**: TutorState 관리 시스템
