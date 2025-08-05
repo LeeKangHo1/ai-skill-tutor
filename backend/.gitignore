@@ -1,0 +1,77 @@
+# backend/.gitignore
+# AI 활용법 학습 튜터 백엔드 Git 무시 파일
+
+# 환경변수 파일
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python 관련
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Flask 관련
+instance/
+.webassets-cache
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 로그 파일
+logs/
+*.log
+
+# 테스트 관련
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# ChromaDB 벡터 데이터베이스
+chroma_db/
+*.chroma
+
+# LangSmith 관련
+.langsmith/
+
+# 백업 파일
+*.bak
+*.backup
+*.old
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# 임시 파일
+*.tmp
+*.temp

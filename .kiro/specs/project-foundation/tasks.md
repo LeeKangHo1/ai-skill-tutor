@@ -69,15 +69,26 @@
   - router/index.js에 기본 라우트 설정
   - _Requirements: 3.3, 3.4_
 
-- [ ] 4. 환경변수 및 설정 파일 작성
-- [ ] 4.1 백엔드 환경변수 설정
+- [x] 4. 환경변수 및 설정 파일 작성
+
+
+
+
+
+- [x] 4.1 백엔드 환경변수 설정
+
+
   - .env.example 파일에 DATABASE_URL, SECRET_KEY 템플릿 작성
   - .env 파일 생성 및 실제 값 설정 (로컬 개발용)
   - _Requirements: 4.1_
 
+
+
 - [ ] 4.2 프론트엔드 환경변수 설정
   - .env 파일에 VITE_API_BASE_URL=http://localhost:5000 설정
   - vite.config.js에 기본 설정 추가
+
+
   - _Requirements: 4.2, 4.4_
 
 - [ ] 4.3 Git 설정 파일 작성

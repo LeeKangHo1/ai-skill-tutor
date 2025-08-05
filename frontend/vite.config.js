@@ -1,3 +1,6 @@
+// frontend/vite.config.js
+// AI 활용법 학습 튜터 Vite 설정
+
 import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
@@ -15,4 +18,20 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  // 개발 서버 설정
+  server: {
+    port: 5173,
+    host: true,
+    open: true
+  },
+  // 빌드 설정
+  build: {
+    outDir: 'dist',
+    sourcemap: true
+  },
+  // 환경변수 설정
+  define: {
+    __VUE_OPTIONS_API__: true,
+    __VUE_PROD_DEVTOOLS__: false
+  }
 })
