@@ -22,26 +22,48 @@
   - 가상환경 활성화 방법을 README에 문서화
   - _Requirements: 2.2_
 
-- [ ] 2.2 백엔드 패키지 설치 및 requirements.txt 생성
+- [x] 2.2 백엔드 패키지 설치 및 requirements.txt 생성
+
+
+
+
+
   - 가상환경 활성화 후 backend/ 폴더로 이동
   - Flask, Flask-CORS, PyMySQL, python-dotenv, bcrypt, PyJWT 패키지 설치
   - pip freeze > requirements.txt로 의존성 파일 생성
   - _Requirements: 2.1, 2.2_
 
-- [ ] 2.3 기본 Flask 애플리케이션 구조 생성
+- [x] 2.3 기본 Flask 애플리케이션 구조 생성
+
+
+
+
+
+
   - app/__init__.py에 Flask 앱 팩토리 함수 작성 (Blueprint 등록 준비)
   - app/config.py에 기본 설정 클래스 작성
   - app/routes/__init__.py에 기본 Blueprint 구조 준비
   - run.py에 애플리케이션 실행 코드 작성
   - _Requirements: 2.3, 2.4_
 
-- [ ] 3. Vue.js 프론트엔드 환경 설정
-- [ ] 3.1 Vue 프로젝트 초기화 및 패키지 설치
+- [x] 3. Vue.js 프론트엔드 환경 설정
+
+
+
+
+
+
+- [x] 3.1 Vue 프로젝트 초기화 및 패키지 설치
+
+
   - npm create vue@latest frontend 명령으로 프로젝트 생성
   - Vue 3, Vite, Pinia, Vue Router, Axios, Sass 패키지 설치
   - _Requirements: 3.1, 3.2_
 
-- [ ] 3.2 기본 Vue 애플리케이션 구조 설정
+
+- [x] 3.2 기본 Vue 애플리케이션 구조 설정
+
+
   - main.js에 Vue 앱 초기화 코드 작성
   - App.vue에 기본 레이아웃 구조 작성
   - router/index.js에 기본 라우트 설정
