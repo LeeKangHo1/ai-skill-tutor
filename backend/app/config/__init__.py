@@ -10,10 +10,10 @@ load_dotenv()
 class Config:
     """기본 설정 클래스"""
     # 시크릿 키 설정 (JWT 토큰 생성 등에 사용)
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     
     # 데이터베이스 설정
-    DATABASE_URL = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:password@localhost/ai_skill_tutor'
+    DATABASE_URL = os.environ.get('DATABASE_URL')
     
     # CORS 설정
     CORS_ORIGINS = ['http://localhost:5173']  # Vue.js 개발 서버
