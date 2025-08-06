@@ -84,26 +84,40 @@
 
 
 
-- [ ] 4.2 프론트엔드 환경변수 설정
+- [x] 4.2 프론트엔드 환경변수 설정
+
   - .env 파일에 VITE_API_BASE_URL=http://localhost:5000 설정
   - vite.config.js에 기본 설정 추가
 
 
   - _Requirements: 4.2, 4.4_
 
-- [ ] 4.3 Git 설정 파일 작성
+- [x] 4.3 Git 설정 파일 작성
+
+
   - .gitignore에 .env, node_modules/, __pycache__/, venv/ 등 추가
   - 프로젝트 루트와 각 폴더별로 적절한 무시 규칙 설정
   - _Requirements: 4.3_
 
 - [ ] 5. 기본 API 연동 테스트 구현
-- [ ] 5.1 백엔드 기본 라우트 구현
+- [x] 5.1 백엔드 기본 라우트 구현
+
+
+
+
+
+
   - app/routes/main.py에 기본 Blueprint 생성
   - "/" 라우트 추가하여 "AI Skill Tutor API" 메시지 반환
   - Flask 앱에 Blueprint 등록 및 CORS 설정
   - _Requirements: 2.4_
 
-- [ ] 5.2 프론트엔드 API 호출 테스트
+- [x] 5.2 프론트엔드 API 호출 테스트
+
+
+
+
+
   - Axios를 사용하여 백엔드 API 호출하는 기본 코드 작성
   - App.vue에서 백엔드 연결 상태 확인하는 간단한 테스트 구현
   - _Requirements: 3.4_
