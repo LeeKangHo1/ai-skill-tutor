@@ -122,18 +122,29 @@
   - App.vue에서 백엔드 연결 상태 확인하는 간단한 테스트 구현
   - _Requirements: 3.4_
 
-- [ ] 6. 문서화 및 README 작성
-- [ ] 6.1 프로젝트 루트 README.md 작성
+- [x] 6. 문서화 및 README 작성
+
+
+
+
+
+- [x] 6.1 프로젝트 루트 README.md 작성
+
+
   - 프로젝트 개요, 기술 스택, 전체 실행 방법 작성
   - 포트폴리오 목적과 MVP 범위 명시
   - _Requirements: 5.1_
 
-- [ ] 6.2 백엔드 README.md 작성
+- [x] 6.2 백엔드 README.md 작성
+
+
   - 가상환경 설정 방법, 패키지 설치 방법 작성
   - Flask 앱 실행 방법과 기본 엔드포인트 정보 작성
   - _Requirements: 5.2_
 
-- [ ] 6.3 프론트엔드 README.md 작성
+- [x] 6.3 프론트엔드 README.md 작성
+
+
   - npm 패키지 설치 방법, 개발 서버 실행 방법 작성
   - 환경변수 설정 방법 설명
   - _Requirements: 5.3_
