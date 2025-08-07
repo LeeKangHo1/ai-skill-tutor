@@ -25,6 +25,24 @@ const router = createRouter({
         title: 'AI 활용법 학습 튜터 - 소개'
       }
     },
+    {
+      path: '/diagnosis',
+      name: 'diagnosis',
+      component: () => import('../views/DiagnosisPage.vue'),
+      meta: {
+        title: 'AI 활용법 학습 튜터 - 사용자 진단',
+        requiresAuth: true // 로그인 필요한 페이지로 설정 (현재 비활성화)
+      }
+    },
+    {
+      path: '/diagnosis/result',
+      name: 'diagnosis-result',
+      component: () => import('../views/DiagnosisResultPage.vue'),
+      meta: {
+        title: 'AI 활용법 학습 튜터 - 진단 결과',
+        requiresAuth: true // 로그인 필요한 페이지로 설정 (현재 비활성화)
+      }
+    },
   ],
 })
 

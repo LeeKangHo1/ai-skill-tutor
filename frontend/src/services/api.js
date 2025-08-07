@@ -4,7 +4,7 @@
 import axios from 'axios'
 
 // API 베이스 URL 설정 (환경변수에서 가져옴)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 // Axios 인스턴스 생성
 const apiClient = axios.create({
@@ -41,28 +41,28 @@ apiClient.interceptors.response.use(
 
 // API 서비스 함수들
 export const apiService = {
-  // 백엔드 연결 상태 확인
+  // 백엔드 연결 상태 확인 (기본 API 정보)
   async checkConnection() {
     try {
-      const response = await apiClient.get('/')
+      const response = await apiClient.get('/system/')
       return {
         success: true,
-        data: response.data,
+        data: response.data?.message || 'Connected successfully',
         status: response.status
       }
     } catch (error) {
       return {
         success: false,
-        error: error.message, // <-- 바로 이 error.message가 App.vue로 전달됩니다.
+        error: error.message,
         status: error.response?.status || 0
       }
     }
   },
 
-  // 헬스 체크 (추후 백엔드에 헬스 체크 엔드포인트 추가 시 사용)
+  // 헬스 체크 (서버 상태 확인)
   async healthCheck() {
     try {
-      const response = await apiClient.get('/health')
+      const response = await apiClient.get('/system/health')
       return {
         success: true,
         data: response.data,

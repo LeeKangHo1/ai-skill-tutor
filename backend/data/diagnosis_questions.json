@@ -14,19 +14,19 @@
       "question_type": "single_choice",
       "options": [
         {
-          "value": 1,
+          "value": "option_1",
           "text": "IT 분야나 프로그래밍 관련 경험이 전혀 없습니다"
         },
         {
-          "value": 2,
+          "value": "option_2",
           "text": "전문적인 기술은 없지만, 일반적인 컴퓨터 활용은 익숙합니다"
         },
         {
-          "value": 3,
+          "value": "option_3",
           "text": "프로그래밍 언어 교육을 이수했거나, 관련 기본 지식이 있습니다"
         },
         {
-          "value": 4,
+          "value": "option_4",
           "text": "현재 개발, 데이터 분석, 엔지니어링 등 IT 관련 업무를 담당하고 있습니다"
         }
       ]
@@ -37,19 +37,19 @@
       "question_type": "single_choice",
       "options": [
         {
-          "value": 1,
+          "value": "option_1",
           "text": "사용해본 적 없거나 1-2회만 시도해봤습니다"
         },
         {
-          "value": 2,
+          "value": "option_2",
           "text": "간단한 질문-답변 용도로만 사용해봤습니다"
         },
         {
-          "value": 3,
+          "value": "option_3",
           "text": "문서 작성, 요약 등 실무에 활용하고 있습니다"
         },
         {
-          "value": 4,
+          "value": "option_4",
           "text": "복잡한 업무나 여러 단계 작업에 활용하고 있습니다"
         }
       ]
@@ -60,19 +60,19 @@
       "question_type": "single_choice",
       "options": [
         {
-          "value": 1,
+          "value": "option_1",
           "text": "전혀 들어본 적 없는 생소한 단어입니다"
         },
         {
-          "value": 2,
+          "value": "option_2",
           "text": "들어본 적은 있지만, 정확한 의미는 잘 모릅니다"
         },
         {
-          "value": 3,
+          "value": "option_3",
           "text": "ChatGPT의 기반 기술 정도로 이해하고 있습니다"
         },
         {
-          "value": 4,
+          "value": "option_4",
           "text": "개념을 이해하고 있으며, 작동 원리에 관심이 많습니다"
         }
       ]
@@ -83,19 +83,19 @@
       "question_type": "single_choice",
       "options": [
         {
-          "value": 1,
+          "value": "option_1",
           "text": "전혀 들어본 적 없습니다"
         },
         {
-          "value": 2,
+          "value": "option_2",
           "text": "들어본 적은 있지만, 정확한 의미는 잘 모릅니다"
         },
         {
-          "value": 3,
+          "value": "option_3",
           "text": "AI에게 좋은 답변을 얻기 위한 대화 기술 정도로 이해합니다"
         },
         {
-          "value": 4,
+          "value": "option_4",
           "text": "구체적인 작성 원리나 고급 기법을 알고 있습니다"
         }
       ]
@@ -106,19 +106,19 @@
       "question_type": "single_choice",
       "options": [
         {
-          "value": 1,
+          "value": "option_1",
           "text": "처음 듣는 용어입니다"
         },
         {
-          "value": 2,
+          "value": "option_2",
           "text": "AI 관련 용어인 것 같지만, 정확한 뜻은 모릅니다"
         },
         {
-          "value": 3,
+          "value": "option_3",
           "text": "AI가 틀린 정보를 생성하는 현상이라고 알고 있습니다"
         },
         {
-          "value": 4,
+          "value": "option_4",
           "text": "발생 원인을 이해하고 있으며, 해결 방법에 관심이 있습니다"
         }
       ]

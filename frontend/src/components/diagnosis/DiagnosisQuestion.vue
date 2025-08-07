@@ -1,533 +1,481 @@
 <!-- frontend/src/components/diagnosis/DiagnosisQuestion.vue -->
+<!-- 진단 문항 표시 및 답변 수집 컴포넌트 -->
+
 <template>
   <div class="diagnosis-question">
-    <!-- 질문 헤더 -->
-    <div class="question-header">
-      <div class="question-number">
-        질문 {{ currentQuestionIndex + 1 }} / {{ totalQuestions }}
-      </div>
-      <div class="question-category" v-if="question.category">
-        {{ question.category }}
-      </div>
+    <!-- 문항 번호 -->
+    <div class="question-number">
+      질문 {{ questionNumber }}/{{ totalQuestions }}
     </div>
-
-    <!-- 질문 내용 -->
+    
+    <!-- 문항 내용 -->
     <div class="question-content">
-      <h3 class="question-title">{{ question.title }}</h3>
-      <p v-if="question.description" class="question-description">
-        {{ question.description }}
-      </p>
+      <h3>{{ question.question_text }}</h3>
     </div>
-
-    <!-- 답변 옵션 -->
+    
+    <!-- 답변 선택 영역 -->
     <div class="answer-options">
-      <div
-        v-for="(option, index) in question.options"
-        :key="index"
-        class="option-item"
-        :class="{ 
-          'selected': selectedAnswer === option.value,
-          'disabled': isLoading 
-        }"
-        @click="handleOptionSelect(option.value)"
+      <!-- 단일 선택 문항 -->
+      <div 
+        v-if="question.question_type === 'single_choice'"
+        class="single-choice-options"
       >
-        <!-- 라디오 버튼 -->
-        <div class="option-radio">
-          <input
-            :id="`option-${index}`"
-            v-model="selectedAnswer"
-            :value="option.value"
-            type="radio"
-            :name="`question-${currentQuestionIndex}`"
-            :disabled="isLoading"
-            class="radio-input"
-          />
-          <div class="radio-custom"></div>
-        </div>
-
-        <!-- 옵션 내용 -->
-        <label :for="`option-${index}`" class="option-content">
-          <div class="option-text">{{ option.text }}</div>
-          <div v-if="option.description" class="option-description">
-            {{ option.description }}
+        <div 
+          v-for="option in question.options" 
+          :key="option.value"
+          class="option-item"
+          :class="{ 'selected': selectedAnswer === option.value }"
+          @click="selectAnswer(option.value)"
+        >
+          <div class="option-radio">
+            <input 
+              type="radio" 
+              :id="`option-${option.value}`"
+              :value="option.value"
+              v-model="selectedAnswer"
+              @change="selectAnswer(option.value)"
+            />
+            <label :for="`option-${option.value}`"></label>
           </div>
-        </label>
+          <div class="option-text">
+            {{ option.text }}
+          </div>
+        </div>
+      </div>
+      
+      <!-- 다중 선택 문항 (향후 확장용) -->
+      <div 
+        v-else-if="question.question_type === 'multiple_choice'"
+        class="multiple-choice-options"
+      >
+        <div 
+          v-for="option in question.options" 
+          :key="option.value"
+          class="option-item"
+          :class="{ 'selected': isMultipleSelected(option.value) }"
+          @click="toggleMultipleAnswer(option.value)"
+        >
+          <div class="option-checkbox">
+            <input 
+              type="checkbox" 
+              :id="`option-${option.value}`"
+              :value="option.value"
+              v-model="multipleSelectedAnswers"
+            />
+            <label :for="`option-${option.value}`"></label>
+          </div>
+          <div class="option-text">
+            {{ option.text }}
+          </div>
+        </div>
+      </div>
+      
+      <!-- 텍스트 입력 문항 (향후 확장용) -->
+      <div 
+        v-else-if="question.question_type === 'text_input'"
+        class="text-input-option"
+      >
+        <textarea
+          v-model="textAnswer"
+          :placeholder="question.placeholder || '답변을 입력해주세요'"
+          @input="handleTextInput"
+        ></textarea>
       </div>
     </div>
-
-    <!-- 추가 입력 필드 (선택적) -->
-    <div v-if="question.allowCustomInput && selectedAnswer === 'custom'" class="custom-input">
-      <label for="customAnswer" class="custom-label">직접 입력:</label>
-      <textarea
-        id="customAnswer"
-        v-model="customAnswer"
-        class="custom-textarea"
-        :placeholder="question.customInputPlaceholder || '자세한 내용을 입력해주세요'"
-        :disabled="isLoading"
-        rows="3"
-      ></textarea>
-    </div>
-
+    
     <!-- 네비게이션 버튼 -->
-    <div class="question-navigation">
-      <button
-        v-if="currentQuestionIndex > 0"
-        @click="handlePrevious"
-        class="nav-btn prev-btn"
-        :disabled="isLoading"
+    <div class="navigation-buttons">
+      <button 
+        class="btn btn-secondary"
+        @click="$emit('previous')"
+        :disabled="isFirstQuestion"
       >
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
-        </svg>
         이전
       </button>
-
-      <button
+      
+      <button 
+        class="btn btn-primary"
         @click="handleNext"
-        class="nav-btn next-btn"
-        :disabled="!canProceed || isLoading"
+        :disabled="!hasAnswer"
       >
-        {{ isLastQuestion ? '완료' : '다음' }}
-        <svg v-if="!isLastQuestion" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
-        </svg>
-        <svg v-else viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-        </svg>
+        {{ isLastQuestion ? '답변 완료' : '다음' }}
       </button>
-    </div>
-
-    <!-- 로딩 상태 -->
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loading-spinner"></div>
-      <span class="loading-text">처리 중...</span>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, watch } from 'vue'
-
-// Props 정의
-const props = defineProps({
-  // 현재 질문 데이터
-  question: {
-    type: Object,
-    required: true,
-    validator: (question) => {
-      return question.title && question.options && Array.isArray(question.options)
+<script>
+export default {
+  name: 'DiagnosisQuestion',
+  
+  props: {
+    // 문항 데이터
+    question: {
+      type: Object,
+      required: true
+    },
+    
+    // 문항 번호
+    questionNumber: {
+      type: Number,
+      required: true
+    },
+    
+    // 전체 문항 수
+    totalQuestions: {
+      type: Number,
+      required: true
+    },
+    
+    // 기존 답변 (수정 시)
+    existingAnswer: {
+      type: [String, Array],
+      default: null
+    },
+    
+    // 첫 번째 문항 여부
+    isFirstQuestion: {
+      type: Boolean,
+      default: false
+    },
+    
+    // 마지막 문항 여부
+    isLastQuestion: {
+      type: Boolean,
+      default: false
     }
   },
-  // 현재 질문 인덱스
-  currentQuestionIndex: {
-    type: Number,
-    required: true
+  
+  emits: ['answer', 'next', 'previous'],
+  
+  data() {
+    return {
+      selectedAnswer: null,
+      multipleSelectedAnswers: [],
+      textAnswer: ''
+    }
   },
-  // 전체 질문 수
-  totalQuestions: {
-    type: Number,
-    required: true
+  
+  computed: {
+    // 답변 여부 확인
+    hasAnswer() {
+      switch (this.question.question_type) {
+        case 'single_choice':
+          return this.selectedAnswer !== null
+        case 'multiple_choice':
+          return this.multipleSelectedAnswers.length > 0
+        case 'text_input':
+          return this.textAnswer.trim().length > 0
+        default:
+          return false
+      }
+    }
   },
-  // 초기 선택된 답변
-  initialAnswer: {
-    type: [String, Number],
-    default: null
+  
+  watch: {
+    // 문항 변경 시 답변 상태 초기화 후 기존 답변 로드
+    question: {
+      immediate: true,
+      handler() {
+        this.resetAnswerState()
+        this.loadExistingAnswer()
+      }
+    },
+    
+    existingAnswer: {
+      immediate: true,
+      handler() {
+        this.loadExistingAnswer()
+      }
+    }
   },
-  // 로딩 상태
-  isLoading: {
-    type: Boolean,
-    default: false
-  }
-})
-
-// 이벤트 정의
-const emit = defineEmits(['answer-change', 'next', 'previous', 'complete'])
-
-// 반응형 데이터
-const selectedAnswer = ref(props.initialAnswer)
-const customAnswer = ref('')
-
-// 계산된 속성
-const isLastQuestion = computed(() => {
-  return props.currentQuestionIndex === props.totalQuestions - 1
-})
-
-const canProceed = computed(() => {
-  if (!selectedAnswer.value) return false
   
-  // 커스텀 입력이 필요한 경우 추가 검증
-  if (selectedAnswer.value === 'custom' && props.question.allowCustomInput) {
-    return customAnswer.value.trim().length > 0
-  }
-  
-  return true
-})
-
-// 옵션 선택 처리
-const handleOptionSelect = (value) => {
-  if (props.isLoading) return
-  
-  selectedAnswer.value = value
-  
-  // 커스텀 입력이 아닌 경우 커스텀 답변 초기화
-  if (value !== 'custom') {
-    customAnswer.value = ''
+  methods: {
+    /**
+     * 답변 상태 초기화
+     */
+    resetAnswerState() {
+      this.selectedAnswer = null
+      this.multipleSelectedAnswers = []
+      this.textAnswer = ''
+    },
+    
+    /**
+     * 기존 답변 로드
+     */
+    loadExistingAnswer() {
+      if (!this.existingAnswer) return
+      
+      switch (this.question.question_type) {
+        case 'single_choice':
+          this.selectedAnswer = this.existingAnswer
+          break
+        case 'multiple_choice':
+          this.multipleSelectedAnswers = Array.isArray(this.existingAnswer) 
+            ? [...this.existingAnswer] 
+            : [this.existingAnswer]
+          break
+        case 'text_input':
+          this.textAnswer = this.existingAnswer
+          break
+      }
+    },
+    
+    /**
+     * 단일 선택 답변 선택
+     */
+    selectAnswer(value) {
+      this.selectedAnswer = value
+      // 마지막 문항이 아닌 경우에만 즉시 답변 저장
+      if (!this.isLastQuestion) {
+        this.$emit('answer', this.question.question_id, value)
+      }
+    },
+    
+    /**
+     * 다중 선택 답변 토글
+     */
+    toggleMultipleAnswer(value) {
+      const index = this.multipleSelectedAnswers.indexOf(value)
+      if (index > -1) {
+        this.multipleSelectedAnswers.splice(index, 1)
+      } else {
+        this.multipleSelectedAnswers.push(value)
+      }
+      // 마지막 문항이 아닌 경우에만 즉시 답변 저장
+      if (!this.isLastQuestion) {
+        this.$emit('answer', this.question.question_id, [...this.multipleSelectedAnswers])
+      }
+    },
+    
+    /**
+     * 다중 선택 선택 여부 확인
+     */
+    isMultipleSelected(value) {
+      return this.multipleSelectedAnswers.includes(value)
+    },
+    
+    /**
+     * 텍스트 입력 처리
+     */
+    handleTextInput() {
+      // 마지막 문항이 아닌 경우에만 즉시 답변 저장
+      if (!this.isLastQuestion) {
+        this.$emit('answer', this.question.question_id, this.textAnswer.trim())
+      }
+    },
+    
+    /**
+     * 다음 버튼 클릭 처리
+     */
+    handleNext() {
+      if (!this.hasAnswer) return
+      
+      // 현재 답변 저장 (모든 문항에서 버튼 클릭 시에만 저장)
+      let answer
+      switch (this.question.question_type) {
+        case 'single_choice':
+          answer = this.selectedAnswer
+          break
+        case 'multiple_choice':
+          answer = [...this.multipleSelectedAnswers]
+          break
+        case 'text_input':
+          answer = this.textAnswer.trim()
+          break
+      }
+      
+      this.$emit('answer', this.question.question_id, answer)
+      
+      // 마지막 문항이 아닌 경우에만 다음으로 이동
+      if (!this.isLastQuestion) {
+        this.$emit('next')
+      }
+    }
   }
 }
-
-// 다음 버튼 클릭 처리
-const handleNext = () => {
-  if (!canProceed.value || props.isLoading) return
-
-  const answerData = {
-    questionIndex: props.currentQuestionIndex,
-    answer: selectedAnswer.value,
-    customAnswer: selectedAnswer.value === 'custom' ? customAnswer.value : null,
-    question: props.question
-  }
-
-  if (isLastQuestion.value) {
-    emit('complete', answerData)
-  } else {
-    emit('next', answerData)
-  }
-}
-
-// 이전 버튼 클릭 처리
-const handlePrevious = () => {
-  if (props.isLoading) return
-
-  const answerData = {
-    questionIndex: props.currentQuestionIndex,
-    answer: selectedAnswer.value,
-    customAnswer: selectedAnswer.value === 'custom' ? customAnswer.value : null,
-    question: props.question
-  }
-
-  emit('previous', answerData)
-}
-
-// 답변 변경 감지
-watch([selectedAnswer, customAnswer], () => {
-  const answerData = {
-    questionIndex: props.currentQuestionIndex,
-    answer: selectedAnswer.value,
-    customAnswer: selectedAnswer.value === 'custom' ? customAnswer.value : null,
-    question: props.question
-  }
-
-  emit('answer-change', answerData)
-}, { deep: true })
-
-// 초기 답변 변경 감지
-watch(() => props.initialAnswer, (newAnswer) => {
-  selectedAnswer.value = newAnswer
-}, { immediate: true })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .diagnosis-question {
-  max-width: 800px;
+  max-width: 600px;
   margin: 0 auto;
   padding: 2rem;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  position: relative;
-
-  .question-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--border-light);
-
-    .question-number {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--primary-color);
-      background: rgba(var(--primary-color-rgb), 0.1);
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-    }
-
-    .question-category {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      background: var(--bg-light);
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-    }
+  
+  .question-number {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+    text-align: center;
   }
-
+  
   .question-content {
     margin-bottom: 2rem;
-
-    .question-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0 0 1rem 0;
+    text-align: center;
+    
+    h3 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #212529;
       line-height: 1.4;
-    }
-
-    .question-description {
-      font-size: 1rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
       margin: 0;
     }
   }
-
+  
   .answer-options {
     margin-bottom: 2rem;
-
+    
     .option-item {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       padding: 1rem;
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s ease;
-
-      &:hover:not(.disabled) {
-        border-color: var(--primary-color);
-        background-color: rgba(var(--primary-color-rgb), 0.02);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
       }
-
+      
       &.selected {
-        border-color: var(--primary-color);
-        background-color: rgba(var(--primary-color-rgb), 0.05);
-
-        .radio-custom {
-          border-color: var(--primary-color);
-          background-color: var(--primary-color);
-
-          &::after {
-            opacity: 1;
-          }
-        }
+        border-color: #007bff;
+        background-color: #e3f2fd;
       }
-
-      &.disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      .option-radio {
+      
+      .option-radio,
+      .option-checkbox {
         margin-right: 1rem;
-        margin-top: 0.125rem;
-
-        .radio-input {
-          display: none;
+        position: relative;
+        
+        input {
+          opacity: 0;
+          position: absolute;
         }
-
-        .radio-custom {
+        
+        label {
+          display: block;
           width: 20px;
           height: 20px;
-          border: 2px solid var(--border-color);
+          border: 2px solid #dee2e6;
           border-radius: 50%;
           position: relative;
-          transition: all 0.2s ease;
-
+          cursor: pointer;
+          
           &::after {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
-            background-color: white;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
+            background-color: #007bff;
             opacity: 0;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.3s ease;
           }
         }
+        
+        input:checked + label::after {
+          opacity: 1;
+        }
       }
-
-      .option-content {
+      
+      .option-checkbox label {
+        border-radius: 3px;
+        
+        &::after {
+          width: 6px;
+          height: 10px;
+          border: 2px solid #007bff;
+          border-top: 0;
+          border-left: 0;
+          transform: translate(-50%, -60%) rotate(45deg);
+          border-radius: 0;
+          background-color: transparent;
+        }
+      }
+      
+      .option-text {
         flex: 1;
-        cursor: pointer;
-
-        .option-text {
-          font-size: 1rem;
-          font-weight: 500;
-          color: var(--text-primary);
-          margin-bottom: 0.25rem;
-        }
-
-        .option-description {
-          font-size: 0.875rem;
-          color: var(--text-secondary);
-          line-height: 1.4;
+        font-size: 1rem;
+        color: #495057;
+      }
+    }
+    
+    .text-input-option {
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1rem;
+        resize: vertical;
+        
+        &:focus {
+          outline: none;
+          border-color: #007bff;
         }
       }
     }
   }
-
-  .custom-input {
-    margin-bottom: 2rem;
-
-    .custom-label {
-      display: block;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-    }
-
-    .custom-textarea {
-      width: 100%;
-      padding: 0.75rem;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 1rem;
-      font-family: inherit;
-      resize: vertical;
-      min-height: 80px;
-      transition: all 0.2s ease;
-
-      &:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
-      }
-
-      &:disabled {
-        background-color: var(--bg-disabled);
-        cursor: not-allowed;
-      }
-    }
-  }
-
-  .question-navigation {
+  
+  .navigation-buttons {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     gap: 1rem;
-
-    .nav-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      border: none;
+    
+    .btn {
+      padding: 0.75rem 2rem;
       border-radius: 8px;
-      font-size: 1rem;
+      border: none;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
-
-      svg {
-        width: 20px;
-        height: 20px;
-      }
-
-      &.prev-btn {
-        background-color: var(--bg-light);
-        color: var(--text-secondary);
-
-        &:hover:not(:disabled) {
-          background-color: var(--border-color);
-          color: var(--text-primary);
-        }
-      }
-
-      &.next-btn {
-        background-color: var(--primary-color);
+      transition: all 0.3s ease;
+      
+      &.btn-secondary {
+        background-color: #6c757d;
         color: white;
-        margin-left: auto;
-
+        
         &:hover:not(:disabled) {
-          background-color: var(--primary-color-dark);
-          transform: translateY(-1px);
+          background-color: #5a6268;
         }
       }
-
+      
+      &.btn-primary {
+        background-color: #007bff;
+        color: white;
+        
+        &:hover:not(:disabled) {
+          background-color: #0056b3;
+        }
+      }
+      
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
-        transform: none;
       }
     }
   }
-
-  .loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.9);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 16px;
-    z-index: 10;
-
-    .loading-spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid var(--primary-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 1rem;
-    }
-
-    .loading-text {
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
 
 // 반응형 디자인
 @media (max-width: 768px) {
   .diagnosis-question {
-    padding: 1.5rem;
-    margin: 1rem;
-
-    .question-header {
-      flex-direction: column;
-      gap: 0.5rem;
-      align-items: flex-start;
+    padding: 1rem;
+    
+    .question-content h3 {
+      font-size: 1.1rem;
     }
-
-    .question-content {
-      .question-title {
-        font-size: 1.25rem;
-      }
-    }
-
-    .answer-options {
-      .option-item {
-        padding: 0.75rem;
-
-        .option-radio {
-          margin-right: 0.75rem;
-        }
-      }
-    }
-
-    .question-navigation {
-      .nav-btn {
-        padding: 0.625rem 1.25rem;
+    
+    .navigation-buttons {
+      .btn {
+        padding: 0.6rem 1.5rem;
         font-size: 0.9rem;
-
-        svg {
-          width: 18px;
-          height: 18px;
-        }
       }
     }
   }

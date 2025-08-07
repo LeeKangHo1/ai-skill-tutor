@@ -56,6 +56,7 @@ onMounted(() => {
           </h1>
           <nav class="app-nav">
             <router-link to="/" class="nav-link">홈</router-link>
+            <router-link to="/diagnosis" class="nav-link">진단하기</router-link>
             <router-link to="/about" class="nav-link">소개</router-link>
           </nav>
         </div>
@@ -289,7 +290,7 @@ onMounted(() => {
   flex: 1;
   padding: 2rem 0;
   background-color: #f8f9fa;
-  min-height: calc(100vh - 180px); /* 연결 상태 표시 영역 고려하여 높이 조정 */
+  min-height: calc(100vh - 180px);
 }
 
 /* 푸터 스타일 */

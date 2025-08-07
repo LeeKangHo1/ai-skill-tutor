@@ -71,9 +71,9 @@ def register_blueprints(app):
         app (Flask): Flask 애플리케이션 인스턴스
     """
     # 시스템 관련 Blueprint들 등록
-    from .routes.system import health_bp, version_bp
-    app.register_blueprint(health_bp, url_prefix='/api/v1/system')
-    app.register_blueprint(version_bp, url_prefix='/api/v1/system')
+    from .routes.system import system_blueprints
+    for blueprint, url_prefix in system_blueprints:
+        app.register_blueprint(blueprint, url_prefix=url_prefix)
     
     # 진단 관련 Blueprint들 등록
     from .routes.diagnosis import diagnosis_blueprints

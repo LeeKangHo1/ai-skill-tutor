@@ -4,5 +4,8 @@
 from .health import health_bp
 from .version import version_bp
 
-# 시스템 관련 Blueprint들을 외부에서 import할 수 있도록 노출
-__all__ = ['health_bp', 'version_bp']
+# 시스템 관련 Blueprint 목록 (diagnosis와 동일한 형식)
+system_blueprints = [
+    (health_bp, '/api/v1/system'),
+    (version_bp, '/api/v1/system')
+]
