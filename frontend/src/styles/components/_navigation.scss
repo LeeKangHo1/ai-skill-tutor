@@ -1,0 +1,305 @@
+// frontend/src/styles/components/_navigation.scss
+// 네비게이션 컴포넌트 스타일
+
+// 메인 헤더
+.main-header {
+  background-color: $header-bg;
+  color: $header-text;
+  box-shadow: $box-shadow-md;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  
+  .header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-md $spacing-lg;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    font-size: $font-size-xl;
+    font-weight: 700;
+    color: $header-text;
+    text-decoration: none;
+    
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      border-radius: $border-radius;
+      @include flex-center;
+      color: $white;
+    }
+  }
+  
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: $spacing-lg;
+    
+    @media (max-width: $breakpoint-md) {
+      display: none;
+    }
+  }
+  
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+  }
+}
+
+// 네비게이션 링크
+.nav-link {
+  color: $header-text;
+  text-decoration: none;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius;
+  transition: all $transition-base;
+  font-weight: 500;
+  
+  &:hover {
+    background-color: rgba($white, 0.1);
+    color: $white;
+  }
+  
+  &.nav-link-active {
+    background-color: rgba($white, 0.2);
+    color: $white;
+  }
+}
+
+// 사용자 드롭다운
+.user-dropdown {
+  position: relative;
+  
+  .user-trigger {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-sm;
+    border-radius: $border-radius;
+    cursor: pointer;
+    transition: all $transition-base;
+    
+    &:hover {
+      background-color: rgba($white, 0.1);
+    }
+    
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+      @include flex-center;
+      color: $white;
+      font-weight: 600;
+    }
+    
+    .user-name {
+      font-weight: 500;
+      
+      @media (max-width: $breakpoint-sm) {
+        display: none;
+      }
+    }
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: $white;
+    border-radius: $border-radius-lg;
+    box-shadow: $box-shadow-lg;
+    min-width: 200px;
+    padding: $spacing-sm 0;
+    margin-top: $spacing-sm;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all $transition-base;
+    
+    &.dropdown-open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+      padding: $spacing-sm $spacing-md;
+      color: $gray-700;
+      text-decoration: none;
+      transition: all $transition-fast;
+      
+      &:hover {
+        background-color: $gray-100;
+        color: $gray-900;
+      }
+      
+      &.dropdown-divider {
+        border-top: 1px solid $border-color;
+        margin: $spacing-sm 0;
+        padding: 0;
+        height: 1px;
+        
+        &:hover {
+          background-color: transparent;
+        }
+      }
+    }
+  }
+}
+
+// 사이드바 네비게이션
+.sidebar {
+  width: 250px;
+  background: $white;
+  border-right: 1px solid $border-color;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 90;
+  transform: translateX(-100%);
+  transition: transform $transition-base;
+  
+  &.sidebar-open {
+    transform: translateX(0);
+  }
+  
+  .sidebar-header {
+    padding: $spacing-lg;
+    border-bottom: 1px solid $border-color;
+    
+    .sidebar-title {
+      font-size: $font-size-lg;
+      font-weight: 600;
+      color: $gray-800;
+      margin: 0;
+    }
+  }
+  
+  .sidebar-nav {
+    padding: $spacing-lg 0;
+    
+    .nav-section {
+      margin-bottom: $spacing-lg;
+      
+      .section-title {
+        padding: 0 $spacing-lg $spacing-sm;
+        font-size: $font-size-xs;
+        font-weight: 600;
+        color: $gray-500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .nav-item {
+        .nav-link {
+          display: flex;
+          align-items: center;
+          gap: $spacing-sm;
+          padding: $spacing-sm $spacing-lg;
+          color: $gray-700;
+          text-decoration: none;
+          transition: all $transition-fast;
+          
+          &:hover {
+            background-color: $gray-100;
+            color: $gray-900;
+          }
+          
+          &.nav-link-active {
+            background-color: rgba($primary-color, 0.1);
+            color: $primary-color;
+            border-right: 3px solid $primary-color;
+          }
+          
+          .nav-icon {
+            width: 20px;
+            height: 20px;
+            @include flex-center;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 모바일 메뉴 토글
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: $header-text;
+  font-size: 24px;
+  cursor: pointer;
+  padding: $spacing-xs;
+  
+  @media (max-width: $breakpoint-md) {
+    display: block;
+  }
+}
+
+// 사이드바 오버레이
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba($black, 0.5);
+  z-index: 85;
+  opacity: 0;
+  visibility: hidden;
+  transition: all $transition-base;
+  
+  &.overlay-open {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+// 브레드크럼
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md 0;
+  font-size: $font-size-sm;
+  
+  .breadcrumb-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    
+    &:not(:last-child)::after {
+      content: '/';
+      color: $gray-400;
+    }
+    
+    a {
+      color: $gray-600;
+      text-decoration: none;
+      
+      &:hover {
+        color: $primary-color;
+      }
+    }
+    
+    &.breadcrumb-active {
+      color: $gray-800;
+      font-weight: 500;
+    }
+  }
+}

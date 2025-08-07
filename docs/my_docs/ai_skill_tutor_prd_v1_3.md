@@ -11,7 +11,7 @@
 
 ---
 
-## 2. 👣 사용자 흐름 (v1.3)
+## 2. 👣 사용자 흐름 
 
 ### 2.1 최초 1회 온보딩
 
@@ -102,7 +102,7 @@ graph TD
 - **JWT 기반** 인증/인가
 - **CORS 설정**
 - **비밀번호 bcrypt** 암호화
-- **실시간 ChatGPT API** 연동
+- **실시간 AI API** 연동 (Gemini/GPT)
 
 ---
 
@@ -174,7 +174,7 @@ graph TD
 
 ---
 
-## 5. 📚 AI 입문자 학습 챕터 구성 임시 (v1.3)
+## 5. 📚 AI 입문자 학습 챕터 구성 임시
 
 | 챕터 | 주제 | 학습 목표 | 주요 실습 |
 | --- | --- | --- | --- |
@@ -189,7 +189,7 @@ graph TD
 
 ---
 
-## 6. 🤖 MAS 아키텍처 v1.3 (멀티에이전트 시스템)
+## 6. 🤖 MAS 아키텍처 (멀티에이전트 시스템)
 
 ### 6.1 최적화된 에이전트 구조
 
@@ -221,15 +221,17 @@ SessionManager (세션 관리 전담)
 **TheoryEducator (개념 설명 대본 생성)**
 
 - 역할: 개념 설명 컨텐츠 생성 (사용자와 직접 소통 없음)
-- 주요 도구: theory_generation_tool
+- 주요 도구: theory_generation_tool, vector_search_tool
 - 활성 구간: LearningSupervisor로부터 이론 설명 요청 시
+- 콘텐츠 소스: 벡터 DB에 저장된 직접 선별한 고품질 학습 자료 참조
 - 결과물: 설명 대본을 LearningSupervisor에게 전달 후 복귀
 
 **QuizGenerator (문제 출제 대본 생성)**
 
 - 역할: 문제 출제 컨텐츠 생성 (사용자와 직접 소통 없음)
-- 주요 도구: quiz_generation_tool, prompt_practice_tool, hint_generation_tool
+- 주요 도구: quiz_generation_tool, prompt_practice_tool, hint_generation_tool, vector_search_tool
 - 활성 구간: LearningSupervisor로부터 문제 출제 요청 시
+- 콘텐츠 소스: 벡터 DB에 저장된 문제 템플릿 및 평가 기준 참조
 - 결과물: 문제 대본을 LearningSupervisor에게 전달
 - 후속 처리: 반드시 EvaluationFeedbackAgent로 연결
 
@@ -262,7 +264,7 @@ SessionManager (세션 관리 전담)
 
 **외부 연동 Tools:**
 
-- `prompt_practice_tool` - 사용자 프롬프트 → ChatGPT API 실제 테스트 (QuizGenerator)
+- `prompt_practice_tool` - 사용자 프롬프트 → AI API 실제 테스트 (QuizGenerator)
 - `vector_search_tool` - ChromaDB 벡터 검색 (QnAResolver)
 - `web_search_tool` - 웹 검색, datetime에서 current_time 정보를 받아와 프롬프트에 포함하여 시간대별 정확한 검색 수행 (QnAResolver)
 
@@ -284,12 +286,12 @@ SessionManager (세션 관리 전담)
 세션 완료 판단: session_completion_analysis_tool
 힌트 요청: hint_generation_tool (필요 시)
 질문 발생: vector_search_tool + web_search_tool + context_integration_tool → response_generation_tool
-프롬프트 실습: prompt_practice_tool (ChatGPT API 연동)
+프롬프트 실습: prompt_practice_tool (AI API 연동)
 ```
 
 ---
 
-## 8. 🧩 기능 명세서 (v1.3)
+## 8. 🧩 기능 명세서 
 
 | 기능 | 설명 | 구현 방식 |
 | --- | --- | --- |
@@ -299,17 +301,18 @@ SessionManager (세션 관리 전담)
 | 개념 설명 | 사용자 레벨별 맞춤 개념 정리 및 예시 제시 | theory_generation_tool |
 | 하이브리드 UX | 자유 대화 구간과 제한 UI 구간의 적절한 조합 | Vue.js 상태 관리 + UI 모드 전환 |
 | 문제 출제 | 객관식/프롬프트 작성 문제 및 힌트 시스템 제공 | quiz_generation_tool + hint |
-| 실제 GPT 연동 | 사용자 프롬프트를 실제 ChatGPT로 테스트 | prompt_practice_tool |
+| 실제 AI 연동 | 사용자 프롬프트를 실제 AI API로 테스트 | prompt_practice_tool |
 | 평가 및 피드백 | 자동 채점, 이해도 측정, 개인화된 피드백 제공 | answer_evaluation_tool |
 | 세션 관리 | 학습 세션 생명주기 관리 및 완료 판단 | SessionManager |
 | 응답 생성 | 에이전트 대본을 바탕으로 사용자 친화적 최종 응답 생성 | LearningSupervisor |
 | 유연한 Q&A | 개념 설명 후, 평가 피드백 후 등 언제든지 질문 답변 가능 | QnAResolver + 순환 구조 |
 | 실시간 Q&A | **ChromaDB 벡터 검색 + 웹 검색** 기반 질문 답변 시스템 | vector_search_tool + web_search_tool |
 | 학습 기록 저장 | 루프 완료 시 전체 진행 요약 및 DB 저장 | MySQL 기반 저장 |
+| AI 모델 유연성 | 다중 AI 제공자 지원 및 동적 모델 전환 | 추상화 레이어 + 환경 설정 |
 
 ---
 
-## 9. 🎯 MVP 범위 (v1.3)
+## 9. 🎯 MVP 범위 
 
 | 항목 | 범위 |
 | --- | --- |
@@ -318,45 +321,49 @@ SessionManager (세션 관리 전담)
 | MAS 구성 | 5개 핵심 에이전트 (SessionManager + LearningSupervisor 중심 구조) |
 | UX 구현 | 하이브리드 UX 패턴, 힌트 시스템, 자유대화↔제한UI 전환 |
 | 프론트엔드 | Vue 3 기반 적응형 UI, Pinia 상태관리, 실시간 UI 모드 전환 |
-| 백엔드 | Flask REST API, LangGraph 워크플로우, MySQL 연동, ChatGPT API 연동, ChromaDB 연동 |
+| 백엔드 | Flask REST API, LangGraph 워크플로우, MySQL 연동, AI API 연동, ChromaDB 연동 |
 | 최적화 항목 | SessionManager 세션 관리 분리, LearningSupervisor 대본 기반 응답 생성, 유연한 질답 시스템 |
 
 ---
 
-## 10. 🚀 확장성 (v1.3)
+## 10. 🚀 확장성 
 
 | 항목 | 내용 |
 | --- | --- |
 | 사용자 유형 추가 | 실무 응용형 사용자 |
 | 개인별 맞춤 플랜 생성하는 에이전트 팀 추가 | 사용자별 학습 경로 및 커리큘럼 동적 생성 |
 | 사용자 진단 에이전트 추가 | 심화된 사용자 분석 및 맞춤형 진단 시스템 |
+| AI 모델 확장 | 새로운 모델 제공자 추가, 특화 모델 도입 |
 
 ---
 
-## 11. 📋 PRD 추가 작성이 필요한 부분
+## 11. 🤖 AI 모델 운영 전략 
 
-| 항목 | 내용 |
-| --- | --- |
-| DB 설계 | 사용자, 학습 기록, 챕터, 퀴즈 등 데이터베이스 스키마 설계 |
-| UI 설계 | 화면별 레이아웃, 컴포넌트 구조, UX 플로우 상세 설계 |
-| 랭그래프 State 설계 | 에이전트 간 데이터 전달, 상태 관리, 워크플로우 상태 정의 |
-| AI 입문자 사용자 유형에 대한 상세 챕터 구성 | 각 챕터별 세부 학습 내용, 예제, 실습 문제, 평가 기준 등 상세 커리큘럼 설계 |
+### 11.1 모델 선택 기준
 
----
+**개발 단계:**
+- **Gemini 2.5 Flash**: 기본 대화, 콘텐츠 생성, 간단한 추론
+- **비용 효율성 중심**: 빠른 프로토타이핑 및 테스트
 
-## 📝 v1.3 주요 변경사항
+**운영 단계:**
+- **일반 학습**: Gemini 2.5 Flash → 필요시 GPT-4o-mini
+- **복잡한 추론**: Gemini 2.5 Pro
+- **고급 기능**: o4-mini (시각적 이해, 도구 통합 필요시)
 
-- **워크플로우 구조 개선**: 모든 에이전트가 LearningSupervisor로 복귀하는 순환 구조 적용
-- **유연한 질답 시스템**: 개념 설명 후, 평가 피드백 후 등 언제든지 질문 가능한 구조
-- **사용자 시나리오 추가**: 1학습 세션의 구체적인 에이전트 흐름 예시 제공
-- **세션 완료 개념 명확화**: 다음 학습 내용으로 진행하는 의미로 정의
+### 11.4 임베딩 시스템
+
+**text-embedding-3-large 고정 사용:**
+- ChromaDB 벡터 저장
+- 학습 콘텐츠 유사도 검색
+- QnA 맥락 매칭
+- 사용자 학습 패턴 분석
 
 ---
 
 *PRD 버전: v1.3*
 
-*최종 수정일: 2025.08.05*
+*최종 수정일: 2025.08.06*
 
 *작성자: 개발팀*
 
-*주요 변경사항: 순환 구조 적용, 유연한 질답 시스템 구축, 사용자 시나리오 추가*
+*주요 변경사항: AI 모델 운영 전략 섹션 최적화, 모델 선택 기준과 임베딩 시스템 중심으로 간소화*

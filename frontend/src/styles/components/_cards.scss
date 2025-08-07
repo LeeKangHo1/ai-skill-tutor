@@ -1,0 +1,189 @@
+// frontend/src/styles/components/_cards.scss
+// 카드 컴포넌트 스타일
+
+// 기본 카드
+.card {
+  @include card-style;
+  border: 1px solid $border-color;
+  
+  // 카드 헤더
+  .card-header {
+    padding: $spacing-lg $spacing-xl $spacing-md;
+    border-bottom: 1px solid $border-color;
+    background-color: $gray-50;
+    border-radius: $border-radius-lg $border-radius-lg 0 0;
+    margin: -$spacing-xl -$spacing-xl $spacing-lg;
+    
+    .card-title {
+      margin: 0;
+      font-size: $font-size-lg;
+      font-weight: 600;
+      color: $gray-800;
+    }
+    
+    .card-subtitle {
+      margin: $spacing-xs 0 0;
+      font-size: $font-size-sm;
+      color: $gray-600;
+    }
+  }
+  
+  // 카드 바디
+  .card-body {
+    padding: 0;
+    
+    &.card-body-padded {
+      padding: $spacing-lg;
+    }
+  }
+  
+  // 카드 푸터
+  .card-footer {
+    padding: $spacing-md $spacing-xl $spacing-lg;
+    border-top: 1px solid $border-color;
+    background-color: $gray-50;
+    border-radius: 0 0 $border-radius-lg $border-radius-lg;
+    margin: $spacing-lg -$spacing-xl -$spacing-xl;
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $spacing-md;
+  }
+  
+  // 카드 이미지
+  .card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: $border-radius-lg $border-radius-lg 0 0;
+    margin: -$spacing-xl -$spacing-xl $spacing-lg;
+  }
+}
+
+// 카드 변형
+.card-compact {
+  padding: $spacing-lg;
+}
+
+.card-elevated {
+  box-shadow: $box-shadow-lg;
+  border: none;
+}
+
+.card-bordered {
+  border: 2px solid $primary-color;
+}
+
+// 카드 그리드
+.card-grid {
+  display: grid;
+  gap: $spacing-xl;
+  
+  &.card-grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  &.card-grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  &.card-grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  @media (max-width: $breakpoint-md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// 학습 카드 (프로젝트 특화)
+.learning-card {
+  @include card-style;
+  border-left: 4px solid $primary-color;
+  transition: all $transition-base;
+  
+  &:hover {
+    border-left-color: $secondary-color;
+    transform: translateY(-4px);
+  }
+  
+  .learning-progress {
+    width: 100%;
+    height: 8px;
+    background-color: $gray-200;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: $spacing-md;
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, $primary-color 0%, $secondary-color 100%);
+      border-radius: 4px;
+      transition: width $transition-base;
+    }
+  }
+  
+  .learning-status {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-xs;
+    font-weight: 500;
+    
+    &.status-completed {
+      background-color: rgba($success-color, 0.1);
+      color: $success-color;
+    }
+    
+    &.status-in-progress {
+      background-color: rgba($warning-color, 0.1);
+      color: darken($warning-color, 20%);
+    }
+    
+    &.status-not-started {
+      background-color: rgba($gray-500, 0.1);
+      color: $gray-600;
+    }
+  }
+}
+
+// 대시보드 카드 (프로젝트 특화)
+.dashboard-card {
+  @include card-style;
+  text-align: center;
+  
+  .dashboard-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto $spacing-md;
+    background: linear-gradient(135deg, $primary-color 0%, $secondary-color 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $white;
+    font-size: 24px;
+  }
+  
+  .dashboard-title {
+    font-size: $font-size-lg;
+    font-weight: 600;
+    margin-bottom: $spacing-sm;
+    color: $gray-800;
+  }
+  
+  .dashboard-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: $primary-color;
+    margin-bottom: $spacing-xs;
+  }
+  
+  .dashboard-description {
+    font-size: $font-size-sm;
+    color: $gray-600;
+  }
+}

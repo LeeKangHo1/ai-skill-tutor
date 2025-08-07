@@ -1,0 +1,13 @@
+// frontend/src/styles/pages/_index.scss
+// 페이지 스타일 통합 import 파일
+
+// 주요 페이지 스타일
+@import 'home';
+@import 'auth';
+@import 'dashboard';
+@import 'learning';
+
+// 추가 페이지 스타일은 여기에 import
+// 예: @import 'profile';
+//     @import 'settings';
+//     @import 'about';

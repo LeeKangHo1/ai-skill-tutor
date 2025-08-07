@@ -1,0 +1,229 @@
+// frontend/src/styles/components/_modals.scss
+// 모달 컴포넌트 스타일
+
+// 모달 오버레이
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba($black, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-lg;
+  
+  // 애니메이션
+  opacity: 0;
+  transition: opacity $transition-base;
+  
+  &.modal-enter-active,
+  &.modal-leave-active {
+    transition: opacity $transition-base;
+  }
+  
+  &.modal-enter-from,
+  &.modal-leave-to {
+    opacity: 0;
+  }
+  
+  &.modal-enter-to,
+  &.modal-leave-from {
+    opacity: 1;
+  }
+}
+
+// 모달 컨테이너
+.modal {
+  background: $white;
+  border-radius: $border-radius-xl;
+  box-shadow: $box-shadow-lg;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  
+  // 모달 애니메이션
+  transform: scale(0.9) translateY(-20px);
+  transition: all $transition-base;
+  
+  .modal-overlay.modal-enter-to &,
+  .modal-overlay.modal-leave-from & {
+    transform: scale(1) translateY(0);
+  }
+  
+  .modal-overlay.modal-enter-from &,
+  .modal-overlay.modal-leave-to & {
+    transform: scale(0.9) translateY(-20px);
+  }
+  
+  // 모달 크기 변형
+  &.modal-sm {
+    max-width: 300px;
+  }
+  
+  &.modal-lg {
+    max-width: 800px;
+  }
+  
+  &.modal-xl {
+    max-width: 1200px;
+  }
+  
+  &.modal-fullscreen {
+    max-width: none;
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+    
+    @media (max-width: $breakpoint-md) {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// 모달 헤더
+.modal-header {
+  padding: $spacing-xl $spacing-xl $spacing-lg;
+  border-bottom: 1px solid $border-color;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  .modal-title {
+    margin: 0;
+    font-size: $font-size-xl;
+    font-weight: 600;
+    color: $gray-800;
+  }
+  
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: $gray-500;
+    cursor: pointer;
+    padding: $spacing-xs;
+    border-radius: $border-radius;
+    transition: all $transition-fast;
+    
+    &:hover {
+      background-color: $gray-100;
+      color: $gray-700;
+    }
+  }
+}
+
+// 모달 바디
+.modal-body {
+  padding: $spacing-xl;
+  overflow-y: auto;
+  max-height: calc(90vh - 140px);
+  
+  &.modal-body-no-padding {
+    padding: 0;
+  }
+}
+
+// 모달 푸터
+.modal-footer {
+  padding: $spacing-lg $spacing-xl $spacing-xl;
+  border-top: 1px solid $border-color;
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-md;
+  
+  &.modal-footer-center {
+    justify-content: center;
+  }
+  
+  &.modal-footer-between {
+    justify-content: space-between;
+  }
+}
+
+// 로딩 모달
+.modal-loading {
+  @include flex-center;
+  padding: $spacing-xxl;
+  
+  .loading-spinner {
+    @include loading-spinner(32px, $primary-color);
+    margin-bottom: $spacing-lg;
+  }
+  
+  .loading-text {
+    color: $gray-600;
+    font-size: $font-size-lg;
+  }
+}
+
+// 확인 모달
+.modal-confirm {
+  text-align: center;
+  
+  .confirm-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto $spacing-lg;
+    border-radius: 50%;
+    @include flex-center;
+    font-size: 32px;
+    
+    &.confirm-success {
+      background-color: rgba($success-color, 0.1);
+      color: $success-color;
+    }
+    
+    &.confirm-warning {
+      background-color: rgba($warning-color, 0.1);
+      color: darken($warning-color, 20%);
+    }
+    
+    &.confirm-danger {
+      background-color: rgba($danger-color, 0.1);
+      color: $danger-color;
+    }
+  }
+  
+  .confirm-title {
+    font-size: $font-size-xl;
+    font-weight: 600;
+    margin-bottom: $spacing-md;
+    color: $gray-800;
+  }
+  
+  .confirm-message {
+    color: $gray-600;
+    margin-bottom: $spacing-xl;
+    line-height: 1.6;
+  }
+}
+
+// 반응형 모달
+@media (max-width: $breakpoint-sm) {
+  .modal-overlay {
+    padding: $spacing-md;
+  }
+  
+  .modal {
+    max-width: none;
+    width: 100%;
+    
+    &.modal-lg,
+    &.modal-xl {
+      max-width: none;
+    }
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: $spacing-lg;
+    padding-right: $spacing-lg;
+  }
+}

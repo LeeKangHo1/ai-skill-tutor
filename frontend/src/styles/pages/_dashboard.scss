@@ -1,0 +1,465 @@
+// frontend/src/styles/pages/_dashboard.scss
+// 대시보드 페이지 스타일
+
+.dashboard-page {
+  padding: $spacing-xl 0;
+  
+  .dashboard-header {
+    margin-bottom: $spacing-xxl;
+    
+    .dashboard-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: $gray-800;
+      margin-bottom: $spacing-sm;
+      
+      @media (max-width: $breakpoint-md) {
+        font-size: 1.75rem;
+      }
+    }
+    
+    .dashboard-subtitle {
+      color: $gray-600;
+      font-size: $font-size-lg;
+    }
+    
+    .user-greeting {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+      margin-bottom: $spacing-lg;
+      
+      .greeting-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        @include gradient-bg($primary-color, $secondary-color);
+        @include flex-center;
+        color: $white;
+        font-weight: 700;
+        font-size: $font-size-lg;
+      }
+      
+      .greeting-text {
+        .greeting-message {
+          font-size: $font-size-lg;
+          font-weight: 600;
+          color: $gray-800;
+          margin-bottom: $spacing-xs;
+        }
+        
+        .greeting-date {
+          font-size: $font-size-sm;
+          color: $gray-500;
+        }
+      }
+    }
+  }
+  
+  // 통계 카드 섹션
+  .stats-section {
+    margin-bottom: $spacing-xxl;
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: $spacing-xl;
+      
+      @media (max-width: $breakpoint-sm) {
+        grid-template-columns: 1fr;
+        gap: $spacing-lg;
+      }
+    }
+    
+    .stat-card {
+      @include card-style;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, $primary-color 0%, $secondary-color 100%);
+      }
+      
+      .stat-icon {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto $spacing-lg;
+        border-radius: 50%;
+        @include flex-center;
+        font-size: 1.5rem;
+        color: $white;
+        
+        &.stat-progress {
+          @include gradient-bg($primary-color, $secondary-color);
+        }
+        
+        &.stat-completed {
+          background-color: $success-color;
+        }
+        
+        &.stat-time {
+          background-color: $info-color;
+        }
+        
+        &.stat-streak {
+          background-color: $warning-color;
+        }
+      }
+      
+      .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: $gray-800;
+        margin-bottom: $spacing-sm;
+        
+        &.stat-progress-value {
+          color: $primary-color;
+        }
+        
+        &.stat-completed-value {
+          color: $success-color;
+        }
+        
+        &.stat-time-value {
+          color: $info-color;
+        }
+        
+        &.stat-streak-value {
+          color: darken($warning-color, 20%);
+        }
+      }
+      
+      .stat-label {
+        font-size: $font-size-base;
+        color: $gray-600;
+        font-weight: 500;
+      }
+      
+      .stat-change {
+        margin-top: $spacing-sm;
+        font-size: $font-size-sm;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: $spacing-xs;
+        
+        &.stat-increase {
+          color: $success-color;
+        }
+        
+        &.stat-decrease {
+          color: $danger-color;
+        }
+        
+        .change-icon {
+          width: 12px;
+          height: 12px;
+        }
+      }
+    }
+  }
+  
+  // 학습 진행 섹션
+  .progress-section {
+    margin-bottom: $spacing-xxl;
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-xl;
+      
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: $gray-800;
+        margin: 0;
+      }
+      
+      .section-action {
+        color: $primary-color;
+        text-decoration: none;
+        font-weight: 500;
+        
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+    
+    .progress-overview {
+      @include card-style;
+      
+      .overall-progress {
+        margin-bottom: $spacing-xl;
+        
+        .progress-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: $spacing-md;
+          
+          .progress-title {
+            font-size: $font-size-lg;
+            font-weight: 600;
+            color: $gray-800;
+          }
+          
+          .progress-percentage {
+            font-size: $font-size-lg;
+            font-weight: 700;
+            color: $primary-color;
+          }
+        }
+        
+        .progress-bar-container {
+          height: 12px;
+          background-color: $gray-200;
+          border-radius: 6px;
+          overflow: hidden;
+          
+          .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, $primary-color 0%, $secondary-color 100%);
+            border-radius: 6px;
+            transition: width $transition-slow;
+          }
+        }
+        
+        .progress-details {
+          display: flex;
+          justify-content: space-between;
+          margin-top: $spacing-sm;
+          font-size: $font-size-sm;
+          color: $gray-600;
+        }
+      }
+      
+      .chapter-progress {
+        .chapter-list {
+          display: grid;
+          gap: $spacing-md;
+          
+          .chapter-item {
+            display: flex;
+            align-items: center;
+            gap: $spacing-md;
+            padding: $spacing-md;
+            border-radius: $border-radius;
+            transition: all $transition-base;
+            
+            &:hover {
+              background-color: $gray-50;
+            }
+            
+            .chapter-status {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              @include flex-center;
+              font-size: $font-size-sm;
+              font-weight: 600;
+              
+              &.status-completed {
+                background-color: $success-color;
+                color: $white;
+              }
+              
+              &.status-current {
+                background-color: $primary-color;
+                color: $white;
+              }
+              
+              &.status-locked {
+                background-color: $gray-300;
+                color: $gray-500;
+              }
+            }
+            
+            .chapter-info {
+              flex: 1;
+              
+              .chapter-title {
+                font-weight: 600;
+                color: $gray-800;
+                margin-bottom: $spacing-xs;
+              }
+              
+              .chapter-description {
+                font-size: $font-size-sm;
+                color: $gray-600;
+              }
+            }
+            
+            .chapter-progress {
+              text-align: right;
+              
+              .progress-text {
+                font-size: $font-size-sm;
+                color: $gray-600;
+                margin-bottom: $spacing-xs;
+              }
+              
+              .mini-progress {
+                width: 60px;
+                height: 4px;
+                background-color: $gray-200;
+                border-radius: 2px;
+                overflow: hidden;
+                
+                .mini-progress-bar {
+                  height: 100%;
+                  background-color: $primary-color;
+                  border-radius: 2px;
+                  transition: width $transition-base;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // 최근 활동 섹션
+  .activity-section {
+    .activity-card {
+      @include card-style;
+      
+      .activity-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: $spacing-xl;
+        
+        .activity-title {
+          font-size: $font-size-lg;
+          font-weight: 600;
+          color: $gray-800;
+          margin: 0;
+        }
+      }
+      
+      .activity-list {
+        .activity-item {
+          display: flex;
+          align-items: flex-start;
+          gap: $spacing-md;
+          padding: $spacing-md 0;
+          border-bottom: 1px solid $border-color;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            @include flex-center;
+            font-size: $font-size-sm;
+            color: $white;
+            flex-shrink: 0;
+            
+            &.activity-lesson {
+              background-color: $primary-color;
+            }
+            
+            &.activity-quiz {
+              background-color: $success-color;
+            }
+            
+            &.activity-achievement {
+              background-color: $warning-color;
+            }
+          }
+          
+          .activity-content {
+            flex: 1;
+            
+            .activity-text {
+              color: $gray-800;
+              margin-bottom: $spacing-xs;
+              line-height: 1.5;
+            }
+            
+            .activity-time {
+              font-size: $font-size-sm;
+              color: $gray-500;
+            }
+          }
+        }
+        
+        .activity-empty {
+          text-align: center;
+          padding: $spacing-xxl 0;
+          color: $gray-500;
+          
+          .empty-icon {
+            font-size: 3rem;
+            margin-bottom: $spacing-lg;
+            opacity: 0.5;
+          }
+          
+          .empty-text {
+            font-size: $font-size-lg;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 반응형 조정
+@media (max-width: $breakpoint-lg) {
+  .dashboard-page {
+    .dashboard-header {
+      .user-greeting {
+        flex-direction: column;
+        text-align: center;
+        
+        .greeting-text {
+          text-align: center;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: $breakpoint-md) {
+  .dashboard-page {
+    padding: $spacing-lg 0;
+    
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: $spacing-md;
+    }
+    
+    .progress-overview {
+      .chapter-progress {
+        .chapter-list {
+          .chapter-item {
+            flex-direction: column;
+            text-align: center;
+            
+            .chapter-info {
+              text-align: center;
+            }
+            
+            .chapter-progress {
+              text-align: center;
+            }
+          }
+        }
+      }
+    }
+  }
+}

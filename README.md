@@ -129,13 +129,13 @@ SessionManager (세션 관리 전담)
 - [ ] 학습 세션 관리 시스템
 
 ## 참고 문서
-- [전체 PRD](docs/ai_skill_tutor_prd_v1_3.md)
-- [랭그래프 State 설계](docs/langgraph_state_design_v1_3.md)
-- [DB 설계](docs/db_design_v1_3.md)
-- [API 설계](docs/api_docs_v1_3.md)
-- [UI 설계](docs/ui_design_v1_3.md)
-- [백엔드 폴더 구조](docs/backend_folder_structure.txt)
-- [프론트엔드 폴더 구조](docs/frontend_folder_structure.md)
+- [전체 PRD](docs/my_docs/ai_skill_tutor_prd_v1_3.md)
+- [랭그래프 State 설계](docs/my_docs/langgraph_state_design_v1_3.md)
+- [DB 설계](docs/my_docs/db_design_v1_3.md)
+- [API 설계](docs/my_docs/api_docs_v1_3.md)
+- [UI 설계](docs/my_docs/ui_design_v1_3.md)
+- [백엔드 폴더 구조](docs/my_docs/backend_folder_structure.txt)
+- [프론트엔드 폴더 구조](docs/my_docs/frontend_folder_structure.md)
 
 ## 라이선스
 이 프로젝트는 포트폴리오 목적으로 개발되었습니다.

@@ -25,22 +25,13 @@
 ## AI 모델 및 임베딩 시스템
 
 ### 모델 선택 기준
-
-#### 개발 단계
-- **Gemini 2.5 Flash**: 기본 대화, 콘텐츠 생성, 간단한 추론
-- **비용 효율성 중심**: 빠른 프로토타이핑 및 테스트
-
-#### 운영 단계
 - **일반 학습**: Gemini 2.5 Flash → 필요시 GPT-4o-mini
-- **복잡한 추론**: Gemini 2.5 Pro
-- **고급 기능**: o4-mini (시각적 이해, 도구 통합 필요시)
+- **복잡한 추론**: Gemini 2.5 Pro -> 필요시 o4-mini
+
 
 ### 임베딩 시스템
 - **text-embedding-3-large 고정 사용**:
   - ChromaDB 벡터 저장
-  - 학습 콘텐츠 유사도 검색
-  - QnA 맥락 매칭
-  - 사용자 학습 패턴 분석
 
 ## 핵심 아키텍처
 
@@ -70,35 +61,33 @@ SessionManager (세션 관리 전담)
 
 ### 개발 원칙
 - **MVP 우선**: 복잡한 배포 설정보다 핵심 기능 완성
-- **점진적 확장**: 기본 구조부터 시작해서 필요할 때마다 폴더/파일 추가
 - **최신 패키지**: 버전 고정 없이 최신 버전 사용, 문제 시 개별 조정
 - **포트폴리오 품질**: 코드 가독성과 구조의 명확성 중시
 
 ### MVP Spec 작성 가이드라인
-- **단순함 우선**: 과도한 클래스 분리나 복잡한 아키텍처 지양
 - **핵심 기능 집중**: 부가적인 기능(Rate Limiting, 복잡한 보안, 모니터링 등) 제외
-- **최소 파일 구조**: 하나의 모듈에서 해결 가능한 것은 분리하지 않음
 - **실용적 설계**: 이론적 완벽함보다는 동작하는 코드 우선
 - **테스트 간소화**: 복잡한 테스트 전략보다는 기본 동작 확인 수준
 - **문서화 적정선**: 과도한 문서화보다는 코드 자체의 명확성 중시
 
-## 주요 문서 위치
-- **전체 PRD**: `docs/ai_skill_tutor_prd_v1_3.md`
-- **State 설계**: `docs/langgraph_state_design_v1_3.md`
-- **DB 설계**: `docs/db_design_v1_3.md`
-- **UI 설계**: `docs/ui_design_v1_3.md`
-- **API 설계**: `docs/api_docs_v1_3.md`
-- **폴더 구조**: `docs/backend_folder_structure.txt`, `docs/frontend_folder_structure.md`
+### 테스트 코드 작성 규칙
+- **테스트 위치**: 모든 테스트 코드는 반드시 `tests/` 폴더 내에 작성
+- **테스트 구조**: `tests/` 폴더 구조는 소스 코드 구조와 유사하게 구성
+- **테스트 파일명**: `test_` 접두사 사용 (예: `test_auth.py`, `test_user_service.py`)
+- **테스트 범위**: 단위 테스트, 통합 테스트 모두 `tests/` 폴더 내에서 관리
 
-## 현재 진행 상황
-- **완료**: project-foundation spec 작성 (requirements, design, tasks)
-- **다음 단계**: project-foundation tasks 실행 → 기본 프로젝트 구조 생성
+## 주요 문서 위치
+- **전체 PRD**: `docs/my_docs/ai_skill_tutor_prd_v1_3.md`
+- **State 설계**: `docs/my_docs/langgraph_state_design_v1_3.md`
+- **DB 설계**: `docs/my_docs/db_design_v1_3.md`
+- **UI 설계**: `docs/my_docs/ui_design_v1_3.md`
+- **API 설계**: `docs/my_docs/api_docs_v1_3.md`
+- **폴더 구조**: `docs/my_docs/backend_folder_structure.txt`, `docs/my_docs/frontend_folder_structure.md`
 
 ## 중요 참고사항
 - 가상환경은 프로젝트 루트에서 생성 (`python -m venv venv`)
 - Flask는 Blueprint 구조 사용
 - Vue는 Composition API 사용
-- 모든 패키지는 최신 버전으로 설치
 
 ## 보안 가이드라인
 - **환경변수 관리**: 실제 비밀번호, API 키, 데이터베이스 정보는 절대 코드나 문서에 하드코딩하지 않음

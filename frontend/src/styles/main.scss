@@ -5,6 +5,20 @@
 @import './variables.scss';
 @import './mixins.scss';
 
+// 컴포넌트 스타일 import
+@import './components/buttons';
+@import './components/forms';
+@import './components/cards';
+@import './components/modals';
+@import './components/navigation';
+@import './components/alerts';
+
+// 페이지 스타일 import
+@import './pages/home';
+@import './pages/auth';
+@import './pages/dashboard';
+@import './pages/learning';
+
 // 전역 리셋 및 기본 스타일
 * {
   margin: 0;

@@ -1,0 +1,113 @@
+// frontend/src/styles/components/_buttons.scss
+// 버튼 컴포넌트 스타일
+
+// 기본 버튼 스타일
+.btn {
+  @include button-style($primary-color);
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  text-decoration: none;
+  font-size: $font-size-base;
+  line-height: 1.5;
+  
+  // 버튼 크기 변형
+  &.btn-sm {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-sm;
+  }
+  
+  &.btn-lg {
+    padding: $spacing-md $spacing-lg;
+    font-size: $font-size-lg;
+  }
+  
+  // 버튼 색상 변형
+  &.btn-secondary {
+    @include button-style($secondary-color);
+  }
+  
+  &.btn-success {
+    @include button-style($success-color);
+  }
+  
+  &.btn-danger {
+    @include button-style($danger-color);
+  }
+  
+  &.btn-warning {
+    @include button-style($warning-color, $gray-800);
+  }
+  
+  &.btn-info {
+    @include button-style($info-color);
+  }
+  
+  // 아웃라인 버튼
+  &.btn-outline {
+    background-color: transparent;
+    color: $primary-color;
+    border: 2px solid $primary-color;
+    
+    &:hover {
+      background-color: $primary-color;
+      color: $white;
+    }
+  }
+  
+  // 텍스트 버튼
+  &.btn-text {
+    background-color: transparent;
+    color: $primary-color;
+    box-shadow: none;
+    
+    &:hover {
+      background-color: rgba($primary-color, 0.1);
+      transform: none;
+    }
+  }
+  
+  // 전체 너비 버튼
+  &.btn-block {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  // 로딩 상태
+  &.btn-loading {
+    position: relative;
+    color: transparent;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      @include loading-spinner(16px, $white);
+    }
+  }
+}
+
+// 버튼 그룹
+.btn-group {
+  display: inline-flex;
+  
+  .btn {
+    border-radius: 0;
+    
+    &:first-child {
+      border-top-left-radius: $border-radius;
+      border-bottom-left-radius: $border-radius;
+    }
+    
+    &:last-child {
+      border-top-right-radius: $border-radius;
+      border-bottom-right-radius: $border-radius;
+    }
+    
+    &:not(:last-child) {
+      border-right: 1px solid rgba($white, 0.2);
+    }
+  }
+}

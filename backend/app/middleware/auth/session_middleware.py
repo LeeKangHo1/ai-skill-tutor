@@ -7,8 +7,7 @@
 from functools import wraps
 from flask import request, jsonify, g
 from typing import Optional, Dict, Any
-from app.models.user.auth_token import UserAuthToken
-from app.models.user.user import User
+from app.models import UserAuthToken, User
 
 class SessionMiddleware:
     """세션 관리 미들웨어 클래스"""
