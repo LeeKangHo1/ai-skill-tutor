@@ -9,16 +9,9 @@ load_dotenv()
 
 class Config:
     """기본 설정 클래스"""
-    # 시크릿 키 설정 (JWT 토큰 생성 등에 사용)
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    
-    # 데이터베이스 설정
     DATABASE_URL = os.environ.get('DATABASE_URL')
-    
-    # CORS 설정
-    CORS_ORIGINS = ['http://localhost:5173']  # Vue.js 개발 서버
-    
-    # 디버그 모드 (개발 환경에서만 True)
+    CORS_ORIGINS = ['http://localhost:5173']
     DEBUG = True
 
 class DevelopmentConfig(Config):
@@ -27,13 +20,22 @@ class DevelopmentConfig(Config):
     TESTING = False
 
 class ProductionConfig(Config):
-    """운영 환경 설정 (추후 사용)"""
+    """운영 환경 설정"""
     DEBUG = False
     TESTING = False
+
+class TestingConfig(Config):
+    """테스트 환경 설정"""
+    TESTING = True
+    DEBUG = False
+    LOG_LEVEL = 'DEBUG'
+    CORS_ORIGINS = ['*']
+    DATABASE_URL = 'sqlite:///:memory:'  # ✅ 테스트용 SQLite 메모리 DB 등
 
 # 설정 딕셔너리
 config = {
     'development': DevelopmentConfig,
     'production': ProductionConfig,
+    'testing': TestingConfig,   # ✅ 추가
     'default': DevelopmentConfig
 }

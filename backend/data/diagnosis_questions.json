@@ -1,0 +1,143 @@
+{
+  "title": "AI 활용 능력 진단 퀴즈",
+  "description": "사용자의 AI 활용 능력을 진단하여 적합한 학습 유형을 추천합니다",
+  "scoring": {
+    "max_score": 20,
+    "threshold": 13,
+    "ai_beginner": "13점 이하",
+    "practical_advanced": "14점 이상"
+  },
+  "questions": [
+    {
+      "question_id": 1,
+      "question_text": "본인의 기술적 배경을 가장 잘 설명하는 것은?",
+      "question_type": "single_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "IT 분야나 프로그래밍 관련 경험이 전혀 없습니다"
+        },
+        {
+          "value": 2,
+          "text": "전문적인 기술은 없지만, 일반적인 컴퓨터 활용은 익숙합니다"
+        },
+        {
+          "value": 3,
+          "text": "프로그래밍 언어 교육을 이수했거나, 관련 기본 지식이 있습니다"
+        },
+        {
+          "value": 4,
+          "text": "현재 개발, 데이터 분석, 엔지니어링 등 IT 관련 업무를 담당하고 있습니다"
+        }
+      ]
+    },
+    {
+      "question_id": 2,
+      "question_text": "ChatGPT와 같은 생성형 AI를 어느 정도로 사용해보셨나요?",
+      "question_type": "single_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "사용해본 적 없거나 1-2회만 시도해봤습니다"
+        },
+        {
+          "value": 2,
+          "text": "간단한 질문-답변 용도로만 사용해봤습니다"
+        },
+        {
+          "value": 3,
+          "text": "문서 작성, 요약 등 실무에 활용하고 있습니다"
+        },
+        {
+          "value": 4,
+          "text": "복잡한 업무나 여러 단계 작업에 활용하고 있습니다"
+        }
+      ]
+    },
+    {
+      "question_id": 3,
+      "question_text": "'LLM(거대 언어 모델)'이라는 용어를 들었을 때 어떻게 느껴지시나요?",
+      "question_type": "single_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "전혀 들어본 적 없는 생소한 단어입니다"
+        },
+        {
+          "value": 2,
+          "text": "들어본 적은 있지만, 정확한 의미는 잘 모릅니다"
+        },
+        {
+          "value": 3,
+          "text": "ChatGPT의 기반 기술 정도로 이해하고 있습니다"
+        },
+        {
+          "value": 4,
+          "text": "개념을 이해하고 있으며, 작동 원리에 관심이 많습니다"
+        }
+      ]
+    },
+    {
+      "question_id": 4,
+      "question_text": "'프롬프트 엔지니어링'이라는 용어를 어떻게 이해하고 계신가요?",
+      "question_type": "single_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "전혀 들어본 적 없습니다"
+        },
+        {
+          "value": 2,
+          "text": "들어본 적은 있지만, 정확한 의미는 잘 모릅니다"
+        },
+        {
+          "value": 3,
+          "text": "AI에게 좋은 답변을 얻기 위한 대화 기술 정도로 이해합니다"
+        },
+        {
+          "value": 4,
+          "text": "구체적인 작성 원리나 고급 기법을 알고 있습니다"
+        }
+      ]
+    },
+    {
+      "question_id": 5,
+      "question_text": "'환각 현상(Hallucination)'이 무엇인지 아시나요?",
+      "question_type": "single_choice",
+      "options": [
+        {
+          "value": 1,
+          "text": "처음 듣는 용어입니다"
+        },
+        {
+          "value": 2,
+          "text": "AI 관련 용어인 것 같지만, 정확한 뜻은 모릅니다"
+        },
+        {
+          "value": 3,
+          "text": "AI가 틀린 정보를 생성하는 현상이라고 알고 있습니다"
+        },
+        {
+          "value": 4,
+          "text": "발생 원인을 이해하고 있으며, 해결 방법에 관심이 있습니다"
+        }
+      ]
+    }
+  ],
+  "user_types": {
+    "ai_beginner": {
+      "name": "AI 입문자",
+      "description": "AI와 LLM의 기본 개념부터 차근차근 배우고, 실생활에서 활용할 수 있는 기초적인 프롬프트 작성법을 익힙니다.",
+      "target_audience": "비전공자, AI 초보자",
+      "estimated_duration": "15시간",
+      "chapter_count": 8
+    },
+    "practical_advanced": {
+      "name": "실무 응용형",
+      "description": "AI 기술의 실무적 이해와 고급 활용 기법을 습득하여 업무 효율성을 크게 향상시킵니다.",
+      "target_audience": "기술적 배경이 있는 직장인",
+      "estimated_duration": "20시간",
+      "chapter_count": 10
+    }
+  }
+}
