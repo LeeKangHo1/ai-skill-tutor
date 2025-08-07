@@ -161,9 +161,9 @@ Authorization: Bearer {access_token}
         "question_text": "AI 도구(ChatGPT, Bard 등) 사용 경험이 있나요?",
         "question_type": "single_choice",
         "options": [
-          { "value": "none", "text": "전혀 없음" },
-          { "value": "occasional", "text": "가끔 사용" },
-          { "value": "frequent", "text": "자주 사용" }
+          { "value": "option_1", "text": "전혀 없음" },
+          { "value": "option_2", "text": "가끔 사용" },
+          { "value": "option_3", "text": "자주 사용" }
         ]
       },
       {
@@ -171,9 +171,9 @@ Authorization: Bearer {access_token}
         "question_text": "주된 학습 목적은 무엇인가요?",
         "question_type": "single_choice",
         "options": [
-          { "value": "curiosity", "text": "호기심" },
-          { "value": "work_efficiency", "text": "업무 효율성" },
-          { "value": "self_development", "text": "자기계발" }
+          { "value": "option_1", "text": "호기심" },
+          { "value": "option_2", "text": "업무 효율성" },
+          { "value": "option_3", "text": "자기계발" }
         ]
       }
     ],
@@ -188,11 +188,11 @@ Authorization: Bearer {access_token}
 ```json
 {
   "answers": [
-    { "question_id": 1, "answer": "occasional" },
-    { "question_id": 2, "answer": "work_efficiency" },
-    { "question_id": 3, "answer": "document_work" },
-    { "question_id": 4, "answer": "medium" },
-    { "question_id": 5, "answer": "practical" }
+    { "question_id": 1, "answer": "option_2" },
+    { "question_id": 2, "answer": "option_2" },
+    { "question_id": 3, "answer": "option_1" },
+    { "question_id": 4, "answer": "option_3" },
+    { "question_id": 5, "answer": "option_1" }
   ]
 }
 ```
@@ -204,10 +204,49 @@ Authorization: Bearer {access_token}
   "data": {
     "user_type": "beginner",
     "user_type_description": "AI 입문자",
+    "total_score": 85,
+    "recommendation": "AI 입문자가 적합합니다",
     "recommended_chapters": 8,
     "estimated_duration": "15시간"
   },
   "message": "진단이 완료되었습니다."
+}
+```
+
+### 3.3 POST /diagnosis/select-type (사용자 유형 선택)
+
+**요청:**
+```json
+{
+  "user_type": "beginner"
+}
+```
+
+**응답:**
+```json
+{
+  "success": true,
+  "data": {
+    "user_type": "beginner",
+    "user_type_description": "AI 입문자",
+    "diagnosis_completed": true,
+    "redirect_url": "/dashboard"
+  },
+  "message": "사용자 유형이 설정되었습니다."
+}
+```
+
+**에러 응답:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_USER_TYPE",
+    "message": "유효하지 않은 사용자 유형입니다.",
+    "details": {
+      "valid_types": ["beginner", "advanced"]
+    }
+  }
 }
 ```
 
@@ -653,16 +692,23 @@ Authorization: Bearer {access_token}
 | DUPLICATE_EMAIL | 409 | 이미 사용 중인 이메일입니다. |
 | PASSWORD_TOO_WEAK | 400 | 비밀번호가 너무 약합니다. |
 
-### 8.3 비즈니스 로직 에러
+### 8.3 진단 관련 에러
 
 | 코드 | HTTP 상태 | 메시지 |
 |------|-----------|--------|
 | DIAGNOSIS_NOT_COMPLETED | 403 | 진단을 먼저 완료해주세요. |
+| INVALID_USER_TYPE | 400 | 유효하지 않은 사용자 유형입니다. |
+| DIAGNOSIS_ALREADY_COMPLETED | 409 | 이미 진단을 완료했습니다. |
+
+### 8.4 비즈니스 로직 에러
+
+| 코드 | HTTP 상태 | 메시지 |
+|------|-----------|--------|
 | CHAPTER_ACCESS_DENIED | 403 | 해당 챕터에 접근할 수 없습니다. |
 | SESSION_NOT_FOUND | 404 | 세션을 찾을 수 없습니다. |
 | SESSION_ALREADY_COMPLETED | 409 | 이미 완료된 세션입니다. |
 
-### 8.4 시스템 에러
+### 8.5 시스템 에러
 
 | 코드 | HTTP 상태 | 메시지 |
 |------|-----------|--------|
@@ -733,6 +779,24 @@ Authorization: Bearer {access_token}
 
 ---
 
+## 📋 2025.08.07 업데이트 내용
+
+### 🆕 새로 추가된 API
+- **POST /diagnosis/select-type**: 진단 완료 후 사용자 유형 선택 API 추가
+
+### 🔧 수정된 API 응답 형식
+- **POST /diagnosis/submit**: `total_score`, `recommendation` 필드 추가
+- **GET /diagnosis/questions**: option value를 숫자에서 문자열(`option_1`, `option_2` 등)로 변경
+
+### ✅ 구현 완료된 API
+- GET /diagnosis/questions (진단 문항 조회)
+- POST /diagnosis/submit (진단 결과 제출)  
+- POST /diagnosis/select-type (사용자 유형 선택)
+- GET /system/health (헬스 체크)
+- GET /system/version (버전 정보)
+
+---
+
 *API 설계 버전: v1.3*  
-*최종 수정일: 2025.08.05*  
+*최종 수정일: 2025.08.07*  
 *연관 문서: AI 활용법 학습 튜터 PRD v1.3, DB 설계 v1.3, UI 설계 v1.3*

@@ -1,9 +1,9 @@
-# 백엔드 폴더 구조
+# 백엔드 폴더 구조 (v1.3 - 2025.08.07 업데이트)
 
 ```
 backend/
 ├── app/                              # Flask 애플리케이션 메인 디렉토리
-│   ├── __init__.py                   # Flask 앱 팩토리 함수
+│   ├── __init__.py                   # Flask 앱 팩토리 함수 (Blueprint 등록 방식 개선)
 │   ├── config/                       # 설정 파일들
 │   │   ├── __init__.py
 │   │   ├── base.py                   # 기본 설정
@@ -26,60 +26,61 @@ backend/
 │   │       ├── __init__.py
 │   │       └── chapter.py            # 챕터 모델
 │   ├── routes/                       # API 라우트 (Blueprint)
-│   │   ├── __init__.py
-│   │   ├── auth/                     # 인증 관련 라우트
+│   │   ├── __init__.py               # ✅ 수정됨: system_blueprints, diagnosis_blueprints import
+│   │   ├── diagnosis/                # 진단 관련 라우트 (완성됨)
+│   │   │   ├── __init__.py           # diagnosis_blueprints 정의
+│   │   │   ├── questions.py          # ✅ 구현됨: 진단 문항 조회 API
+│   │   │   └── submit.py             # ✅ 구현됨: 진단 결과 제출 + 유형 선택 API
+│   │   ├── system/                   # 시스템 관련 라우트 (완성됨)
+│   │   │   ├── __init__.py           # ✅ 수정됨: system_blueprints 정의
+│   │   │   ├── health.py             # ✅ 구현됨: 헬스체크 API
+│   │   │   └── version.py            # ✅ 구현됨: 기본 API 정보
+│   │   ├── auth/                     # 인증 관련 라우트 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   ├── login.py              # 로그인/로그아웃
 │   │   │   ├── register.py           # 회원가입
 │   │   │   └── token.py              # 토큰 관리
-│   │   ├── diagnosis/                # 사용자 진단 라우트
-│   │   │   ├── __init__.py
-│   │   │   ├── questions.py          # 진단 문항
-│   │   │   └── submit.py             # 진단 결과 제출
-│   │   ├── dashboard/                # 대시보드 라우트
+│   │   ├── dashboard/                # 대시보드 라우트 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   ├── overview.py           # 대시보드 개요
 │   │   │   └── statistics.py         # 통계 정보
-│   │   ├── learning/                 # 학습 세션 라우트
-│   │   │   ├── __init__.py
-│   │   │   ├── session/              # 세션 관리
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── start.py          # 세션 시작
-│   │   │   │   ├── message.py        # 메시지 처리
-│   │   │   │   └── status.py         # 세션 상태
-│   │   │   ├── quiz/                 # 퀴즈 관리
-│   │   │   │   ├── __init__.py
-│   │   │   │   ├── submit.py         # 답변 제출
-│   │   │   │   └── hint.py           # 힌트 요청
-│   │   │   └── history/              # 학습 기록
-│   │   │       ├── __init__.py
-│   │   │       ├── list.py           # 기록 목록
-│   │   │       └── details.py        # 상세 조회
-│   │   └── system/                   # 시스템 관리 라우트
+│   │   └── learning/                 # 학습 세션 라우트 (미구현)
 │   │       ├── __init__.py
-│   │       ├── health.py             # 헬스 체크
-│   │       └── version.py            # 버전 정보
+│   │       ├── session/              # 세션 관리
+│   │       │   ├── __init__.py
+│   │       │   ├── start.py          # 세션 시작
+│   │       │   ├── message.py        # 메시지 처리
+│   │       │   └── status.py         # 세션 상태
+│   │       ├── quiz/                 # 퀴즈 관리
+│   │       │   ├── __init__.py
+│   │       │   ├── submit.py         # 답변 제출
+│   │       │   └── hint.py           # 힌트 요청
+│   │       └── history/              # 학습 기록
+│   │           ├── __init__.py
+│   │           ├── list.py           # 기록 목록
+│   │           └── details.py        # 상세 조회
 │   ├── services/                     # 비즈니스 로직 서비스
 │   │   ├── __init__.py
-│   │   ├── auth/                     # 인증 서비스
+│   │   ├── diagnosis_service.py      # ✅ 구현됨: 진단 점수 계산 및 유형 추천
+│   │   ├── auth/                     # 인증 서비스 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   ├── login_service.py      # 로그인 처리
 │   │   │   ├── register_service.py   # 회원가입 처리
 │   │   │   └── token_service.py      # 토큰 관리
-│   │   ├── user/                     # 사용자 관리 서비스
+│   │   ├── user/                     # 사용자 관리 서비스 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   ├── profile_service.py    # 프로필 관리
 │   │   │   └── progress_service.py   # 진행 상태 관리
-│   │   ├── learning/                 # 학습 진행 서비스
+│   │   ├── learning/                 # 학습 진행 서비스 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   ├── session_service.py    # 세션 관리 서비스
 │   │   │   ├── content_service.py    # 컨텐츠 처리 서비스
 │   │   │   └── quiz_service.py       # 퀴즈 처리 서비스
-│   │   └── statistics/               # 통계 처리 서비스
+│   │   └── statistics/               # 통계 처리 서비스 (미구현)
 │   │       ├── __init__.py
 │   │       ├── dashboard_service.py  # 대시보드 통계
 │   │       └── report_service.py     # 리포트 생성
-│   ├── agents/                       # LangGraph 에이전트 시스템
+│   ├── agents/                       # LangGraph 에이전트 시스템 (미구현)
 │   │   ├── __init__.py
 │   │   ├── base/                     # 기본 에이전트 구성 요소
 │   │   │   ├── __init__.py
@@ -113,7 +114,7 @@ backend/
 │   │       ├── agent.py              # QnAResolver 에이전트
 │   │       ├── query_processor.py    # 질문 처리기
 │   │       └── answer_generator.py   # 답변 생성기
-│   ├── tools/                        # LangGraph 도구 함수들
+│   ├── tools/                        # LangGraph 도구 함수들 (미구현)
 │   │   ├── __init__.py
 │   │   ├── content/                  # 컨텐츠 생성 도구
 │   │   │   ├── __init__.py
@@ -158,7 +159,7 @@ backend/
 │   │       ├── exceptions.py         # 커스텀 예외 클래스
 │   │       ├── constants.py          # 상수 정의
 │   │       └── helpers.py            # 헬퍼 함수들
-│   ├── core/                         # 핵심 시스템 구성 요소
+│   ├── core/                         # 핵심 시스템 구성 요소 (미구현)
 │   │   ├── __init__.py
 │   │   ├── langraph/                 # LangGraph 관련
 │   │   │   ├── __init__.py
@@ -176,7 +177,7 @@ backend/
 │   │   └── cache/                    # 캐시 관련
 │   │       ├── __init__.py
 │   │       └── redis_client.py       # Redis 클라이언트 (선택사항)
-│   └── middleware/                   # 미들웨어
+│   └── middleware/                   # 미들웨어 (미구현)
 │       ├── __init__.py
 │       ├── auth/                     # 인증 미들웨어
 │       │   ├── __init__.py
@@ -196,13 +197,14 @@ backend/
 │   ├── test_auth.py                  # 인증 테스트
 │   ├── test_agents.py                # 에이전트 테스트
 │   ├── test_services.py              # 서비스 테스트
+│   ├── test_diagnosis.py             # ✅ 신규: 진단 시스템 테스트
 │   └── test_tools.py                 # 도구 테스트
 ├── migrations/                       # 데이터베이스 마이그레이션
 │   ├── 001_initial_schema.sql        # 초기 스키마
 │   ├── 002_add_indexes.sql           # 인덱스 추가
 │   └── 003_user_progress.sql         # 사용자 진행 상태
 ├── data/                            # 정적 데이터
-│   ├── diagnosis_questions.json      # 진단 퀴즈 문항
+│   ├── diagnosis_questions.json      # ✅ 구현됨: 진단 퀴즈 문항 (option value 수정)
 │   ├── chapter_contents.json         # 챕터 내용
 │   └── quiz_templates.json           # 퀴즈 템플릿
 ├── logs/                            # 로그 파일
@@ -223,48 +225,108 @@ backend/
 └── run.py                         # Flask 애플리케이션 실행 파일
 ```
 
-## 주요 디렉토리 설명
+---
 
-### `/app` - 메인 애플리케이션
-- **config/**: 환경별 설정 파일 분리 (개발/운영/테스트)
-- **models/**: 도메인별로 분리된 SQLAlchemy 모델
-- **routes/**: 기능별로 세분화된 Flask Blueprint API
-- **services/**: 도메인별 비즈니스 로직 처리
-- **agents/**: 각 에이전트별 디렉토리로 관련 로직 그룹화
-- **tools/**: 기능별로 분류된 LangGraph 도구 함수
-- **utils/**: 목적별로 분리된 유틸리티 함수
-- **core/**: 시스템 핵심 구성 요소들을 역할별로 분리
-- **middleware/**: 처리 단계별로 분리된 미들웨어
 
-### 파일 크기 최적화 원칙
-- **각 파일 100-200줄 내외** 유지
-- **단일 책임 원칙** 적용 (한 파일 = 한 가지 기능)
-- **관련 기능끼리 디렉토리로 그룹화**
-- **복잡한 로직은 별도 파일로 분리**
+# 프론트엔드 폴더 구조 (v1.3 - 2025.08.07 업데이트)
 
-### 예상 파일 크기
-- **라우트 파일**: 50-100줄 (단일 엔드포인트)
-- **서비스 파일**: 100-200줄 (단일 도메인 로직)
-- **에이전트 파일**: 150-250줄 (핵심 로직만)
-- **도구 파일**: 50-150줄 (단일 도구 기능)
-- **모델 파일**: 50-100줄 (단일 테이블)
+```
+ai-skill-tutor-frontend/
+├── public/
+│   ├── index.html
+│   ├── favicon.ico
+│   └── assets/
+│       ├── images/
+│       │   ├── logo.png
+│       │   └── icons/
+│       └── fonts/
+├── src/
+│   ├── main.js                    # Vue 앱 진입점
+│   ├── App.vue                    # ✅ 수정됨: 퀵 액션 영역 제거, 깔끔한 구조로 정리
+│   ├── router/
+│   │   └── index.js               # ✅ 수정됨: /diagnosis/result 라우트 추가
+│   ├── stores/
+│   │   ├── index.js               # Pinia store 설정
+│   │   ├── authStore.js           # 인증 관련 상태 관리 (미구현)
+│   │   ├── tutorStore.js          # 학습 세션 상태 관리 (미구현)
+│   │   ├── dashboardStore.js      # 대시보드 상태 관리 (미구현)
+│   │   └── diagnosisStore.js      # ✅ 구현됨: 진단 관련 상태 관리 (완전 구현)
+│   ├── views/
+│   │   ├── HomeView.vue           # 홈 페이지 (기본)
+│   │   ├── AboutView.vue          # 소개 페이지 (기본)
+│   │   ├── LoginPage.vue          # 로그인/회원가입 페이지 (미구현)
+│   │   ├── DiagnosisPage.vue      # ✅ 구현됨: 사용자 진단 페이지 (완전 구현)
+│   │   ├── DiagnosisResultPage.vue # ✅ 신규: 진단 결과 및 유형 선택 페이지 (완전 구현)
+│   │   ├── DashboardPage.vue      # 대시보드 페이지 (미구현)
+│   │   └── LearningPage.vue       # 학습 진행 페이지 (미구현)
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── HeaderComponent.vue   # 헤더 컴포넌트 (미구현)
+│   │   │   ├── LoadingModal.vue      # 로딩 모달 (미구현)
+│   │   │   └── AlertMessage.vue      # 알림 메시지 (미구현)
+│   │   ├── auth/                  # 인증 관련 컴포넌트 (미구현)
+│   │   │   ├── LoginForm.vue
+│   │   │   └── RegisterForm.vue
+│   │   ├── diagnosis/             # ✅ 진단 관련 컴포넌트 (완전 구현)
+│   │   │   ├── DiagnosisQuestion.vue  # ✅ 구현됨: 문항 표시 및 답변 수집
+│   │   │   └── ProgressBar.vue        # ✅ 구현됨: 진행률 표시
+│   │   ├── dashboard/             # 대시보드 관련 컴포넌트 (미구현)
+│   │   │   ├── LearningStats.vue
+│   │   │   ├── ChapterList.vue
+│   │   │   └── ChapterCard.vue
+│   │   └── learning/              # 학습 관련 컴포넌트 (미구현)
+│   │       ├── SessionProgressIndicator.vue
+│   │       ├── MainContentArea.vue
+│   │       ├── content/
+│   │       │   ├── TheoryContent.vue
+│   │       │   ├── QuizContent.vue
+│   │       │   ├── FeedbackContent.vue
+│   │       │   └── SessionCompleteContent.vue
+│   │       └── chat/
+│   │           ├── ChatArea.vue
+│   │           ├── ChatHistory.vue
+│   │           ├── ChatInput.vue
+│   │           └── QuizAnswerInput.vue
+│   ├── composables/
+│   │   ├── useAuth.js             # 인증 관련 컴포저블 (미구현)
+│   │   ├── useApi.js              # API 호출 컴포저블 (미구현)
+│   │   ├── useLearning.js         # 학습 세션 컴포저블 (미구현)
+│   │   └── useNotification.js     # 알림 컴포저블 (미구현)
+│   ├── services/
+│   │   ├── api.js                 # ✅ 수정됨: Base URL /api/v1로 수정, 연결 확인 로직 개선
+│   │   ├── authService.js         # 인증 관련 API (미구현)
+│   │   ├── learningService.js     # 학습 관련 API (미구현)
+│   │   ├── dashboardService.js    # 대시보드 관련 API (미구현)
+│   │   └── diagnosisService.js    # ✅ 구현됨: 진단 관련 API (완전 구현)
+│   ├── utils/
+│   │   ├── constants.js           # 상수 정의
+│   │   ├── helpers.js             # 유틸리티 함수
+│   │   ├── validators.js          # 입력값 검증 함수
+│   │   └── formatters.js          # 데이터 포맷팅 함수
+│   ├── styles/
+│   │   ├── main.scss              # 메인 스타일시트
+│   │   ├── variables.scss         # SCSS 변수
+│   │   ├── mixins.scss            # SCSS 믹스인
+│   │   ├── components/
+│   │   │   ├── _buttons.scss
+│   │   │   ├── _forms.scss
+│   │   │   ├── _cards.scss
+│   │   │   └── _modals.scss
+│   │   └── pages/
+│   │       ├── _login.scss
+│   │       ├── _dashboard.scss
+│   │       ├── _learning.scss
+│   │       ├── _diagnosis.scss    # ✅ 신규: 진단 페이지 스타일
+│   │       └── _diagnosis-result.scss # ✅ 신규: 진단 결과 페이지 스타일
+│   └── assets/
+│       ├── images/
+│       └── icons/
+├── .env                           # 환경 변수 (개발용)
+├── .env.production                # 환경 변수 (운영용)
+├── .gitignore
+├── package.json                   # ✅ 수정됨: 새로운 의존성 추가 가능성
+├── vite.config.js                 # Vite 설정
+├── index.html
+└── README.md
+```
 
-### `/tests` - 테스트 코드
-- 각 모듈별 단위 테스트 및 통합 테스트
-
-### `/migrations` - 데이터베이스 스키마
-- SQL 파일로 버전 관리되는 DB 스키마
-
-### `/data` - 정적 데이터
-- JSON 형태의 설정 및 초기 데이터
-
-### `/scripts` - 관리 스크립트
-- DB 초기화, 시드 데이터 생성 등
-
-## 핵심 파일 역할
-
-- **run.py**: Flask 애플리케이션 실행 진입점
-- **app/__init__.py**: Flask 앱 팩토리 함수
-- **app/config.py**: 환경별 설정 관리
-- **core/langraph_workflow.py**: 멀티에이전트 워크플로우 정의
-- **core/state_manager.py**: TutorState 관리 시스템

@@ -134,8 +134,7 @@ SessionManager (세션 관리 전담)
 - [DB 설계](docs/my_docs/db_design_v1_3.md)
 - [API 설계](docs/my_docs/api_docs_v1_3.md)
 - [UI 설계](docs/my_docs/ui_design_v1_3.md)
-- [백엔드 폴더 구조](docs/my_docs/backend_folder_structure.txt)
-- [프론트엔드 폴더 구조](docs/my_docs/frontend_folder_structure.md)
+- [프로젝트 폴더 구조](docs/my_docs/project_folder_structure.md)
 
 ## 라이선스
 이 프로젝트는 포트폴리오 목적으로 개발되었습니다.

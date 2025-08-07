@@ -82,7 +82,7 @@ SessionManager (세션 관리 전담)
 - **DB 설계**: `docs/my_docs/db_design_v1_3.md`
 - **UI 설계**: `docs/my_docs/ui_design_v1_3.md`
 - **API 설계**: `docs/my_docs/api_docs_v1_3.md`
-- **폴더 구조**: `docs/my_docs/backend_folder_structure.txt`, `docs/my_docs/frontend_folder_structure.md`
+- **폴더 구조**: `docs/my_docs/project_folder_structure.md`
 
 ## 중요 참고사항
 - 가상환경은 프로젝트 루트에서 생성 (`python -m venv venv`)
