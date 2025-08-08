@@ -49,13 +49,27 @@
   - 세션 ID 생성 함수 구현 (user{id}_ch{chapter}_session{count}_{timestamp} 형식)
   - _Requirements: 4.1_
 
-- [ ] 4. 데이터베이스 유틸리티 함수 구현
+- [x] 4. 데이터베이스 유틸리티 함수 구현
+
+
+
+
+
   - 기본 CRUD 작업 함수 구현 (db_utils.py)
   - execute_query, fetch_one, fetch_all 함수 구현
   - 간단한 오류 처리 및 로깅 구현
   - _Requirements: 4.2, 4.3_
 
-- [ ] 5. 데이터베이스 테스트 구현
+- [x] 5. 데이터베이스 테스트 구현
+
+
+
+
+
+
+
+
+
   - 연결 테스트 및 테이블 생성 테스트 구현
   - 기본 CRUD 작업 테스트 구현
   - 외래키 관계 및 제약조건 테스트 구현

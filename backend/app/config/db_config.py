@@ -15,15 +15,24 @@ logger = logging.getLogger(__name__)
 # 커스텀 예외 클래스들
 class DatabaseConnectionError(Exception):
     """데이터베이스 연결 오류"""
-    pass
+    def __init__(self, message: str, original_error: Exception = None):
+        super().__init__(message)
+        self.original_error = original_error
 
 class DatabaseQueryError(Exception):
     """데이터베이스 쿼리 오류"""
-    pass
+    def __init__(self, message: str, query: str = None, params: tuple = None, original_error: Exception = None):
+        super().__init__(message)
+        self.query = query
+        self.params = params
+        self.original_error = original_error
 
 class DatabaseIntegrityError(Exception):
     """데이터베이스 무결성 오류"""
-    pass
+    def __init__(self, message: str, constraint_name: str = None, original_error: Exception = None):
+        super().__init__(message)
+        self.constraint_name = constraint_name
+        self.original_error = original_error
 
 class DatabaseConfig:
     """데이터베이스 설정 클래스"""

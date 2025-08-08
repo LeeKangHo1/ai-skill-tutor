@@ -126,6 +126,9 @@ export default {
     const diagnosisStore = useDiagnosisStore()
     const authStore = useAuthStore()
     
+    // 제출 버튼 표시 여부를 제어하는 별도 상태
+    const hasSubmittedOnce = ref(false)
+    
     // 컴포넌트 마운트 시 문항 로드
     onMounted(async () => {
       // 로그인 체크 (임시 비활성화)
@@ -144,6 +147,9 @@ export default {
       if (diagnosisStore.questions.length === 0) {
         await diagnosisStore.loadQuestions()
       }
+      
+      // 진단 결과 페이지에서 돌아온 경우 제출 상태 초기화
+      hasSubmittedOnce.value = false
     })
     
     // 사용자 유형에 따른 스타일 클래스
@@ -170,11 +176,12 @@ export default {
       }
     })
     
-    // 완료 버튼 표시 여부
+    // 완료 버튼 표시 여부 - 수정된 로직
     const showSubmitButton = computed(() => {
       return diagnosisStore.isLastQuestion && 
              diagnosisStore.isAllAnswered && 
-             !diagnosisStore.diagnosisResult
+             !diagnosisStore.diagnosisResult &&
+             !hasSubmittedOnce.value  // 한 번 제출했으면 숨김
     })
     
     /**
@@ -191,10 +198,12 @@ export default {
     }
     
     /**
-     * 답변 저장
+     * 답변 저장 - 수정된 로직
      */
     const saveAnswer = (questionId, answer) => {
       diagnosisStore.saveAnswer(questionId, answer)
+      // 답변이 저장될 때마다 제출 상태 초기화 (사용자가 답변을 변경한 경우)
+      hasSubmittedOnce.value = false
     }
     
     /**
@@ -203,32 +212,44 @@ export default {
     const handleNext = () => {
       if (!diagnosisStore.isLastQuestion) {
         diagnosisStore.nextQuestion()
+        // 다음 문항으로 이동할 때 제출 상태 초기화
+        hasSubmittedOnce.value = false
       }
     }
     
     /**
-     * 이전 문항으로 이동
+     * 이전 문항으로 이동 - 수정된 로직
      */
     const handlePrevious = () => {
       diagnosisStore.previousQuestion()
+      // 이전 문항으로 이동할 때 제출 상태 초기화
+      hasSubmittedOnce.value = false
     }
     
     /**
-     * 특정 문항으로 이동
+     * 특정 문항으로 이동 - 수정된 로직
      */
     const goToQuestion = (index) => {
       diagnosisStore.goToQuestion(index)
+      // 문항 이동 시 제출 상태 초기화
+      hasSubmittedOnce.value = false
     }
     
     /**
-     * 진단 결과 제출 (완료 버튼 클릭 시)
+     * 진단 결과 제출 (완료 버튼 클릭 시) - 수정된 로직
      */
     const submitDiagnosis = async () => {
+      // 제출 상태를 먼저 true로 설정하여 버튼 숨김
+      hasSubmittedOnce.value = true
+      
       // /submit API 호출하여 진단 결과 받기
       const success = await diagnosisStore.submitDiagnosis()
       if (success) {
         // 성공 시 결과 페이지로 이동
         router.push('/diagnosis/result')
+      } else {
+        // 실패 시 제출 상태 초기화하여 버튼 다시 표시
+        hasSubmittedOnce.value = false
       }
     }
     
@@ -237,6 +258,7 @@ export default {
      */
     const restartDiagnosis = () => {
       diagnosisStore.resetDiagnosis()
+      hasSubmittedOnce.value = false  // 제출 상태도 초기화
       diagnosisStore.loadQuestions()
     }
     
