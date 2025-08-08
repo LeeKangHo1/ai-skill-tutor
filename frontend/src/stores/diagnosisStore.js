@@ -2,7 +2,7 @@
 // 진단 관련 상태 관리
 
 import { defineStore } from 'pinia'
-import { getDiagnosisQuestions, submitDiagnosisAnswers } from '@/services/diagnosisService'
+import { getDiagnosisQuestions, submitDiagnosisAnswers, selectUserType } from '@/services/diagnosisService'
 
 export const useDiagnosisStore = defineStore('diagnosis', {
   state: () => ({
@@ -21,19 +21,16 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     // UI 상태
     isLoading: false,
     error: null,
-    isCompleted: false
+    isCompleted: false,
+    
+    // 제출 후 복귀 상태
+    hasReturnedFromResult: false
   }),
 
   getters: {
     // 현재 문항
     currentQuestion: (state) => {
       return state.questions[state.currentQuestionIndex] || null
-    },
-    
-    // 진행률 계산
-    progressPercentage: (state) => {
-      if (state.totalQuestions === 0) return 0
-      return Math.round((state.currentQuestionIndex / state.totalQuestions) * 100)
     },
     
     // 마지막 문항 여부
@@ -43,6 +40,10 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     
     // 모든 문항 답변 완료 여부
     isAllAnswered: (state) => {
+      // 결과 페이지에서 돌아온 경우 false 반환
+      if (state.hasReturnedFromResult) {
+        return false
+      }
       return state.answers.length === state.totalQuestions
     }
   },
@@ -87,6 +88,9 @@ export const useDiagnosisStore = defineStore('diagnosis', {
         // 새 답변 추가
         this.answers.push({ question_id: questionId, answer })
       }
+      
+      // 답변 변경 시 복귀 상태 초기화
+      this.hasReturnedFromResult = false
     },
 
     /**
@@ -96,6 +100,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
       if (this.currentQuestionIndex < this.totalQuestions - 1) {
         this.currentQuestionIndex++
       }
+      this.hasReturnedFromResult = false
     },
 
     /**
@@ -105,16 +110,18 @@ export const useDiagnosisStore = defineStore('diagnosis', {
       if (this.currentQuestionIndex > 0) {
         this.currentQuestionIndex--
       }
+      this.hasReturnedFromResult = false
     },
 
     /**
      * 특정 문항으로 이동
-     * @param {number} index - 문항 인덱스
+     * @param {number} index - 문항 인덱스 (0부터 시작)
      */
     goToQuestion(index) {
       if (index >= 0 && index < this.totalQuestions) {
         this.currentQuestionIndex = index
       }
+      this.hasReturnedFromResult = false
     },
 
     /**
@@ -134,7 +141,6 @@ export const useDiagnosisStore = defineStore('diagnosis', {
         
         if (response.success) {
           this.diagnosisResult = response.data
-          // 여기서는 완료 상태로 설정하지 않음 (유형 선택 필요)
           return true
         } else {
           throw new Error(response.error?.message || '진단 제출 실패')
@@ -181,7 +187,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     clearResult() {
       this.diagnosisResult = null
       this.isCompleted = false
-      // 답변은 유지 - isAllAnswered getter에서 diagnosisResult 존재 시 false 반환
+      this.hasReturnedFromResult = true
     },
 
     /**
@@ -197,6 +203,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
       this.isLoading = false
       this.error = null
       this.isCompleted = false
+      this.hasReturnedFromResult = false
     }
   }
 })

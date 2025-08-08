@@ -64,32 +64,48 @@
         
         <div class="type-options">
           <div 
-            v-for="userType in diagnosisStore.diagnosisResult.user_types" 
-            :key="userType.type"
             class="type-card"
-            :class="{ 
-              'recommended': userType.type === diagnosisStore.diagnosisResult.recommended_type,
-              'selected': selectedUserType === userType.type 
-            }"
-            @click="selectUserType(userType.type)"
+            :class="{ 'selected': selectedUserType === 'beginner' }"
+            @click="selectUserType('beginner')"
           >
             <div class="type-header">
-              <h3>{{ userType.description }}</h3>
-              <span v-if="userType.type === diagnosisStore.diagnosisResult.recommended_type" class="recommended-badge">
-                추천
-              </span>
+              <h3>AI 입문자</h3>
+              <span class="recommended-badge">추천</span>
             </div>
             
             <div class="type-info">
               <div class="duration-chapters">
-                <span class="chapters">{{ userType.chapters }}개 챕터</span>
-                <span class="duration">{{ userType.duration }}</span>
+                <span class="chapters">8개 챕터</span>
+                <span class="duration">15시간</span>
               </div>
               
               <ul class="features">
-                <li v-for="feature in userType.features" :key="feature">
-                  {{ feature }}
-                </li>
+                <li>기초부터 차근차근 학습</li>
+                <li>쉬운 용어로 설명</li>
+                <li>실생활 예시 중심</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div 
+            class="type-card"
+            :class="{ 'selected': selectedUserType === 'advanced' }"
+            @click="selectUserType('advanced')"
+          >
+            <div class="type-header">
+              <h3>실무 응용형</h3>
+            </div>
+            
+            <div class="type-info">
+              <div class="duration-chapters">
+                <span class="chapters">10개 챕터</span>
+                <span class="duration">20시간</span>
+              </div>
+              
+              <ul class="features">
+                <li>실무 중심 학습</li>
+                <li>고급 기법 포함</li>
+                <li>프로젝트 기반 학습</li>
               </ul>
             </div>
           </div>
@@ -174,12 +190,14 @@ export default {
      * 선택된 유형 이름 반환
      */
     const getSelectedTypeName = () => {
-      if (!selectedUserType.value || !diagnosisStore.diagnosisResult) return ''
-      
-      const selectedType = diagnosisStore.diagnosisResult.user_types.find(
-        type => type.type === selectedUserType.value
-      )
-      return selectedType ? selectedType.description : ''
+      switch (selectedUserType.value) {
+        case 'beginner':
+          return 'AI 입문자'
+        case 'advanced':
+          return '실무 응용형'
+        default:
+          return ''
+      }
     }
     
     /**
@@ -396,21 +414,6 @@ export default {
         border-color: #007bff;
         background-color: #f8f9ff;
         box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
-      }
-      
-      &.recommended {
-        border-color: #28a745;
-        
-        &:hover {
-          border-color: #28a745;
-          box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
-        }
-        
-        &.selected {
-          border-color: #28a745;
-          background-color: #f8fff9;
-          box-shadow: 0 8px 25px rgba(40, 167, 69, 0.2);
-        }
       }
       
       .type-header {

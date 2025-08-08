@@ -24,45 +24,6 @@
         <button class="btn btn-primary" @click="retryLoad">다시 시도</button>
       </div>
       
-      <!-- 진단 완료 상태 -->
-      <div v-else-if="diagnosisStore.isCompleted" class="completion-state">
-        <div class="completion-icon">🎉</div>
-        <h2>진단이 완료되었습니다!</h2>
-        
-        <div class="result-card">
-          <h3>당신의 유형</h3>
-          <div class="user-type">
-            <span class="type-badge" :class="userTypeClass">
-              {{ userTypeText }}
-            </span>
-          </div>
-          
-          <div class="type-description">
-            <p>{{ diagnosisStore.diagnosisResult.user_type_description }}</p>
-          </div>
-          
-          <div class="learning-info">
-            <div class="info-item">
-              <strong>추천 챕터 수:</strong> 
-              {{ diagnosisStore.diagnosisResult.recommended_chapters }}개
-            </div>
-            <div class="info-item">
-              <strong>예상 학습 시간:</strong> 
-              {{ diagnosisStore.diagnosisResult.estimated_duration }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="action-buttons">
-          <button class="btn btn-secondary" @click="restartDiagnosis">
-            다시 진단하기
-          </button>
-          <button class="btn btn-primary" @click="startLearning">
-            학습 시작하기
-          </button>
-        </div>
-      </div>
-      
       <!-- 진단 진행 상태 -->
       <div v-else-if="diagnosisStore.questions.length > 0" class="diagnosis-content">
         <!-- 진행률 표시 -->
@@ -76,7 +37,6 @@
         <DiagnosisQuestion
           v-if="diagnosisStore.currentQuestion"
           :question="diagnosisStore.currentQuestion"
-          :question-number="diagnosisStore.currentQuestionIndex + 1"
           :total-questions="diagnosisStore.totalQuestions"
           :existing-answer="getCurrentAnswer()"
           :is-first-question="diagnosisStore.currentQuestionIndex === 0"
@@ -106,10 +66,9 @@
 </template>
 
 <script>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDiagnosisStore } from '@/stores/diagnosisStore'
-import { useAuthStore } from '@/stores/authStore'
 import ProgressBar from '@/components/diagnosis/ProgressBar.vue'
 import DiagnosisQuestion from '@/components/diagnosis/DiagnosisQuestion.vue'
 
@@ -124,64 +83,19 @@ export default {
   setup() {
     const router = useRouter()
     const diagnosisStore = useDiagnosisStore()
-    const authStore = useAuthStore()
-    
-    // 제출 버튼 표시 여부를 제어하는 별도 상태
-    const hasSubmittedOnce = ref(false)
     
     // 컴포넌트 마운트 시 문항 로드
     onMounted(async () => {
-      // 로그인 체크 (임시 비활성화)
-      // if (!authStore.isAuthenticated) {
-      //   router.push('/login')
-      //   return
-      // }
-      
-      // 이미 진단이 완료된 사용자인지 체크 (임시 비활성화)
-      // if (authStore.user?.diagnosis_completed) {
-      //   router.push('/dashboard')
-      //   return
-      // }
-      
-      // 문항 로드
       if (diagnosisStore.questions.length === 0) {
         await diagnosisStore.loadQuestions()
       }
-      
-      // 진단 결과 페이지에서 돌아온 경우 제출 상태 초기화
-      hasSubmittedOnce.value = false
     })
     
-    // 사용자 유형에 따른 스타일 클래스
-    const userTypeClass = computed(() => {
-      switch (diagnosisStore.userType) {
-        case 'beginner':
-          return 'type-beginner'
-        case 'advanced':
-          return 'type-advanced'
-        default:
-          return ''
-      }
-    })
-    
-    // 사용자 유형 텍스트
-    const userTypeText = computed(() => {
-      switch (diagnosisStore.userType) {
-        case 'beginner':
-          return 'AI 입문자'
-        case 'advanced':
-          return '실무 응용형'
-        default:
-          return '미정'
-      }
-    })
-    
-    // 완료 버튼 표시 여부 - 수정된 로직
+    // 완료 버튼 표시 여부
     const showSubmitButton = computed(() => {
       return diagnosisStore.isLastQuestion && 
              diagnosisStore.isAllAnswered && 
-             !diagnosisStore.diagnosisResult &&
-             !hasSubmittedOnce.value  // 한 번 제출했으면 숨김
+             !diagnosisStore.diagnosisResult
     })
     
     /**
@@ -198,75 +112,43 @@ export default {
     }
     
     /**
-     * 답변 저장 - 수정된 로직
+     * 답변 저장
      */
     const saveAnswer = (questionId, answer) => {
       diagnosisStore.saveAnswer(questionId, answer)
-      // 답변이 저장될 때마다 제출 상태 초기화 (사용자가 답변을 변경한 경우)
-      hasSubmittedOnce.value = false
     }
     
     /**
-     * 다음 문항으로 이동 (자동 제출 없음)
+     * 다음 문항으로 이동
      */
     const handleNext = () => {
       if (!diagnosisStore.isLastQuestion) {
         diagnosisStore.nextQuestion()
-        // 다음 문항으로 이동할 때 제출 상태 초기화
-        hasSubmittedOnce.value = false
       }
     }
     
     /**
-     * 이전 문항으로 이동 - 수정된 로직
+     * 이전 문항으로 이동
      */
     const handlePrevious = () => {
       diagnosisStore.previousQuestion()
-      // 이전 문항으로 이동할 때 제출 상태 초기화
-      hasSubmittedOnce.value = false
     }
     
     /**
-     * 특정 문항으로 이동 - 수정된 로직
+     * 특정 문항으로 이동
      */
     const goToQuestion = (index) => {
       diagnosisStore.goToQuestion(index)
-      // 문항 이동 시 제출 상태 초기화
-      hasSubmittedOnce.value = false
     }
     
     /**
-     * 진단 결과 제출 (완료 버튼 클릭 시) - 수정된 로직
+     * 진단 결과 제출
      */
     const submitDiagnosis = async () => {
-      // 제출 상태를 먼저 true로 설정하여 버튼 숨김
-      hasSubmittedOnce.value = true
-      
-      // /submit API 호출하여 진단 결과 받기
       const success = await diagnosisStore.submitDiagnosis()
       if (success) {
-        // 성공 시 결과 페이지로 이동
         router.push('/diagnosis/result')
-      } else {
-        // 실패 시 제출 상태 초기화하여 버튼 다시 표시
-        hasSubmittedOnce.value = false
       }
-    }
-    
-    /**
-     * 진단 다시 시작
-     */
-    const restartDiagnosis = () => {
-      diagnosisStore.resetDiagnosis()
-      hasSubmittedOnce.value = false  // 제출 상태도 초기화
-      diagnosisStore.loadQuestions()
-    }
-    
-    /**
-     * 학습 시작
-     */
-    const startLearning = () => {
-      router.push('/dashboard')
     }
     
     /**
@@ -278,8 +160,6 @@ export default {
     
     return {
       diagnosisStore,
-      userTypeClass,
-      userTypeText,
       showSubmitButton,
       getCurrentAnswer,
       saveAnswer,
@@ -287,8 +167,6 @@ export default {
       handlePrevious,
       goToQuestion,
       submitDiagnosis,
-      restartDiagnosis,
-      startLearning,
       retryLoad
     }
   }
@@ -359,91 +237,6 @@ export default {
     }
   }
   
-  .completion-state {
-    background: white;
-    border-radius: 12px;
-    padding: 3rem 2rem;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    
-    .completion-icon {
-      font-size: 4rem;
-      margin-bottom: 1rem;
-    }
-    
-    h2 {
-      color: #28a745;
-      margin-bottom: 2rem;
-    }
-    
-    .result-card {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 2rem;
-      margin: 2rem 0;
-      text-align: left;
-      
-      h3 {
-        text-align: center;
-        margin-bottom: 1rem;
-        color: #495057;
-      }
-      
-      .user-type {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        
-        .type-badge {
-          display: inline-block;
-          padding: 0.5rem 1.5rem;
-          border-radius: 25px;
-          font-weight: bold;
-          font-size: 1.1rem;
-          
-          &.type-beginner {
-            background-color: #e3f2fd;
-            color: #1976d2;
-          }
-          
-          &.type-advanced {
-            background-color: #f3e5f5;
-            color: #7b1fa2;
-          }
-        }
-      }
-      
-      .type-description {
-        text-align: center;
-        margin-bottom: 1.5rem;
-        
-        p {
-          color: #6c757d;
-          line-height: 1.6;
-        }
-      }
-      
-      .learning-info {
-        .info-item {
-          display: flex;
-          justify-content: space-between;
-          padding: 0.5rem 0;
-          border-bottom: 1px solid #dee2e6;
-          
-          &:last-child {
-            border-bottom: none;
-          }
-        }
-      }
-    }
-    
-    .action-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-  }
-  
   .diagnosis-content {
     background: white;
     border-radius: 12px;
@@ -491,15 +284,6 @@ export default {
       }
     }
     
-    &.btn-secondary {
-      background-color: #6c757d;
-      color: white;
-      
-      &:hover:not(:disabled) {
-        background-color: #5a6268;
-      }
-    }
-    
     &.btn-success {
       background-color: #28a745;
       color: white;
@@ -539,18 +323,9 @@ export default {
     }
     
     .diagnosis-content,
-    .completion-state,
     .loading-state,
     .error-state {
       padding: 1.5rem 1rem;
-    }
-    
-    .completion-state .action-buttons {
-      flex-direction: column;
-      
-      .btn {
-        width: 100%;
-      }
     }
   }
 }
