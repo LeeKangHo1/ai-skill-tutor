@@ -33,6 +33,10 @@ def create_app(config_name='default'):
     
     # Blueprint 등록
     register_blueprints(app)
+
+    # 미들웨어 등록 (Blueprint 등록 후)
+    from .middleware import init_middlewares
+    init_middlewares(app)
     
     # 기본 에러 핸들러 등록
     register_error_handlers(app)
@@ -80,10 +84,11 @@ def register_blueprints(app):
     for blueprint, url_prefix in diagnosis_blueprints:
         app.register_blueprint(blueprint, url_prefix=url_prefix)
     
-    # 향후 추가될 Blueprint들을 위한 주석
-    # 인증 관련 Blueprint
-    # from .routes.auth import auth_bp
-    # app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    # 인증 관련 Blueprint들 등록
+    from .routes.auth import register_bp, login_bp, token_bp
+    app.register_blueprint(register_bp, url_prefix='/api/v1/auth')
+    app.register_blueprint(login_bp, url_prefix='/api/v1/auth')
+    app.register_blueprint(token_bp, url_prefix='/api/v1/auth')
     
     # 사용자 관련 Blueprint
     # from .routes.user import user_bp

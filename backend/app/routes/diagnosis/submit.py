@@ -2,7 +2,7 @@
 
 from flask import Blueprint, request, jsonify
 from app.utils.database.connection import get_db_connection
-from app.utils.auth.jwt_handler import get_current_user
+from app.utils.auth.jwt_handler import get_current_user_from_request
 from app.utils.logging.logger import log_error
 from app.services.diagnosis_service import calculate_score, recommend_type_by_score, update_user_type_in_db
 
@@ -16,7 +16,7 @@ def submit_diagnosis():
     사용자의 진단 답변을 받아 점수 계산 후 추천 유형을 제시합니다.
     """
     try:
-        current_user = get_current_user()
+        current_user = get_current_user_from_request()
         if not current_user:
             return jsonify({
                 "success": False,
@@ -99,7 +99,7 @@ def select_user_type():
     사용자가 최종 선택한 유형을 데이터베이스에 저장합니다.
     """
     try:
-        current_user = get_current_user()
+        current_user = get_current_user_from_request()
         if not current_user:
             return jsonify({
                 "success": False,
