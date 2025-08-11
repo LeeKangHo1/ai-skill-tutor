@@ -9,7 +9,8 @@ def theory_generation_tool(
     chapter_data: Dict[str, Any],
     user_type: str,
     learning_context: Dict[str, Any],
-    recent_sessions: List[Dict[str, str]]
+    recent_sessions: List[Dict[str, str]],
+    vector_materials: List[Dict[str, Any]] = None
 ) -> str:
     """
     JSON 챕터 데이터를 기반으로 사용자 맞춤형 이론 설명 대본 생성
@@ -19,6 +20,7 @@ def theory_generation_tool(
         user_type: 사용자 유형 ("beginner" or "advanced")
         learning_context: 학습 맥락 정보
         recent_sessions: 최근 학습 세션 요약
+        vector_materials: 벡터 DB에서 검색한 관련 자료 (추후 활용)
         
     Returns:
         생성된 이론 설명 대본 (JSON 문자열)
@@ -48,11 +50,12 @@ def theory_generation_tool(
         # 3. 선택된 섹션의 이론 내용 추출
         theory_data = selected_section.get("theory", {})
         
-        # 4. 사용자 유형별 맞춤 처리
+        # 4. 사용자 유형별 맞춤 처리 (벡터 자료 고려)
         customized_content = _customize_content_for_user_type(
             theory_data, 
             user_type, 
-            learning_context
+            learning_context,
+            vector_materials
         )
         
         # 5. 최종 대본 구성
@@ -108,7 +111,8 @@ def _select_retry_section(sections: List[Dict[str, Any]], learning_context: Dict
 def _customize_content_for_user_type(
     theory_data: Dict[str, Any], 
     user_type: str, 
-    learning_context: Dict[str, Any]
+    learning_context: Dict[str, Any],
+    vector_materials: List[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     사용자 유형에 맞게 이론 내용 맞춤화
@@ -117,6 +121,7 @@ def _customize_content_for_user_type(
         theory_data: 원본 이론 데이터
         user_type: 사용자 유형
         learning_context: 학습 맥락
+        vector_materials: 벡터 DB 검색 자료 (추후 활용)
         
     Returns:
         맞춤화된 컨텐츠
@@ -150,6 +155,10 @@ def _customize_content_for_user_type(
         
         # 기술적 배경이 있는 사용자를 위한 추가 설명
         customized_content += "\n\n🔧 **기술적 배경**: 이러한 개념들은 실무에서 AI 도구를 선택하고 활용할 때 중요한 판단 기준이 됩니다."
+        
+        # 벡터 자료가 있을 경우 추가 정보 제공 (추후 구현)
+        if vector_materials:
+            customized_content += f"\n\n📚 **추가 참고자료**: {len(vector_materials)}개의 관련 자료를 참고했습니다."
     
     return {
         "content": customized_content,

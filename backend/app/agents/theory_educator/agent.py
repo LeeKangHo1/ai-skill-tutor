@@ -42,12 +42,16 @@ class TheoryEducator:
             # 2. 사용자 학습 맥락 분석
             learning_context = self._analyze_learning_context(state)
             
-            # 3. 이론 설명 대본 생성
+            # 3. 벡터 DB에서 관련 자료 검색 (추후 활용)
+            vector_materials = self._get_vector_search_materials(chapter_data, state["user_type"])
+            
+            # 4. 이론 설명 대본 생성
             theory_content = theory_generation_tool(
                 chapter_data=chapter_data,
                 user_type=state["user_type"],
                 learning_context=learning_context,
-                recent_sessions=state["recent_sessions_summary"]
+                recent_sessions=state["recent_sessions_summary"],
+                vector_materials=vector_materials  # 벡터 검색 결과 추가
             )
             
             # 4. State 업데이트 - 대본 저장
@@ -113,6 +117,30 @@ class TheoryEducator:
         except Exception as e:
             print(f"[{self.agent_name}] 챕터 데이터 로드 실패: {str(e)}")
             return None
+    
+    def _get_vector_search_materials(self, chapter_data: Dict[str, Any], user_type: str) -> List[Dict[str, Any]]:
+        """
+        벡터 DB에서 관련 학습 자료 검색 (추후 구현)
+        
+        Args:
+            chapter_data: 챕터 데이터
+            user_type: 사용자 유형
+            
+        Returns:
+            검색된 관련 자료 목록
+        """
+        # TODO: ChromaDB 벡터 검색 구현
+        # search_query = f"챕터 {chapter_data['chapter_number']} {chapter_data['title']}"
+        # vector_results = vector_search_tool(
+        #     query=search_query,
+        #     top_k=3,
+        #     user_type=user_type
+        # )
+        # return vector_results
+        
+        # 현재는 빈 리스트 반환 (JSON 파일 기반 학습)
+        print(f"[{self.agent_name}] 벡터 검색 기능은 추후 구현 예정")
+        return []
     
     def _analyze_learning_context(self, state: TutorState) -> Dict[str, Any]:
         """

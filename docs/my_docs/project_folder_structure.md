@@ -80,37 +80,32 @@ backend/
 │   │       ├── __init__.py
 │   │       ├── dashboard_service.py  # 대시보드 통계
 │   │       └── report_service.py     # 리포트 생성
-│   ├── agents/                       # LangGraph 에이전트 시스템 (미구현)
-│   │   ├── __init__.py
+│   ├── agents/                       # LangGraph 에이전트 시스템 (부분 구현)
+│   │   ├── __init__.py               # ✅ 수정됨: 실제 구조에 맞춰 import 정리
 │   │   ├── base/                     # 기본 에이전트 구성 요소
-│   │   │   ├── __init__.py
-│   │   │   ├── base_agent.py         # 기본 에이전트 클래스
-│   │   │   └── agent_config.py       # 에이전트 설정
+│   │   │   ├── __init__.py           # ✅ 구현됨: BaseAgent, AgentConfig 등 export
+│   │   │   ├── base_agent.py         # ✅ 구현됨: 기본 에이전트 클래스
+│   │   │   └── agent_config.py       # ✅ 구현됨: 에이전트 설정
 │   │   ├── session_manager/          # 세션 관리 에이전트
-│   │   │   ├── __init__.py
+│   │   │   ├── __init__.py           # ✅ 수정됨: SessionManager, SessionHandlers export
 │   │   │   ├── agent.py              # SessionManager 에이전트
 │   │   │   └── handlers.py           # 세션 처리 핸들러
 │   │   ├── learning_supervisor/      # 학습 감독 에이전트
-│   │   │   ├── __init__.py
+│   │   │   ├── __init__.py           # ✅ 수정됨: LearningSupervisor 등 export
 │   │   │   ├── agent.py              # LearningSupervisor 에이전트
 │   │   │   ├── router.py             # 라우팅 로직
 │   │   │   └── response_generator.py # 응답 생성기
 │   │   ├── theory_educator/          # 이론 교육 에이전트
-│   │   │   ├── __init__.py
-│   │   │   ├── agent.py              # TheoryEducator 에이전트
-│   │   │   └── content_generator.py  # 컨텐츠 생성기
+│   │   │   ├── __init__.py           # ✅ 수정됨: TheoryEducator만 export (간소화)
+│   │   │   └── agent.py              # TheoryEducator 에이전트
 │   │   ├── quiz_generator/           # 퀴즈 생성 에이전트
-│   │   │   ├── __init__.py
-│   │   │   ├── agent.py              # QuizGenerator 에이전트
-│   │   │   ├── question_generator.py # 문제 생성기
-│   │   │   └── hint_generator.py     # 힌트 생성기
+│   │   │   ├── __init__.py           # ✅ 수정됨: QuizGenerator만 export (간소화)
+│   │   │   └── agent.py              # QuizGenerator 에이전트
 │   │   ├── evaluation_feedback/      # 평가 피드백 에이전트
-│   │   │   ├── __init__.py
-│   │   │   ├── agent.py              # EvaluationFeedbackAgent
-│   │   │   ├── evaluator.py          # 답변 평가기
-│   │   │   └── feedback_generator.py # 피드백 생성기
+│   │   │   ├── __init__.py           # ✅ 수정됨: EvaluationFeedbackAgent만 export (간소화)
+│   │   │   └── agent.py              # EvaluationFeedbackAgent
 │   │   └── qna_resolver/             # 질문 답변 에이전트
-│   │       ├── __init__.py
+│   │       ├── __init__.py           # ✅ 수정됨: QnAResolver 등 export
 │   │       ├── agent.py              # QnAResolver 에이전트
 │   │       ├── query_processor.py    # 질문 처리기
 │   │       └── answer_generator.py   # 답변 생성기
