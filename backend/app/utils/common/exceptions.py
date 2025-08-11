@@ -85,3 +85,15 @@ class ServiceUnavailableError(BaseCustomException):
     """서비스 일시적 사용 불가"""
     def __init__(self, message="서비스가 일시적으로 사용할 수 없습니다.", details=None, error_code="SERVICE_UNAVAILABLE"):
         super().__init__(message, details, error_code)
+
+
+class AgentException(BaseCustomException):
+    """에이전트 실행 중 발생하는 예외"""
+    def __init__(self, message="에이전트 실행 중 오류가 발생하였습니다.", details=None, error_code="AGENT_EXCEPTION"):
+        super().__init__(message, details, error_code)
+
+
+class StateValidationException(BaseCustomException):
+    """State 검증 실패 시 발생하는 예외"""
+    def __init__(self, message="State 검증에 실패하였습니다.", details=None, error_code="STATE_VALIDATION_ERROR"):
+        super().__init__(message, details, error_code)
