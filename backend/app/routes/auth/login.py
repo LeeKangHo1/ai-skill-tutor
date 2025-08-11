@@ -51,10 +51,9 @@ def login():
         # 로그인 처리
         result = login_user(data, device_info)
         
-        return success_response(
+        response = success_response(
             data={
                 "access_token": result['access_token'],
-                "refresh_token": result['refresh_token'],
                 "user_info": {
                     "user_id": result['user_info']['user_id'],
                     "login_id": result['user_info']['login_id'],
@@ -66,6 +65,18 @@ def login():
             },
             message=result['message']
         )
+
+        # HttpOnly 쿠키로 refresh_token 설정
+        response.set_cookie(
+            'refresh_token',
+            result['refresh_token'],
+            max_age=30*24*60*60,  # 30일
+            httponly=True,
+            secure=True,  # HTTPS에서만
+            samesite='Strict'
+        )
+
+        return response
         
     except ValidationError as e:
         return error_response(
@@ -122,31 +133,35 @@ def logout():
                 status_code=401
             )
         
-        # 요청 데이터 검증
-        if not request.is_json:
-            return error_response(
-                code="INVALID_CONTENT_TYPE",
-                message="Content-Type은 application/json이어야 합니다.",
-                status_code=400
-            )
-        
-        data = request.get_json()
-        refresh_token = data.get('refresh_token') if data else None
-        
+        # 쿠키에서 refresh_token 읽기
+        refresh_token = request.cookies.get('refresh_token')
+
         if not refresh_token:
             return error_response(
                 code="MISSING_REFRESH_TOKEN",
-                message="refresh_token이 필요합니다.",
+                message="refresh_token 쿠키가 필요합니다.",
                 status_code=400
             )
         
         # 로그아웃 처리
         result = logout_user(refresh_token)
         
-        return success_response(
+        response = success_response(
             data=None,
             message=result['message']
         )
+
+        # refresh_token 쿠키 삭제
+        response.set_cookie(
+            'refresh_token',
+            '',
+            expires=0,
+            httponly=True,
+            secure=True,
+            samesite='Strict'
+        )
+
+        return response
         
     except Exception as e:
         print(f"로그아웃 오류: {str(e)}")
@@ -187,10 +202,22 @@ def logout_all():
         # 모든 디바이스에서 로그아웃
         result = TokenService.logout_all_devices(current_user['user_id'])
         
-        return success_response(
+        response = success_response(
             data=None,
             message=result['message']
         )
+
+        # refresh_token 쿠키 삭제
+        response.set_cookie(
+            'refresh_token',
+            '',
+            expires=0,
+            httponly=True,
+            secure=True,
+            samesite='Strict'
+        )
+
+        return response
         
     except Exception as e:
         print(f"전체 로그아웃 오류: {str(e)}")

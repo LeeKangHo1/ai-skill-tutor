@@ -69,19 +69,30 @@ def register():
             device_info=request.headers.get('User-Agent', 'Unknown')
         )
         
-        return success_response(
+        response = success_response(
             data={
                 "user_id": user_info['user_id'],
                 "login_id": user_info['login_id'],
                 "username": user_info['username'],
                 "user_type": user_info['user_type'],
                 "diagnosis_completed": user_info['diagnosis_completed'],
-                "access_token": access_token,
-                "refresh_token": refresh_token
+                "access_token": access_token
             },
             message=result['message'],
             status_code=201
         )
+
+        # HttpOnly 쿠키로 refresh_token 설정
+        response.set_cookie(
+            'refresh_token',
+            refresh_token,
+            max_age=30*24*60*60,  # 30일
+            httponly=True,
+            secure=True,  # HTTPS에서만
+            samesite='Strict'
+        )
+
+        return response
         
     except ValidationError as e:
         return error_response(

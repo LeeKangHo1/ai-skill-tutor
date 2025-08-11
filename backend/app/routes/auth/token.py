@@ -27,37 +27,21 @@ def refresh():
         500: 서버 오류
     """
     try:
-        # 요청 데이터 검증
-        if not request.is_json:
-            return error_response(
-                code="INVALID_CONTENT_TYPE",
-                message="Content-Type은 application/json이어야 합니다.",
-                status_code=400
-            )
-        
-        data = request.get_json()
-        if not data:
-            return error_response(
-                code="EMPTY_REQUEST_BODY",
-                message="요청 본문이 비어있습니다.",
-                status_code=400
-            )
-        
-        refresh_token = data.get('refresh_token')
+        # 쿠키에서 refresh_token 읽기
+        refresh_token = request.cookies.get('refresh_token')
         if not refresh_token:
             return error_response(
                 code="MISSING_REFRESH_TOKEN",
-                message="refresh_token이 필요합니다.",
+                message="refresh_token 쿠키가 필요합니다.",
                 status_code=400
             )
         
         # 토큰 갱신 처리
         result = refresh_access_token(refresh_token)
         
-        return success_response(
+        response = success_response(
             data={
                 "access_token": result['access_token'],
-                "refresh_token": result['refresh_token'],
                 "user_info": {
                     "user_id": result['user_info']['user_id'],
                     "login_id": result['user_info']['login_id'],
@@ -69,6 +53,18 @@ def refresh():
             },
             message=result['message']
         )
+
+        # HttpOnly 쿠키로 새 refresh_token 설정
+        response.set_cookie(
+            'refresh_token',
+            result['refresh_token'],
+            max_age=30*24*60*60,  # 30일
+            httponly=True,
+            secure=True,  # HTTPS에서만
+            samesite='Strict'
+        )
+
+        return response
         
     except AuthenticationError as e:
         return error_response(
