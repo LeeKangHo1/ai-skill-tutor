@@ -1,6 +1,6 @@
 # app/routes/auth/token.py
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from app.services.auth.token_service import refresh_access_token, TokenService
 from app.utils.auth.jwt_handler import require_auth, get_current_user_from_request
 from app.utils.common.exceptions import AuthenticationError
@@ -39,7 +39,7 @@ def refresh():
         # 토큰 갱신 처리
         result = refresh_access_token(refresh_token)
         
-        response = success_response(
+        response_data, status_code = success_response(
             data={
                 "access_token": result['access_token'],
                 "user_info": {
@@ -53,6 +53,9 @@ def refresh():
             },
             message=result['message']
         )
+
+        # Response 객체 생성
+        response = make_response(response_data, status_code)
 
         # HttpOnly 쿠키로 새 refresh_token 설정
         response.set_cookie(

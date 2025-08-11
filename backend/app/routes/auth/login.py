@@ -1,6 +1,6 @@
 # app/routes/auth/login.py
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from app.services.auth.login_service import login_user
 from app.services.auth.token_service import logout_user
 from app.utils.auth.jwt_handler import require_auth, get_current_user_from_request
@@ -51,7 +51,7 @@ def login():
         # 로그인 처리
         result = login_user(data, device_info)
         
-        response = success_response(
+        response_data, status_code = success_response(
             data={
                 "access_token": result['access_token'],
                 "user_info": {
@@ -65,6 +65,9 @@ def login():
             },
             message=result['message']
         )
+
+        # Response 객체 생성
+        response = make_response(response_data, status_code)
 
         # HttpOnly 쿠키로 refresh_token 설정
         response.set_cookie(
@@ -146,10 +149,13 @@ def logout():
         # 로그아웃 처리
         result = logout_user(refresh_token)
         
-        response = success_response(
+        response_data, status_code = success_response(
             data=None,
             message=result['message']
         )
+
+        # Response 객체 생성
+        response = make_response(response_data, status_code)
 
         # refresh_token 쿠키 삭제
         response.set_cookie(
@@ -202,10 +208,13 @@ def logout_all():
         # 모든 디바이스에서 로그아웃
         result = TokenService.logout_all_devices(current_user['user_id'])
         
-        response = success_response(
+        response_data, status_code = success_response(
             data=None,
             message=result['message']
         )
+
+        # Response 객체 생성
+        response = make_response(response_data, status_code)
 
         # refresh_token 쿠키 삭제
         response.set_cookie(

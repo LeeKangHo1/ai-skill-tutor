@@ -1,6 +1,6 @@
 # app/routes/auth/register.py
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, make_response
 from app.services.auth.register_service import register_user
 from app.utils.common.exceptions import ValidationError, DuplicateError
 from app.utils.response.formatter import success_response, error_response
@@ -69,7 +69,7 @@ def register():
             device_info=request.headers.get('User-Agent', 'Unknown')
         )
         
-        response = success_response(
+        response_data, status_code = success_response(
             data={
                 "user_id": user_info['user_id'],
                 "login_id": user_info['login_id'],
@@ -81,6 +81,9 @@ def register():
             message=result['message'],
             status_code=201
         )
+
+        # Response 객체 생성
+        response = make_response(response_data, status_code)
 
         # HttpOnly 쿠키로 refresh_token 설정
         response.set_cookie(
