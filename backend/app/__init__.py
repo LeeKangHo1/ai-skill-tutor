@@ -26,7 +26,11 @@ def create_app(config_name='default'):
     app_logger.init_app(app)
     
     # CORS 설정 (프론트엔드와의 통신을 위해)
-    CORS(app, origins=app.config['CORS_ORIGINS'])
+    CORS(app, 
+         origins=app.config['CORS_ORIGINS'],
+         supports_credentials=True,  # HttpOnly 쿠키 사용을 위해 필요
+         allow_headers=['Content-Type', 'Authorization'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     
     # 요청 전후 처리 (로깅용)
     register_request_handlers(app)

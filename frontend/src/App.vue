@@ -5,6 +5,7 @@
 import { RouterView } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { apiService } from './services/api.js'
+import HeaderComponent from './components/common/HeaderComponent.vue'
 
 // 백엔드 연결 상태 관리
 const backendStatus = ref({
@@ -45,23 +46,8 @@ onMounted(() => {
 
 <template>
   <div id="app">
-    <!-- 헤더 영역 -->
-    <header class="app-header">
-      <div class="container">
-        <div class="header-content">
-          <h1 class="app-title">
-            <router-link to="/" class="title-link">
-              AI 활용법 학습 튜터
-            </router-link>
-          </h1>
-          <nav class="app-nav">
-            <router-link to="/" class="nav-link">홈</router-link>
-            <router-link to="/diagnosis" class="nav-link">진단하기</router-link>
-            <router-link to="/about" class="nav-link">소개</router-link>
-          </nav>
-        </div>
-      </div>
-    </header>
+    <!-- 헤더 컴포넌트 사용 -->
+    <HeaderComponent />
 
     <!-- 백엔드 연결 상태 표시 -->
     <div class="connection-status" :class="{ 
@@ -132,62 +118,7 @@ onMounted(() => {
   padding: 0 20px;
 }
 
-/* 헤더 스타일 */
-.app-header {
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  color: white;
-  padding: 1rem 0;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.app-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.title-link {
-  color: white;
-  text-decoration: none;
-  transition: opacity 0.3s;
-}
-
-.title-link:hover {
-  opacity: 0.8;
-}
-
-.app-nav {
-  display: flex;
-  gap: 1rem;
-}
-
-.nav-link {
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  transition: all 0.3s;
-  font-weight: 500;
-}
-
-.nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
-}
-
-.nav-link.router-link-active {
-  background-color: rgba(255, 255, 255, 0.2);
-  font-weight: 600;
-}
+/* 헤더 스타일은 HeaderComponent에서 처리 */
 
 /* 백엔드 연결 상태 스타일 */
 .connection-status {
@@ -310,21 +241,6 @@ onMounted(() => {
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-  
-  .app-title {
-    font-size: 1.3rem;
-  }
-  
-  .app-nav {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  
   .container {
     padding: 0 15px;
   }
@@ -347,15 +263,6 @@ onMounted(() => {
 }
 
 @media (max-width: 480px) {
-  .app-title {
-    font-size: 1.1rem;
-  }
-  
-  .nav-link {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.9rem;
-  }
-  
   .app-main {
     padding: 1rem 0;
   }

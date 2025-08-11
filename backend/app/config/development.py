@@ -29,3 +29,6 @@ class DevelopmentConfig(BaseConfig):
     
     # 개발용 ChromaDB 경로
     CHROMA_DB_PATH = 'data/chroma_db_dev'
+    
+    # 개발용 쿠키 설정 (HTTP에서도 동작하도록)
+    COOKIE_SECURE = False

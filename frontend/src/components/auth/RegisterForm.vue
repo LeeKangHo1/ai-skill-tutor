@@ -49,6 +49,9 @@
         <div v-else-if="validFields.loginId" class="valid-feedback">
           사용 가능한 로그인 ID입니다
         </div>
+        <div v-else-if="formData.loginId.length >= 4 && !errors.loginId && !checkingLoginId" class="check-required-feedback">
+          중복 확인 버튼을 눌러주세요
+        </div>
       </div>
 
       <!-- 사용자명 입력 -->
@@ -117,6 +120,9 @@
         </div>
         <div v-else-if="validFields.email" class="valid-feedback">
           사용 가능한 이메일입니다
+        </div>
+        <div v-else-if="formData.email && !errors.email && !checkingEmail" class="check-required-feedback">
+          중복 확인 버튼을 눌러주세요
         </div>
       </div>
 
@@ -517,6 +523,14 @@ export default {
       })
       validateField('agreeTerms')
 
+      // 중복 확인 검증
+      if (formData.value.loginId && !validFields.value.loginId) {
+        errors.value.loginId = '로그인 ID 중복 확인을 완료해주세요'
+      }
+      if (formData.value.email && !validFields.value.email) {
+        errors.value.email = '이메일 중복 확인을 완료해주세요'
+      }
+
       // 에러가 있으면 제출하지 않음
       if (Object.keys(errors.value).length > 0 || !isFormValid.value) {
         return
@@ -825,6 +839,14 @@ export default {
   color: #198754;
   font-size: 0.875rem;
   margin-top: 0.25rem;
+}
+
+.check-required-feedback {
+  display: block;
+  color: #fd7e14;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
 }
 
 .alert {

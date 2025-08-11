@@ -86,13 +86,14 @@ def register():
         response = make_response(response_data, status_code)
 
         # HttpOnly 쿠키로 refresh_token 설정
+        from flask import current_app
         response.set_cookie(
             'refresh_token',
             refresh_token,
             max_age=30*24*60*60,  # 30일
             httponly=True,
-            secure=True,  # HTTPS에서만
-            samesite='Strict'
+            secure=current_app.config.get('COOKIE_SECURE', False),  # 개발환경에서는 False
+            samesite='Lax'  # 개발환경에서는 Lax로 완화
         )
 
         return response

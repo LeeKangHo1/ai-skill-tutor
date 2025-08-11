@@ -133,10 +133,20 @@ export const useAuthStore = defineStore('auth', {
      */
     async checkForValidRefreshToken() {
       try {
+        // 먼저 refresh_token 쿠키가 실제로 존재하는지 확인
+        const { hasRefreshToken } = await import('../utils/cookieUtils.js')
+        
+        if (!hasRefreshToken()) {
+          // refresh_token 쿠키가 없으면 로그아웃 상태 유지
+          this.clearAuth()
+          return
+        }
+        
         // refresh_token 쿠키가 있다면 토큰 갱신 시도
         await this.refreshTokens()
       } catch (error) {
         // refresh_token이 없거나 만료된 경우 로그아웃 상태 유지
+        console.log('refresh_token 확인 실패:', error.message)
         this.clearAuth()
       }
     },
@@ -333,6 +343,13 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
       this.isRefreshing = false
       authService.clearTokens()
+      
+      // 쿠키도 정리
+      import('../utils/cookieUtils.js').then(({ clearAuthCookies }) => {
+        clearAuthCookies()
+      }).catch(error => {
+        console.warn('쿠키 정리 실패:', error)
+      })
     },
 
     /**

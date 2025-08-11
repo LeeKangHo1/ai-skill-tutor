@@ -204,24 +204,24 @@ export default {
       loadingMessage.value = '로그인 처리 중...'
 
       try {
-        // 성공 모달 표시
+        // 성공 메시지 표시 후 홈으로 이동
         successModalTitle.value = '로그인 성공!'
-        successModalMessage.value = '환영합니다. 학습을 계속 진행하시겠습니까?'
+        successModalMessage.value = '환영합니다!'
         successUserInfo.value = data.user
-        redirectPath.value = data.redirectTo || '/dashboard'
+        redirectPath.value = '/'
         
-        // 약간의 지연 후 모달 표시 (UX 개선)
+        // 약간의 지연 후 홈으로 이동
         setTimeout(() => {
           isPageLoading.value = false
-          showSuccessModal.value = true
+          router.push('/')
         }, 1000)
         
       } catch (error) {
         console.error('로그인 후 처리 오류:', error)
         isPageLoading.value = false
         
-        // 에러가 발생해도 기본 리다이렉트 수행
-        router.push(redirectPath.value)
+        // 에러가 발생해도 홈으로 이동
+        router.push('/')
       }
     }
 
@@ -230,24 +230,24 @@ export default {
       loadingMessage.value = '회원가입 처리 중...'
 
       try {
-        // 성공 모달 표시
+        // 성공 메시지 표시 후 홈으로 이동
         successModalTitle.value = '회원가입 성공!'
-        successModalMessage.value = '계정이 성공적으로 생성되었습니다. 사용자 진단을 시작하시겠습니까?'
+        successModalMessage.value = '계정이 성공적으로 생성되었습니다!'
         successUserInfo.value = data.user
-        redirectPath.value = data.redirectTo || '/diagnosis'
+        redirectPath.value = '/'
         
-        // 약간의 지연 후 모달 표시 (UX 개선)
+        // 약간의 지연 후 홈으로 이동
         setTimeout(() => {
           isPageLoading.value = false
-          showSuccessModal.value = true
+          router.push('/')
         }, 1500)
         
       } catch (error) {
         console.error('회원가입 후 처리 오류:', error)
         isPageLoading.value = false
         
-        // 에러가 발생해도 기본 리다이렉트 수행
-        router.push(redirectPath.value)
+        // 에러가 발생해도 홈으로 이동
+        router.push('/')
       }
     }
 

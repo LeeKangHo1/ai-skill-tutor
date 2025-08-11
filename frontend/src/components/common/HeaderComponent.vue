@@ -6,15 +6,23 @@
         <!-- 로고 영역 -->
         <div class="logo-section">
           <router-link to="/" class="logo-link">
-            <img src="@/assets/images/logo.png" alt="AI Skill Tutor" class="logo-image" />
-            <span class="logo-text">AI Skill Tutor</span>
+            <i class="fas fa-robot logo-icon"></i>
+            <span class="logo-text">AI 활용법 학습 튜터</span>
           </router-link>
         </div>
 
         <!-- 네비게이션 영역 -->
-        <nav class="navigation" v-if="isAuthenticated">
-          <router-link to="/dashboard" class="nav-link">대시보드</router-link>
-          <router-link to="/learning" class="nav-link">학습하기</router-link>
+        <nav class="navigation">
+          <router-link to="/" class="nav-link">홈</router-link>
+          <router-link to="/about" class="nav-link">소개</router-link>
+          <template v-if="isAuthenticated">
+            <router-link to="/diagnosis" class="nav-link">진단하기</router-link>
+            <router-link to="/dashboard" class="nav-link">대시보드</router-link>
+            <router-link to="/learning" class="nav-link">학습하기</router-link>
+          </template>
+          <template v-else>
+            <router-link to="/diagnosis" class="nav-link">진단하기</router-link>
+          </template>
         </nav>
 
         <!-- 사용자 메뉴 영역 -->
@@ -24,8 +32,7 @@
             <button @click="handleLogout" class="logout-btn">로그아웃</button>
           </div>
           <div v-else class="auth-buttons">
-            <router-link to="/login" class="btn btn-outline">로그인</router-link>
-            <router-link to="/register" class="btn btn-primary">회원가입</router-link>
+            <router-link to="/login" class="btn btn-primary">로그인</router-link>
           </div>
         </div>
       </div>
@@ -44,23 +51,25 @@ const authStore = useAuthStore()
 
 // 계산된 속성
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const userName = computed(() => authStore.user?.name || '사용자')
+const userName = computed(() => authStore.user?.username || '사용자')
 
 // 로그아웃 처리
 const handleLogout = async () => {
   try {
     await authStore.logout()
-    router.push('/login')
+    router.push('/')
   } catch (error) {
     console.error('로그아웃 실패:', error)
+    // 에러가 발생해도 홈으로 이동
+    router.push('/')
   }
 }
 </script>
 
 <style lang="scss" scoped>
 .header-component {
-  background-color: var(--primary-color);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -75,7 +84,7 @@ const handleLogout = async () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 60px;
+    padding: 1rem 0;
   }
 
   .logo-section {
@@ -85,13 +94,14 @@ const handleLogout = async () => {
       text-decoration: none;
       color: white;
 
-      .logo-image {
-        height: 32px;
+      .logo-icon {
+        font-size: 1.8rem;
         margin-right: 0.5rem;
+        color: #3498db;
       }
 
       .logo-text {
-        font-size: 1.25rem;
+        font-size: 1.5rem;
         font-weight: bold;
       }
     }
@@ -105,12 +115,18 @@ const handleLogout = async () => {
       color: white;
       text-decoration: none;
       padding: 0.5rem 1rem;
-      border-radius: 4px;
-      transition: background-color 0.2s;
+      border-radius: 6px;
+      transition: all 0.3s;
+      font-weight: 500;
 
-      &:hover,
-      &.router-link-active {
+      &:hover {
         background-color: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+
+      &.router-link-active {
+        background-color: rgba(255, 255, 255, 0.2);
+        font-weight: 600;
       }
     }
   }
@@ -164,13 +180,13 @@ const handleLogout = async () => {
         }
 
         &.btn-primary {
-          background-color: var(--secondary-color);
+          background-color: #3498db;
           color: white;
-          border: 1px solid var(--secondary-color);
+          border: 1px solid #3498db;
 
           &:hover {
-            background-color: var(--secondary-color-dark);
-            border-color: var(--secondary-color-dark);
+            background-color: #2980b9;
+            border-color: #2980b9;
           }
         }
       }

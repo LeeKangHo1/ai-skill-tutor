@@ -30,3 +30,6 @@ class ProductionConfig(BaseConfig):
     
     # 운영용 ChromaDB 경로
     CHROMA_DB_PATH = '/var/lib/ai_skill_tutor/chroma_db'
+    
+    # 운영용 쿠키 설정 (HTTPS에서만 동작)
+    COOKIE_SECURE = True
