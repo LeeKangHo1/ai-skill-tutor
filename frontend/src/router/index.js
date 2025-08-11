@@ -18,13 +18,13 @@ import {
 } from './authGuard'
 
 // 페이지 컴포넌트 import
-import HomeView from '../views/HomeView.vue'
-import AboutView from '../views/AboutView.vue'
-import LoginPage from '../views/LoginPage.vue'
-import DiagnosisPage from '../views/DiagnosisPage.vue'
-import DiagnosisResultPage from '../views/DiagnosisResultPage.vue'
-// import DashboardPage from '../views/DashboardPage.vue'
-// import LearningPage from '../views/LearningPage.vue'
+import HomeView from '../views/common/HomeView.vue'
+import AboutView from '../views/common/AboutView.vue'
+import LoginPage from '../views/auth/LoginPage.vue'
+import DiagnosisPage from '../views/diagnosis/DiagnosisPage.vue'
+import DiagnosisResultPage from '../views/diagnosis/DiagnosisResultPage.vue'
+// import DashboardPage from '../views/dashboard/DashboardPage.vue'
+// import LearningPage from '../views/learning/LearningPage.vue'
 
 const routes = [
   // 홈 페이지 (누구나 접근 가능)

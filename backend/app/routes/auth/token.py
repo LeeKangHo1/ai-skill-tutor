@@ -58,15 +58,48 @@ def refresh():
         response = make_response(response_data, status_code)
 
         # HttpOnly 쿠키로 새 refresh_token 설정
+        # 기존 쿠키가 세션 쿠키였다면 새 쿠키도 세션 쿠키로 설정
         from flask import current_app
-        response.set_cookie(
-            'refresh_token',
-            result['refresh_token'],
-            max_age=30*24*60*60,  # 30일
-            httponly=True,
-            secure=current_app.config.get('COOKIE_SECURE', False),  # 개발환경에서는 False
-            samesite='Lax'  # 개발환경에서는 Lax로 완화
+        
+        # 기존 refresh_token의 만료 시간 정보를 DB에서 조회
+        from app.utils.database.connection import fetch_one
+        token_info = fetch_one(
+            "SELECT expires_at FROM user_auth_tokens WHERE refresh_token = %s AND is_active = TRUE",
+            (refresh_token,)
         )
+        
+        # 기존 토큰의 남은 시간 계산
+        if token_info and token_info['expires_at']:
+            from datetime import datetime
+            remaining_time = token_info['expires_at'] - datetime.utcnow()
+            remaining_seconds = int(remaining_time.total_seconds())
+            
+            if remaining_seconds > 24*60*60:  # 1일 이상 남았으면 장기 쿠키
+                response.set_cookie(
+                    'refresh_token',
+                    result['refresh_token'],
+                    max_age=remaining_seconds,
+                    httponly=True,
+                    secure=current_app.config.get('COOKIE_SECURE', False),
+                    samesite='Lax'
+                )
+            else:  # 1일 미만이면 세션 쿠키
+                response.set_cookie(
+                    'refresh_token',
+                    result['refresh_token'],
+                    httponly=True,
+                    secure=current_app.config.get('COOKIE_SECURE', False),
+                    samesite='Lax'
+                )
+        else:
+            # 기본값: 세션 쿠키
+            response.set_cookie(
+                'refresh_token',
+                result['refresh_token'],
+                httponly=True,
+                secure=current_app.config.get('COOKIE_SECURE', False),
+                samesite='Lax'
+            )
 
         return response
         

@@ -51,7 +51,14 @@ const authStore = useAuthStore()
 
 // 계산된 속성
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const userName = computed(() => authStore.user?.username || '사용자')
+const userName = computed(() => {
+  // 초기화가 완료되지 않았거나 로딩 중이면 기본값 표시
+  if (!authStore.isInitialized || authStore.isLoading) {
+    return '로딩 중...'
+  }
+  // 인증되었지만 사용자 정보가 없으면 기본값
+  return authStore.user?.username || authStore.user?.login_id || '사용자'
+})
 
 // 로그아웃 처리
 const handleLogout = async () => {

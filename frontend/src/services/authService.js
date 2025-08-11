@@ -72,7 +72,8 @@ class AuthService {
     try {
       const response = await api.post('/auth/login', {
         login_id: credentials.loginId,
-        password: credentials.password
+        password: credentials.password,
+        remember_me: credentials.rememberMe || false  // 로그인 상태 유지 옵션 전송
       })
 
       // 로그인 성공 시 토큰 자동 저장 (refresh_token은 쿠키로 자동 저장됨)

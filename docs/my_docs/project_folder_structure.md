@@ -253,13 +253,18 @@ ai-skill-tutor-frontend/
 │   │   ├── dashboardStore.js      # 대시보드 상태 관리 (미구현)
 │   │   └── diagnosisStore.js      # ✅ 구현됨: 진단 관련 상태 관리 (완전 구현)
 │   ├── views/
-│   │   ├── HomeView.vue           # 홈 페이지 (기본)
-│   │   ├── AboutView.vue          # 소개 페이지 (기본)
-│   │   ├── LoginPage.vue          # ✅ 구현됨: 통합 인증 페이지 (탭 기반 로그인/회원가입)
-│   │   ├── DiagnosisPage.vue      # ✅ 구현됨: 사용자 진단 페이지 (완전 구현)
-│   │   ├── DiagnosisResultPage.vue # ✅ 신규: 진단 결과 및 유형 선택 페이지 (완전 구현)
-│   │   ├── DashboardPage.vue      # 대시보드 페이지 (미구현)
-│   │   └── LearningPage.vue       # 학습 진행 페이지 (미구현)
+│   │   ├── common/                # 공통 페이지
+│   │   │   ├── HomeView.vue           # 홈 페이지 (기본)
+│   │   │   └── AboutView.vue          # 소개 페이지 (기본)
+│   │   ├── auth/                  # 인증 관련 페이지
+│   │   │   └── LoginPage.vue          # ✅ 구현됨: 통합 인증 페이지 (탭 기반 로그인/회원가입)
+│   │   ├── diagnosis/             # 진단 관련 페이지
+│   │   │   ├── DiagnosisPage.vue      # ✅ 구현됨: 사용자 진단 페이지 (완전 구현)
+│   │   │   └── DiagnosisResultPage.vue # ✅ 신규: 진단 결과 및 유형 선택 페이지 (완전 구현)
+│   │   ├── dashboard/             # 대시보드 관련 페이지
+│   │   │   └── DashboardPage.vue      # 대시보드 페이지 (미구현)
+│   │   └── learning/              # 학습 관련 페이지
+│   │       └── LearningPage.vue       # 학습 진행 페이지 (미구현)
 │   ├── components/
 │   │   ├── common/
 │   │   │   ├── HeaderComponent.vue   # ✅ 구현됨: 로그인 상태별 헤더 (로그인/로그아웃 버튼)

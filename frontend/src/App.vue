@@ -5,6 +5,7 @@
 import { RouterView } from 'vue-router'
 import { ref, onMounted } from 'vue'
 import { apiService } from './services/api.js'
+import { useAuthStore } from './stores/authStore.js'
 import HeaderComponent from './components/common/HeaderComponent.vue'
 
 // 백엔드 연결 상태 관리
@@ -38,8 +39,17 @@ const checkBackendConnection = async () => {
   }
 }
 
-// 컴포넌트 마운트 시 백엔드 연결 확인
-onMounted(() => {
+// 컴포넌트 마운트 시 초기화
+onMounted(async () => {
+  // 인증 스토어 초기화
+  const authStore = useAuthStore()
+  try {
+    await authStore.initialize()
+  } catch (error) {
+    console.error('인증 초기화 실패:', error)
+  }
+  
+  // 백엔드 연결 확인
   checkBackendConnection()
 })
 </script>

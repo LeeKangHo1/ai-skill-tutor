@@ -90,7 +90,7 @@ export default {
     }
   },
   
-  emits: ['answer', 'next', 'previous'],
+  emits: ['answer', 'next', 'previous', 'complete'],
   
   data() {
     return {
@@ -153,8 +153,10 @@ export default {
       // 현재 답변 저장
       this.$emit('answer', this.question.question_id, this.selectedAnswer)
       
-      // 마지막 문항이 아닌 경우에만 다음으로 이동
-      if (!this.isLastQuestion) {
+      // 마지막 문항인 경우 바로 진단 완료 처리
+      if (this.isLastQuestion) {
+        this.$emit('complete')
+      } else {
         this.$emit('next')
       }
     }

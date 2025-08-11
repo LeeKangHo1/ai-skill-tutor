@@ -145,9 +145,9 @@
 <script>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../stores/authStore'
-import LoginForm from '../components/auth/LoginForm.vue'
-import RegisterForm from '../components/auth/RegisterForm.vue'
+import { useAuthStore } from '../../stores/authStore'
+import LoginForm from '../../components/auth/LoginForm.vue'
+import RegisterForm from '../../components/auth/RegisterForm.vue'
 
 export default {
   name: 'LoginPage',

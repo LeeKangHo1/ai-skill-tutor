@@ -206,7 +206,8 @@ export default {
       try {
         const credentials = {
           loginId: formData.value.loginId,
-          password: formData.value.password
+          password: formData.value.password,
+          rememberMe: formData.value.rememberMe  // 로그인 상태 유지 옵션 추가
         }
 
         const result = await authStore.login(credentials)

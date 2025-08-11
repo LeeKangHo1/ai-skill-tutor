@@ -100,7 +100,7 @@ class LoginService:
         )
     
     @staticmethod
-    def save_refresh_token(user_id: int, refresh_token: str, device_info: Optional[str] = None) -> None:
+    def save_refresh_token(user_id: int, refresh_token: str, device_info: Optional[str] = None, remember_me: bool = False) -> None:
         """
         리프레시 토큰을 데이터베이스에 저장
         
@@ -108,10 +108,15 @@ class LoginService:
             user_id (int): 사용자 ID
             refresh_token (str): 리프레시 토큰
             device_info (str, optional): 디바이스 정보
+            remember_me (bool): 로그인 상태 유지 여부
         """
         from datetime import datetime, timedelta
         
-        expires_at = datetime.utcnow() + timedelta(days=30)  # 30일 후 만료
+        # remember_me 옵션에 따라 만료 시간 설정
+        if remember_me:
+            expires_at = datetime.utcnow() + timedelta(days=30)  # 30일
+        else:
+            expires_at = datetime.utcnow() + timedelta(hours=12)  # 12시간 (세션 쿠키와 맞춤)
         
         execute_query(
             """
@@ -199,10 +204,12 @@ class LoginService:
         tokens = LoginService.generate_tokens(user_info)
         
         # 5. 리프레시 토큰 저장
+        remember_me = login_data.get('remember_me', False)
         LoginService.save_refresh_token(
             user_info['user_id'], 
             tokens['refresh_token'],
-            device_info
+            device_info,
+            remember_me
         )
         
         # 6. 마지막 로그인 시간 업데이트

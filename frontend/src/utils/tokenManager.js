@@ -72,10 +72,11 @@ class TokenManager {
   }
 
   /**
-   * 토큰 존재 여부 확인
+   * 토큰 존재 여부 확인 (HttpOnly 쿠키 방식에 맞게 수정)
    */
   hasTokens() {
-    return !!(this.getAccessToken() && this.getRefreshToken())
+    // Access Token만 확인 (Refresh Token은 HttpOnly 쿠키로 관리됨)
+    return !!this.getAccessToken()
   }
 
   /**
@@ -149,21 +150,14 @@ class TokenManager {
   }
 
   /**
-   * 토큰 유효성 검증
+   * 토큰 유효성 검증 (HttpOnly 쿠키 방식에 맞게 수정)
    */
   validateTokens() {
     const accessToken = this.getAccessToken()
-    const refreshToken = this.getRefreshToken()
 
-    // 토큰이 없는 경우
-    if (!accessToken || !refreshToken) {
-      return { valid: false, reason: 'NO_TOKENS' }
-    }
-
-    // Refresh Token이 만료된 경우
-    if (this.isRefreshTokenExpired()) {
-      this.clearAll()
-      return { valid: false, reason: 'REFRESH_TOKEN_EXPIRED' }
+    // Access Token이 없는 경우
+    if (!accessToken) {
+      return { valid: false, reason: 'NO_ACCESS_TOKEN' }
     }
 
     // Access Token이 만료된 경우 (갱신 필요)

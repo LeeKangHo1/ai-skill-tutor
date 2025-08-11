@@ -3,7 +3,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { shallowMount } from '@vue/test-utils'
-import HomeView from '../HomeView.vue'
+import HomeView from '../common/HomeView.vue'
 
 describe('HomeView.vue', () => {
   it('홈 뷰 컴포넌트가 존재한다', () => {

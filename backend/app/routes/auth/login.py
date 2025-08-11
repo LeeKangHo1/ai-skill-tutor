@@ -71,14 +71,30 @@ def login():
 
         # HttpOnly 쿠키로 refresh_token 설정
         from flask import current_app
-        response.set_cookie(
-            'refresh_token',
-            result['refresh_token'],
-            max_age=30*24*60*60,  # 30일
-            httponly=True,
-            secure=current_app.config.get('COOKIE_SECURE', False),  # 개발환경에서는 False
-            samesite='Lax'  # 개발환경에서는 Lax로 완화
-        )
+        
+        # remember_me 옵션에 따라 쿠키 설정
+        remember_me = data.get('remember_me', False)
+        
+        if remember_me:
+            # 로그인 상태 유지: 30일 만료 쿠키
+            response.set_cookie(
+                'refresh_token',
+                result['refresh_token'],
+                max_age=30*24*60*60,  # 30일
+                httponly=True,
+                secure=current_app.config.get('COOKIE_SECURE', False),
+                samesite='Lax'
+            )
+        else:
+            # 일반 로그인: 세션 쿠키 (브라우저 종료 시 삭제)
+            response.set_cookie(
+                'refresh_token',
+                result['refresh_token'],
+                httponly=True,
+                secure=current_app.config.get('COOKIE_SECURE', False),
+                samesite='Lax'
+                # max_age 없음 = 세션 쿠키
+            )
 
         return response
         

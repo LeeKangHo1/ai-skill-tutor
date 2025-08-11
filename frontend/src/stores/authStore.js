@@ -15,19 +15,19 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     // 사용자 정보
     user: null,
-    
+
     // 로그인 상태
     isAuthenticated: false,
-    
+
     // 로딩 상태
     isLoading: false,
-    
+
     // 에러 상태
     error: null,
-    
+
     // 토큰 갱신 상태
     isRefreshing: false,
-    
+
     // 초기화 완료 여부
     isInitialized: false
   }),
@@ -37,52 +37,52 @@ export const useAuthStore = defineStore('auth', {
      * 사용자 유형 조회
      */
     userType: (state) => state.user?.user_type || null,
-    
+
     /**
      * 진단 완료 여부
      */
     isDiagnosisCompleted: (state) => state.user?.diagnosis_completed || false,
-    
+
     /**
      * 현재 챕터
      */
     currentChapter: (state) => state.user?.current_chapter || 1,
-    
+
     /**
      * 사용자 ID
      */
     userId: (state) => state.user?.user_id || null,
-    
+
     /**
      * 로그인 ID
      */
     loginId: (state) => state.user?.login_id || null,
-    
+
     /**
      * 사용자명
      */
     username: (state) => state.user?.username || null,
-    
+
     /**
      * 이메일
      */
     email: (state) => state.user?.email || null,
-    
+
     /**
      * 인증 필요 여부 (진단 미완료자 포함)
      */
     requiresAuth: (state) => !state.isAuthenticated,
-    
+
     /**
      * 진단 필요 여부
      */
     requiresDiagnosis: (state) => state.isAuthenticated && !state.user?.diagnosis_completed,
-    
+
     /**
      * 학습 접근 가능 여부
      */
     canAccessLearning: (state) => state.isAuthenticated && state.user?.diagnosis_completed,
-    
+
     /**
      * 사용자 유형별 접근 권한
      */
@@ -97,14 +97,14 @@ export const useAuthStore = defineStore('auth', {
      */
     async initialize() {
       if (this.isInitialized) return
-      
+
       this.isLoading = true
-      
+
       try {
         // 저장된 Access Token이 있는지 확인
         if (tokenManager.hasTokens()) {
           const validation = tokenManager.validateTokens()
-          
+
           if (validation.valid) {
             // 유효한 토큰이 있으면 사용자 정보 복원
             await this.restoreUserFromToken()
@@ -135,13 +135,13 @@ export const useAuthStore = defineStore('auth', {
       try {
         // 먼저 refresh_token 쿠키가 실제로 존재하는지 확인
         const { hasRefreshToken } = await import('../utils/cookieUtils.js')
-        
+
         if (!hasRefreshToken()) {
           // refresh_token 쿠키가 없으면 로그아웃 상태 유지
           this.clearAuth()
           return
         }
-        
+
         // refresh_token 쿠키가 있다면 토큰 갱신 시도
         await this.refreshTokens()
       } catch (error) {
@@ -156,18 +156,28 @@ export const useAuthStore = defineStore('auth', {
      */
     async restoreUserFromToken() {
       try {
-        // localStorage의 사용자 정보 먼저 확인
+        // localStorage의 사용자 정보 먼저 확인하고 즉시 상태 업데이트
         const storedUser = tokenManager.getUserInfo()
         if (storedUser) {
           this.user = storedUser
           this.isAuthenticated = true
         }
 
-        // 서버에서 최신 사용자 정보 조회
-        const response = await authService.getCurrentUser()
-        if (response.success) {
-          this.user = response.data.data
-          this.isAuthenticated = true
+        // 서버에서 최신 사용자 정보 조회 (백그라운드에서)
+        try {
+          const response = await authService.getCurrentUser()
+          if (response.success && response.data.data) {
+            this.user = response.data.data
+            this.isAuthenticated = true
+            // localStorage도 최신 정보로 업데이트
+            tokenManager.setUserInfo(response.data.data)
+          }
+        } catch (serverError) {
+          // 서버 요청 실패해도 localStorage 정보가 있으면 계속 진행
+          console.warn('서버에서 사용자 정보 조회 실패:', serverError)
+          if (!storedUser) {
+            throw serverError
+          }
         }
       } catch (error) {
         console.error('사용자 정보 복원 실패:', error)
@@ -182,15 +192,18 @@ export const useAuthStore = defineStore('auth', {
       if (this.isRefreshing) return
 
       this.isRefreshing = true
-      
+
       try {
         const response = await authService.refreshToken()
-        
+
         if (response.success && response.data) {
           // 사용자 정보 업데이트
           if (response.data.user_info) {
             this.user = response.data.user_info
             this.isAuthenticated = true
+
+            // localStorage에도 사용자 정보 저장
+            tokenManager.setUserInfo(response.data.user_info)
           }
         } else {
           throw new Error('토큰 갱신 실패')
@@ -213,7 +226,7 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const response = await authService.login(credentials)
-        
+
         if (response.success) {
           this.user = response.data.user_info
           this.isAuthenticated = true
@@ -238,7 +251,7 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const response = await authService.register(userData)
-        
+
         if (response.success) {
           // 회원가입 후 자동 로그인된 경우
           if (response.data.access_token && response.data.user_id) {
@@ -343,7 +356,7 @@ export const useAuthStore = defineStore('auth', {
       this.error = null
       this.isRefreshing = false
       authService.clearTokens()
-      
+
       // 쿠키도 정리
       import('../utils/cookieUtils.js').then(({ clearAuthCookies }) => {
         clearAuthCookies()
@@ -366,11 +379,11 @@ export const useAuthStore = defineStore('auth', {
       if (!this.isAuthenticated) {
         await this.initialize()
       }
-      
+
       if (!this.isAuthenticated) {
         throw new Error('인증이 필요합니다')
       }
-      
+
       return authService.ensureValidToken()
     },
 
