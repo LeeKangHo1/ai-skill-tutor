@@ -19,9 +19,9 @@
       <!-- 에러 상태 -->
       <div v-else-if="diagnosisStore.error" class="error-state">
         <div class="error-icon">⚠️</div>
-        <h3>문제가 발생했습니다</h3>
+        <h3>알림</h3>
         <p>{{ diagnosisStore.error }}</p>
-        <button class="btn btn-primary" @click="goBack">진단으로 돌아가기</button>
+        <button class="btn btn-primary" @click="clearError">확인</button>
       </div>
       
       <!-- 진단 결과가 없는 경우 -->
@@ -88,12 +88,13 @@
           </div>
           
           <div 
-            class="type-card"
+            class="type-card disabled"
             :class="{ 'selected': selectedUserType === 'advanced' }"
-            @click="selectUserType('advanced')"
+            @click="showComingSoonMessage"
           >
             <div class="type-header">
               <h3>실무 응용형</h3>
+              <span class="coming-soon-badge">개발 예정</span>
             </div>
             
             <div class="type-info">
@@ -107,6 +108,10 @@
                 <li>고급 기법 포함</li>
                 <li>프로젝트 기반 학습</li>
               </ul>
+            </div>
+            
+            <div class="disabled-overlay">
+              <p>곧 출시 예정입니다!</p>
             </div>
           </div>
         </div>
@@ -136,6 +141,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDiagnosisStore } from '@/stores/diagnosisStore'
+import { useAuthStore } from '@/stores/authStore'
 
 export default {
   name: 'DiagnosisResultPage',
@@ -143,12 +149,22 @@ export default {
   setup() {
     const router = useRouter()
     const diagnosisStore = useDiagnosisStore()
+    const authStore = useAuthStore()
     
     // 선택된 사용자 유형
     const selectedUserType = ref(null)
     
     // 컴포넌트 마운트 시 진단 결과 확인
-    onMounted(() => {
+    onMounted(async () => {
+      // 인증 상태 확인
+      if (!authStore.isAuthenticated) {
+        await authStore.initialize()
+        if (!authStore.isAuthenticated) {
+          router.push('/login')
+          return
+        }
+      }
+      
       // 진단 결과가 없으면 진단 페이지로 돌려보냄
       if (!diagnosisStore.diagnosisResult) {
         router.push('/diagnosis')
@@ -183,7 +199,23 @@ export default {
      * 사용자 유형 선택
      */
     const selectUserType = (type) => {
+      if (type === 'advanced') {
+        return // 실무 응용형은 선택 불가
+      }
       selectedUserType.value = type
+    }
+    
+    /**
+     * 개발 예정 메시지 표시
+     */
+    const showComingSoonMessage = () => {
+      // 더 나은 사용자 경험을 위해 에러 상태로 메시지 표시
+      diagnosisStore.error = '실무 응용형은 현재 개발 중입니다. 곧 출시 예정이니 조금만 기다려주세요!'
+      
+      // 3초 후 에러 메시지 자동 제거
+      setTimeout(() => {
+        diagnosisStore.error = null
+      }, 3000)
     }
     
     /**
@@ -205,6 +237,11 @@ export default {
      */
     const confirmUserType = async () => {
       if (!selectedUserType.value) return
+      
+      if (selectedUserType.value === 'advanced') {
+        showComingSoonMessage()
+        return
+      }
       
       // /select-type API 호출하여 유형 저장
       const success = await diagnosisStore.selectUserType(selectedUserType.value)
@@ -229,16 +266,25 @@ export default {
       router.push('/diagnosis')
     }
     
+    /**
+     * 에러 메시지 제거
+     */
+    const clearError = () => {
+      diagnosisStore.error = null
+    }
+    
     return {
       diagnosisStore,
       selectedUserType,
       userTypeClass,
       userTypeText,
       selectUserType,
+      showComingSoonMessage,
       getSelectedTypeName,
       confirmUserType,
       startLearning,
-      goBack
+      goBack,
+      clearError
     }
   }
 }
@@ -436,6 +482,15 @@ export default {
           font-size: 0.8rem;
           font-weight: 600;
         }
+        
+        .coming-soon-badge {
+          background-color: #ffc107;
+          color: #212529;
+          padding: 0.25rem 0.75rem;
+          border-radius: 15px;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
       }
       
       .type-info {
@@ -471,6 +526,38 @@ export default {
               font-weight: bold;
               margin-right: 0.5rem;
             }
+          }
+        }
+      }
+      
+      &.disabled {
+        position: relative;
+        opacity: 0.7;
+        cursor: not-allowed;
+        
+        &:hover {
+          border-color: #e9ecef;
+          transform: none;
+          box-shadow: none;
+        }
+        
+        .disabled-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(255, 255, 255, 0.8);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          p {
+            color: #6c757d;
+            font-weight: 600;
+            margin: 0;
+            text-align: center;
           }
         }
       }

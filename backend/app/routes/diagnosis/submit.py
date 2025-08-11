@@ -121,11 +121,10 @@ def select_user_type():
                 }
             }), 400
 
-        connection = get_db_connection()
         try:
-            update_user_type_in_db(current_user['user_id'], selected_type, connection)
+            with get_db_connection() as connection:
+                update_user_type_in_db(current_user['user_id'], selected_type, connection)
         except Exception as db_error:
-            connection.rollback()
             log_error(db_error, {"route": "/select-type"})
             return jsonify({
                 "success": False,
@@ -134,8 +133,6 @@ def select_user_type():
                     "message": "데이터베이스 업데이트 중 오류가 발생했습니다."
                 }
             }), 500
-        finally:
-            connection.close()
 
         # 선택된 유형에 따른 정보 직접 반환
         type_info_map = {

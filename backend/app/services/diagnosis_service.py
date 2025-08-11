@@ -30,7 +30,8 @@ def recommend_type_by_score(score):
 
 def update_user_type_in_db(user_id, selected_type, connection):
     """유저 유형을 DB에 저장"""
-    with connection.cursor() as cursor:
+    cursor = connection.cursor()
+    try:
         query = """
         UPDATE users
         SET user_type = %s, diagnosis_completed = TRUE, updated_at = NOW()
@@ -38,3 +39,5 @@ def update_user_type_in_db(user_id, selected_type, connection):
         """
         cursor.execute(query, (selected_type, user_id))
         connection.commit()
+    finally:
+        cursor.close()
