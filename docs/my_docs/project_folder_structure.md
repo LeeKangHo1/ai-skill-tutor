@@ -1,4 +1,4 @@
-# 백엔드 폴더 구조 (v1.3 - 2025.08.07 업데이트)
+# 백엔드 폴더 구조 (v1.3 - 2025.08.11 업데이트)
 
 ```
 backend/
@@ -34,12 +34,12 @@ backend/
 │   │   ├── system/                   # 시스템 관련 라우트 (완성됨)
 │   │   │   ├── __init__.py           # ✅ 수정됨: system_blueprints 정의
 │   │   │   ├── health.py             # ✅ 구현됨: 헬스체크 API
-│   │   │   └── version.py            # ✅ 구현됨: 기본 API 정보
-│   │   ├── auth/                     # 인증 관련 라우트 (미구현)
-│   │   │   ├── __init__.py
-│   │   │   ├── login.py              # 로그인/로그아웃
-│   │   │   ├── register.py           # 회원가입
-│   │   │   └── token.py              # 토큰 관리
+│   │   │   └── version.py            # ✅ 구현됨: 기본 API 정보 + /version 엔드포인트
+│   │   ├── auth/                     # ✅ 인증 관련 라우트 (완성됨)
+│   │   │   ├── __init__.py           # auth_blueprints 정의
+│   │   │   ├── login.py              # ✅ 구현됨: 로그인/로그아웃/사용자정보 API
+│   │   │   ├── register.py           # ✅ 구현됨: 회원가입/중복확인 API
+│   │   │   └── token.py              # ✅ 구현됨: 토큰 갱신/검증/세션관리 API
 │   │   ├── dashboard/                # 대시보드 라우트 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   ├── overview.py           # 대시보드 개요
@@ -62,11 +62,11 @@ backend/
 │   ├── services/                     # 비즈니스 로직 서비스
 │   │   ├── __init__.py
 │   │   ├── diagnosis_service.py      # ✅ 구현됨: 진단 점수 계산 및 유형 추천
-│   │   ├── auth/                     # 인증 서비스 (미구현)
+│   │   ├── auth/                     # ✅ 인증 서비스 (완성됨)
 │   │   │   ├── __init__.py
-│   │   │   ├── login_service.py      # 로그인 처리
-│   │   │   ├── register_service.py   # 회원가입 처리
-│   │   │   └── token_service.py      # 토큰 관리
+│   │   │   ├── login_service.py      # ✅ 구현됨: 로그인 처리 및 토큰 발급
+│   │   │   ├── register_service.py   # ✅ 구현됨: 회원가입 처리 및 검증
+│   │   │   └── token_service.py      # ✅ 구현됨: 토큰 갱신/검증/세션관리
 │   │   ├── user/                     # 사용자 관리 서비스 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   ├── profile_service.py    # 프로필 관리
@@ -137,26 +137,26 @@ backend/
 │   │       └── session_completion_tools.py # 세션 완료 분석 도구
 │   ├── utils/                        # 유틸리티 함수
 │   │   ├── __init__.py
-│   │   ├── database/                 # 데이터베이스 유틸리티
+│   │   ├── database/                 # ✅ 데이터베이스 유틸리티 (완성됨)
 │   │   │   ├── __init__.py
-│   │   │   ├── connection.py         # DB 연결 관리
-│   │   │   ├── query_builder.py      # 쿼리 빌더
-│   │   │   └── transaction.py        # 트랜잭션 관리
-│   │   ├── auth/                     # 인증 유틸리티
+│   │   │   ├── connection.py         # ✅ 구현됨: DB 연결 관리
+│   │   │   ├── query_builder.py      # ✅ 구현됨: 쿼리 빌더
+│   │   │   └── transaction.py        # ✅ 구현됨: 트랜잭션 관리
+│   │   ├── auth/                     # ✅ 인증 유틸리티 (완성됨)
 │   │   │   ├── __init__.py
-│   │   │   ├── jwt_handler.py        # JWT 토큰 처리
-│   │   │   └── password_handler.py   # 비밀번호 처리
+│   │   │   ├── jwt_handler.py        # ✅ 구현됨: JWT 토큰 생성/검증/데코레이터
+│   │   │   └── password_handler.py   # ✅ 구현됨: bcrypt 비밀번호 해시화/검증
 │   │   ├── validation/               # 검증 유틸리티
 │   │   │   ├── __init__.py
 │   │   │   ├── input_validators.py   # 입력 검증
 │   │   │   └── business_validators.py # 비즈니스 룰 검증
-│   │   ├── response/                 # 응답 처리 유틸리티
+│   │   ├── response/                 # ✅ 응답 처리 유틸리티 (완성됨)
 │   │   │   ├── __init__.py
-│   │   │   ├── formatter.py          # 응답 포맷터
-│   │   │   └── error_formatter.py    # 에러 응답 포맷터
-│   │   └── common/                   # 공통 유틸리티
+│   │   │   ├── formatter.py          # ✅ 구현됨: 표준화된 응답 포맷터
+│   │   │   └── error_formatter.py    # ✅ 구현됨: 에러 응답 전용 포맷터
+│   │   └── common/                   # ✅ 공통 유틸리티 (완성됨)
 │   │       ├── __init__.py
-│   │       ├── exceptions.py         # 커스텀 예외 클래스
+│   │       ├── exceptions.py         # ✅ 구현됨: 계층적 커스텀 예외 클래스
 │   │       ├── constants.py          # 상수 정의
 │   │       └── helpers.py            # 헬퍼 함수들
 │   ├── core/                         # 핵심 시스템 구성 요소 (미구현)
@@ -177,11 +177,11 @@ backend/
 │   │   └── cache/                    # 캐시 관련
 │   │       ├── __init__.py
 │   │       └── redis_client.py       # Redis 클라이언트 (선택사항)
-│   └── middleware/                   # 미들웨어 (미구현)
-│       ├── __init__.py
-│       ├── auth/                     # 인증 미들웨어
+│   └── middleware/                   # ✅ 미들웨어 (부분 구현)
+│       ├── __init__.py               # ✅ 구현됨: 미들웨어 초기화 함수
+│       ├── auth/                     # ✅ 인증 미들웨어 (완성됨)
 │       │   ├── __init__.py
-│       │   ├── jwt_middleware.py     # JWT 검증 미들웨어
+│       │   ├── jwt_middleware.py     # ✅ 구현됨: JWT 검증 및 g 객체 설정
 │       │   └── session_middleware.py # 세션 관리 미들웨어
 │       ├── request/                  # 요청 처리 미들웨어
 │       │   ├── __init__.py
@@ -228,7 +228,7 @@ backend/
 ---
 
 
-# 프론트엔드 폴더 구조 (v1.3 - 2025.08.07 업데이트)
+# 프론트엔드 폴더 구조 (v1.3 - 2025.08.11 업데이트)
 
 ```
 ai-skill-tutor-frontend/
@@ -244,29 +244,30 @@ ai-skill-tutor-frontend/
 │   ├── main.js                    # Vue 앱 진입점
 │   ├── App.vue                    # ✅ 수정됨: 퀵 액션 영역 제거, 깔끔한 구조로 정리
 │   ├── router/
-│   │   └── index.js               # ✅ 수정됨: /diagnosis/result 라우트 추가
+│   │   ├── index.js               # ✅ 수정됨: 인증 가드 적용 및 라우트 보안 설정
+│   │   └── authGuard.js           # ✅ 구현됨: 페이지별 접근 권한 제어 가드
 │   ├── stores/
 │   │   ├── index.js               # Pinia store 설정
-│   │   ├── authStore.js           # 인증 관련 상태 관리 (미구현)
+│   │   ├── authStore.js           # ✅ 구현됨: 인증 상태 관리 및 자동 토큰 갱신
 │   │   ├── tutorStore.js          # 학습 세션 상태 관리 (미구현)
 │   │   ├── dashboardStore.js      # 대시보드 상태 관리 (미구현)
 │   │   └── diagnosisStore.js      # ✅ 구현됨: 진단 관련 상태 관리 (완전 구현)
 │   ├── views/
 │   │   ├── HomeView.vue           # 홈 페이지 (기본)
 │   │   ├── AboutView.vue          # 소개 페이지 (기본)
-│   │   ├── LoginPage.vue          # 로그인/회원가입 페이지 (미구현)
+│   │   ├── LoginPage.vue          # ✅ 구현됨: 통합 인증 페이지 (탭 기반 로그인/회원가입)
 │   │   ├── DiagnosisPage.vue      # ✅ 구현됨: 사용자 진단 페이지 (완전 구현)
 │   │   ├── DiagnosisResultPage.vue # ✅ 신규: 진단 결과 및 유형 선택 페이지 (완전 구현)
 │   │   ├── DashboardPage.vue      # 대시보드 페이지 (미구현)
 │   │   └── LearningPage.vue       # 학습 진행 페이지 (미구현)
 │   ├── components/
 │   │   ├── common/
-│   │   │   ├── HeaderComponent.vue   # 헤더 컴포넌트 (미구현)
+│   │   │   ├── HeaderComponent.vue   # ✅ 구현됨: 로그인 상태별 헤더 (로그인/로그아웃 버튼)
 │   │   │   ├── LoadingModal.vue      # 로딩 모달 (미구현)
 │   │   │   └── AlertMessage.vue      # 알림 메시지 (미구현)
-│   │   ├── auth/                  # 인증 관련 컴포넌트 (미구현)
-│   │   │   ├── LoginForm.vue
-│   │   │   └── RegisterForm.vue
+│   │   ├── auth/                  # ✅ 인증 관련 컴포넌트 (완성됨)
+│   │   │   ├── LoginForm.vue         # ✅ 구현됨: 실시간 검증 로그인 폼
+│   │   │   └── RegisterForm.vue      # ✅ 구현됨: 중복 확인 및 검증 회원가입 폼
 │   │   ├── diagnosis/             # ✅ 진단 관련 컴포넌트 (완전 구현)
 │   │   │   ├── DiagnosisQuestion.vue  # ✅ 구현됨: 문항 표시 및 답변 수집
 │   │   │   └── ProgressBar.vue        # ✅ 구현됨: 진행률 표시
@@ -293,8 +294,8 @@ ai-skill-tutor-frontend/
 │   │   ├── useLearning.js         # 학습 세션 컴포저블 (미구현)
 │   │   └── useNotification.js     # 알림 컴포저블 (미구현)
 │   ├── services/
-│   │   ├── api.js                 # ✅ 수정됨: Base URL /api/v1로 수정, 연결 확인 로직 개선
-│   │   ├── authService.js         # 인증 관련 API (미구현)
+│   │   ├── api.js                 # ✅ 구현됨: HTTP 클라이언트 + 자동 토큰 갱신 인터셉터
+│   │   ├── authService.js         # ✅ 구현됨: 인증 관련 API (로그인/회원가입/중복확인)
 │   │   ├── learningService.js     # 학습 관련 API (미구현)
 │   │   ├── dashboardService.js    # 대시보드 관련 API (미구현)
 │   │   └── diagnosisService.js    # ✅ 구현됨: 진단 관련 API (완전 구현)
@@ -302,7 +303,9 @@ ai-skill-tutor-frontend/
 │   │   ├── constants.js           # 상수 정의
 │   │   ├── helpers.js             # 유틸리티 함수
 │   │   ├── validators.js          # 입력값 검증 함수
-│   │   └── formatters.js          # 데이터 포맷팅 함수
+│   │   ├── formatters.js          # 데이터 포맷팅 함수
+│   │   ├── tokenManager.js        # ✅ 구현됨: Access Token 관리 유틸리티
+│   │   └── cookieUtils.js         # ✅ 구현됨: 쿠키 관리 유틸리티
 │   ├── styles/
 │   │   ├── main.scss              # 메인 스타일시트
 │   │   ├── variables.scss         # SCSS 변수
@@ -326,7 +329,7 @@ ai-skill-tutor-frontend/
 ├── .gitignore
 ├── package.json                   # ✅ 수정됨: 새로운 의존성 추가 가능성
 ├── vite.config.js                 # Vite 설정
-├── index.html
+├── index.html                     # ✅ 수정됨: FontAwesome CDN 추가
 └── README.md
 ```
 
