@@ -4,6 +4,6 @@
 사용자 답변을 평가하고 피드백을 제공하는 에이전트입니다.
 """
 
-from .agent import EvaluationFeedbackAgent
+from .evaluation_feedback_agent import EvaluationFeedbackAgent
 
 __all__ = ['EvaluationFeedbackAgent']

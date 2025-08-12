@@ -4,6 +4,6 @@
 개념 설명 및 이론 교육 컨텐츠를 생성하는 에이전트입니다.
 """
 
-from .agent import TheoryEducator
+from .theory_educator_agent import TheoryEducator
 
 __all__ = ['TheoryEducator']

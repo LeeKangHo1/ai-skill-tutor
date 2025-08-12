@@ -4,6 +4,6 @@
 학습 내용에 대한 퀴즈를 생성하는 에이전트입니다.
 """
 
-from .agent import QuizGenerator
+from .quiz_generator_agent import QuizGenerator
 
 __all__ = ['QuizGenerator']
