@@ -16,7 +16,7 @@ def test_theory_tools():
     
     learning_context = {
         "user_type": "beginner",
-        "current_section": 1,
+        "current_section": 3,
         "session_count": 0,
         "is_retry_session": False
     }

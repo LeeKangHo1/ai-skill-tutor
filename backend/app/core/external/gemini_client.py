@@ -6,6 +6,7 @@ import logging
 from typing import Dict, Any, Optional, List
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
+from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
 
 from app.utils.common.exceptions import ExternalAPIError
 
@@ -16,6 +17,7 @@ class GeminiClient:
     - 프롬프트 전송 및 응답 처리
     - 에러 처리 및 재시도 로직
     - 설정 관리 및 안전 필터링
+    - LangChain Messages 지원 추가
     """
     
     def __init__(self):
@@ -34,7 +36,7 @@ class GeminiClient:
             genai.configure(api_key=api_key)
             
             # 모델 설정 로드 (.env.example 형식에 맞춤)
-            self.model_name = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
+            self.model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash-exp')
             self.max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', '8192'))
             self.temperature = float(os.getenv('GEMINI_TEMPERATURE', '0.7'))
             
@@ -105,11 +107,60 @@ class GeminiClient:
             if not response.text:
                 raise ExternalAPIError("Gemini API에서 빈 응답을 반환했습니다.")
             
-            self.logger.info("Gemini API 호출 성공")
-            return response.text.strip()
+            self.logger.info(f"Gemini API 응답 수신 완료 - 길이: {len(response.text)}")
+            return response.text
             
         except Exception as e:
-            error_msg = f"Gemini API 호출 실패: {str(e)}"
+            error_msg = f"Gemini API 컨텐츠 생성 실패: {str(e)}"
+            self.logger.error(error_msg)
+            raise ExternalAPIError(error_msg)
+    
+    def generate_content_with_messages(
+        self,
+        messages: List[BaseMessage],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> str:
+        """
+        LangChain Messages를 사용한 컨텐츠 생성
+        
+        Args:
+            messages: LangChain 메시지 리스트 (SystemMessage, HumanMessage 등)
+            temperature: 창의성 수준 (0.0-1.0)
+            max_tokens: 최대 토큰 수
+            **kwargs: 추가 파라미터
+            
+        Returns:
+            생성된 텍스트 응답
+            
+        Raises:
+            ExternalAPIError: 생성 실패 시
+        """
+        try:
+            # Messages를 기존 인터페이스로 변환
+            system_instruction = None
+            user_prompt = ""
+            
+            for message in messages:
+                if isinstance(message, SystemMessage):
+                    system_instruction = message.content
+                elif isinstance(message, HumanMessage):
+                    user_prompt = message.content
+            
+            if not user_prompt:
+                raise ExternalAPIError("유효한 사용자 메시지가 없습니다.")
+            
+            # 기존 generate_content 메서드 활용
+            return self.generate_content(
+                prompt=user_prompt,
+                system_instruction=system_instruction,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+                
+        except Exception as e:
+            error_msg = f"Messages 기반 컨텐츠 생성 실패: {str(e)}"
             self.logger.error(error_msg)
             raise ExternalAPIError(error_msg)
     
@@ -117,26 +168,28 @@ class GeminiClient:
         self,
         prompt: str,
         system_instruction: Optional[str] = None,
-        temperature: Optional[float] = None
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        JSON 형태의 구조화된 응답 생성
+        JSON 형태 응답을 위한 컨텐츠 생성
         
         Args:
             prompt: 사용자 프롬프트
-            system_instruction: 시스템 지시사항
-            temperature: 창의성 수준
+            system_instruction: 시스템 지시사항 (선택)
+            temperature: 창의성 수준 (0.0-1.0)
+            max_tokens: 최대 토큰 수
             
         Returns:
             JSON 형태로 파싱된 응답
             
         Raises:
-            ExternalAPIError: API 호출 또는 JSON 파싱 실패 시
+            ExternalAPIError: 생성 또는 파싱 실패 시
         """
         try:
-            # JSON 응답 요청을 위한 시스템 지시사항 추가
+            # JSON 전용 시스템 지시사항 준비
             json_system_instruction = (
-                "응답은 반드시 유효한 JSON 형태로만 제공해주세요. "
+                "반드시 유효한 JSON 형식으로만 응답해주세요. "
                 "추가적인 설명이나 마크다운 포맷팅은 사용하지 마세요.\n"
                 f"{system_instruction or ''}"
             )
@@ -169,6 +222,55 @@ class GeminiClient:
             raise
         except Exception as e:
             error_msg = f"JSON 컨텐츠 생성 실패: {str(e)}"
+            self.logger.error(error_msg)
+            raise ExternalAPIError(error_msg)
+    
+    def generate_json_content_with_messages(
+        self,
+        messages: List[BaseMessage],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        LangChain Messages를 사용한 JSON 컨텐츠 생성
+        
+        Args:
+            messages: LangChain 메시지 리스트 (SystemMessage, HumanMessage 등)
+            temperature: 창의성 수준 (0.0-1.0)
+            max_tokens: 최대 토큰 수
+            **kwargs: 추가 파라미터
+            
+        Returns:
+            JSON 형태로 파싱된 응답
+            
+        Raises:
+            ExternalAPIError: 생성 실패 시
+        """
+        try:
+            # Messages를 기존 인터페이스로 변환
+            system_instruction = None
+            user_prompt = ""
+            
+            for message in messages:
+                if isinstance(message, SystemMessage):
+                    system_instruction = message.content
+                elif isinstance(message, HumanMessage):
+                    user_prompt = message.content
+            
+            if not user_prompt:
+                raise ExternalAPIError("유효한 사용자 메시지가 없습니다.")
+            
+            # 기존 generate_json_content 메서드 활용
+            return self.generate_json_content(
+                prompt=user_prompt,
+                system_instruction=system_instruction,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+                
+        except Exception as e:
+            error_msg = f"Messages 기반 JSON 컨텐츠 생성 실패: {str(e)}"
             self.logger.error(error_msg)
             raise ExternalAPIError(error_msg)
     
