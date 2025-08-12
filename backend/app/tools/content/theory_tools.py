@@ -1,7 +1,5 @@
 # backend/app/tools/content/theory_tools.py
 
-import time
-import uuid
 import json
 import logging
 from typing import Dict, Any, List
@@ -10,13 +8,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.core.external.ai_client_manager import get_ai_client_manager, AIProvider
-from app.core.langsmith.langsmith_client import (
-    get_langsmith_client, 
-    is_langsmith_enabled,
-    create_langsmith_run,
-    update_langsmith_run,
-    end_langsmith_run
-)
 from app.utils.common.exceptions import ExternalAPIError
 
 
@@ -28,7 +19,7 @@ def theory_generation_tool(
 ) -> str:
     """
     AI를 활용한 사용자 맞춤형 이론 설명 대본 생성 (LangChain + LangSmith 적용)
-    409 Conflict 오류 해결 버전
+    AI Client Manager에서 LangSmith 추적 관리
     
     Args:
         chapter_data: JSON에서 로드한 챕터 데이터
@@ -42,47 +33,24 @@ def theory_generation_tool(
     
     logger = logging.getLogger(__name__)
     
-    # 고유 run_id 생성 (409 Conflict 방지)
-    run_id = f"theory_gen_{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
-    
     try:
-        # 1. LangSmith 추적 시작 (안전한 방식)
-        if is_langsmith_enabled():
-            try:
-                run_id = create_langsmith_run(
-                    name="theory_generation_tool",
-                    run_type="tool",
-                    inputs={
-                        "chapter_number": chapter_data.get('chapter_number', 1),
-                        "user_type": user_type,
-                        "current_section": learning_context.get('current_section', 1),
-                        "session_count": learning_context.get('session_count', 0),
-                        "is_retry_session": learning_context.get('is_retry_session', False)
-                    },
-                    run_id=run_id  # 고유 ID 전달
-                )
-                logger.info(f"LangSmith 추적 시작: {run_id}")
-            except Exception as langsmith_error:
-                logger.warning(f"LangSmith 추적 시작 실패 (계속 진행): {langsmith_error}")
-                run_id = None
+        logger.info("이론 생성 도구 시작")
         
-        logger.info(f"이론 생성 도구 시작 - LangSmith 추적: {is_langsmith_enabled()}")
-        
-        # 2. AI 클라이언트 관리자 가져오기
+        # 1. AI 클라이언트 관리자 가져오기
         ai_manager = get_ai_client_manager()
         
-        # 3. 현재 섹션 데이터 추출
+        # 2. 현재 섹션 데이터 추출
         current_section = _get_current_section_data(chapter_data, learning_context)
         if not current_section:
             raise ValueError("현재 섹션 데이터를 찾을 수 없습니다.")
         
-        # 4. LangChain 프롬프트 템플릿 생성
+        # 3. LangChain 프롬프트 템플릿 생성
         system_template, user_template = _create_prompt_templates(user_type, learning_context)
         
-        # 5. 프롬프트 데이터 준비
+        # 4. 프롬프트 데이터 준비
         prompt_data = _prepare_prompt_data(chapter_data, current_section, learning_context)
         
-        # 6. Messages 생성 (간소화된 구조)
+        # 5. Messages 생성
         system_message = SystemMessage(content=system_template.format(**prompt_data))
         user_message = HumanMessage(content=user_template.format(
             chapter_number=prompt_data["chapter_number"],
@@ -91,13 +59,12 @@ def theory_generation_tool(
             section_title=prompt_data["section_title"]
         ))
         
-        # 7. AI 컨텐츠 생성 (개선된 방식)
+        # 6. AI 컨텐츠 생성 (AI Client Manager가 LangSmith 추적 관리)
         generated_response = ai_manager.generate_json_content_with_messages(
-            messages=[system_message, user_message],
-            langsmith_run_id=run_id  # 고유 ID 전달
+            messages=[system_message, user_message]
         )
         
-        # 8. 응답 검증 및 표준화
+        # 7. 응답 검증 및 표준화
         if isinstance(generated_response, str):
             try:
                 generated_response = json.loads(generated_response)
@@ -107,31 +74,11 @@ def theory_generation_tool(
         
         validated_response = _validate_response(generated_response, chapter_data, current_section, user_type)
         
-        # 9. LangSmith 추적 종료 (성공)
-        if run_id and is_langsmith_enabled():
-            try:
-                end_langsmith_run(
-                    run_id,
-                    outputs={"generated_content": "이론 설명 생성 완료"}
-                )
-            except Exception as end_error:
-                logger.warning(f"LangSmith 추적 종료 실패: {end_error}")
-        
         logger.info("이론 생성 도구 완료")
         return json.dumps(validated_response, ensure_ascii=False, indent=2)
     
     except Exception as e:
         logger.error(f"AI 이론 설명 생성 실패: {str(e)}")
-        
-        # LangSmith 오류 기록
-        if run_id and is_langsmith_enabled():
-            try:
-                end_langsmith_run(
-                    run_id,
-                    outputs={"error": f"이론 생성 실패: {str(e)}"}
-                )
-            except Exception as end_error:
-                logger.warning(f"LangSmith 오류 기록 실패: {end_error}")
         
         # Fallback 응답 생성
         return _generate_fallback_response(chapter_data, user_type, str(e))

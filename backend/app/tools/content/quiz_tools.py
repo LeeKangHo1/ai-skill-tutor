@@ -8,7 +8,6 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.core.external.ai_client_manager import get_ai_client_manager, AIProvider
-from app.core.langsmith.langsmith_client import get_langsmith_client, is_langsmith_enabled
 from app.utils.common.exceptions import ExternalAPIError
 
 
@@ -21,6 +20,7 @@ def quiz_generation_tool(
     """
     AI를 활용한 사용자 맞춤형 퀴즈 생성 (LangChain + LangSmith 적용)
     State에서 퀴즈 타입을 읽어와 객관식/주관식 함수 분기 처리
+    AI Client Manager에서 LangSmith 추적 관리
     
     Args:
         chapter_data: JSON에서 로드한 챕터 데이터
@@ -34,75 +34,34 @@ def quiz_generation_tool(
     
     logger = logging.getLogger(__name__)
     
-    # LangSmith 추적 시작
-    langsmith_client = None
-    run_id = None
-    
     try:
         # 1. State에서 퀴즈 타입 추출
         quiz_type = learning_context.get("current_question_type", "multiple_choice")
         
-        # 2. LangSmith 설정
-        if is_langsmith_enabled():
-            langsmith_client = get_langsmith_client()
-            run_id = langsmith_client.create_run(
-                name="quiz_generation_tool",
-                run_type="tool",
-                inputs={
-                    "chapter_number": chapter_data.get('chapter_number', 1),
-                    "quiz_type": quiz_type,
-                    "user_type": user_type,
-                    "session_count": learning_context.get('session_count', 0),
-                    "is_retry_session": learning_context.get('is_retry_session', False)
-                }
-            )
-        
         logger.info(f"퀴즈 생성 시작 - 타입: {quiz_type}, 사용자: {user_type}")
         
-        # 3. 퀴즈 타입별 함수 분기
+        # 2. 퀴즈 타입별 함수 분기
         if quiz_type == "subjective":
             result = _generate_subjective_quiz(
-                chapter_data, user_type, learning_context, theory_content, run_id
+                chapter_data, user_type, learning_context, theory_content
             )
         else:  # multiple_choice
             result = _generate_multiple_choice_quiz(
-                chapter_data, user_type, learning_context, theory_content, run_id
-            )
-        
-        # 4. LangSmith에 성공 결과 로깅
-        if langsmith_client and run_id:
-            langsmith_client.update_run(
-                run_id,
-                outputs={"success": True, "quiz_type": quiz_type, "response_length": len(result)}
+                chapter_data, user_type, learning_context, theory_content
             )
         
         return result
             
     except Exception as e:
         logger.error(f"퀴즈 생성 실패: {str(e)}")
-        
-        # LangSmith에 오류 로깅
-        if langsmith_client and run_id:
-            langsmith_client.update_run(
-                run_id,
-                error=str(e),
-                outputs={"success": False, "error_type": type(e).__name__}
-            )
-        
         return _generate_quiz_fallback_response(chapter_data, user_type, str(e))
-    
-    finally:
-        # LangSmith 추적 종료
-        if langsmith_client and run_id:
-            langsmith_client.end_run(run_id)
 
 
 def _generate_multiple_choice_quiz(
     chapter_data: Dict[str, Any],
     user_type: str,
     learning_context: Dict[str, Any],
-    theory_content: str,
-    langsmith_run_id: str = None
+    theory_content: str
 ) -> str:
     """객관식 퀴즈 생성"""
     
@@ -130,12 +89,11 @@ def _generate_multiple_choice_quiz(
         
         logger.info(f"객관식 퀴즈 생성 - 챕터 {chapter_data.get('chapter_number', 1)}")
         
-        # AI 호출
+        # AI 호출 (AI Client Manager가 LangSmith 추적 관리)
         generated_response = ai_manager.generate_json_content_with_messages(
             messages=[system_message, user_message],
             provider=AIProvider.GEMINI,
-            temperature=0.8,
-            langsmith_run_id=langsmith_run_id
+            temperature=0.8
         )
         
         # 응답 검증
@@ -155,8 +113,7 @@ def _generate_subjective_quiz(
     chapter_data: Dict[str, Any],
     user_type: str,
     learning_context: Dict[str, Any],
-    theory_content: str,
-    langsmith_run_id: str = None
+    theory_content: str
 ) -> str:
     """주관식 퀴즈 생성"""
     
@@ -184,12 +141,11 @@ def _generate_subjective_quiz(
         
         logger.info(f"주관식 퀴즈 생성 - 챕터 {chapter_data.get('chapter_number', 1)}")
         
-        # AI 호출
+        # AI 호출 (AI Client Manager가 LangSmith 추적 관리)
         generated_response = ai_manager.generate_json_content_with_messages(
             messages=[system_message, user_message],
             provider=AIProvider.GEMINI,
-            temperature=0.8,
-            langsmith_run_id=langsmith_run_id
+            temperature=0.8
         )
         
         # 응답 검증

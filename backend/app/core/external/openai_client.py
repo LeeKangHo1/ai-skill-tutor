@@ -3,18 +3,20 @@
 import os
 import logging
 from typing import List, Dict, Any, Optional
-import openai
-from openai import OpenAI
+
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_core.messages import BaseMessage
+from langchain_core.output_parsers import JsonOutputParser
 
 from app.utils.common.exceptions import ExternalAPIError
 
 
 class OpenAIClient:
     """
-    OpenAI API 클라이언트 (임베딩 전용)
-    - 텍스트 임베딩 생성
-    - 벡터 검색을 위한 쿼리 임베딩 처리
-    - 에러 처리 및 재시도 로직
+    LangChain OpenAI 클라이언트
+    - LangChain ChatOpenAI 및 OpenAIEmbeddings 사용
+    - 자동 LangSmith 추적 지원
+    - JSON 출력 파서 통합
     """
     
     def __init__(self):
@@ -22,36 +24,168 @@ class OpenAIClient:
         self._initialize_client()
     
     def _initialize_client(self):
-        """OpenAI API 클라이언트 초기화"""
+        """LangChain OpenAI 클라이언트 초기화"""
         try:
             # 환경변수에서 API 키 로드
             api_key = os.getenv('OPENAI_API_KEY')
             if not api_key:
                 raise ValueError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
             
-            # OpenAI 클라이언트 생성
-            self.client = OpenAI(api_key=api_key)
-            
-            # 임베딩 모델 설정
+            # 모델 설정
+            self.chat_model = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
             self.embedding_model = os.getenv('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-large')
+            self.temperature = float(os.getenv('OPENAI_TEMPERATURE', '0.7'))
+            self.max_tokens = int(os.getenv('OPENAI_MAX_TOKENS', '4096'))
             
-            self.logger.info(f"OpenAI 클라이언트 초기화 완료 - 임베딩 모델: {self.embedding_model}")
+            # LangChain ChatOpenAI 모델 생성
+            self.llm = ChatOpenAI(
+                model=self.chat_model,
+                openai_api_key=api_key,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens
+            )
+            
+            # LangChain OpenAI 임베딩 모델 생성
+            self.embeddings = OpenAIEmbeddings(
+                model=self.embedding_model,
+                openai_api_key=api_key
+            )
+            
+            # JSON 출력 파서
+            self.json_parser = JsonOutputParser()
+            
+            self.logger.info(f"LangChain OpenAI 클라이언트 초기화 완료 - 채팅: {self.chat_model}, 임베딩: {self.embedding_model}")
             
         except Exception as e:
-            self.logger.error(f"OpenAI 클라이언트 초기화 실패: {str(e)}")
-            raise ExternalAPIError(f"OpenAI API 초기화 오류: {str(e)}")
+            self.logger.error(f"LangChain OpenAI 클라이언트 초기화 실패: {str(e)}")
+            raise ExternalAPIError(f"LangChain OpenAI API 초기화 오류: {str(e)}")
     
-    def create_embedding(
+    def generate_content_with_messages(
         self,
-        text: str,
-        model: Optional[str] = None
-    ) -> List[float]:
+        messages: List[BaseMessage],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> str:
         """
-        단일 텍스트에 대한 임베딩 벡터 생성
+        LangChain Messages를 사용한 컨텐츠 생성 (자동 LangSmith 추적)
+        
+        Args:
+            messages: LangChain 메시지 리스트
+            temperature: 창의성 수준
+            max_tokens: 최대 토큰 수
+            **kwargs: 추가 파라미터
+            
+        Returns:
+            생성된 텍스트 응답
+            
+        Raises:
+            ExternalAPIError: 생성 실패 시
+        """
+        try:
+            self.logger.info(f"LangChain OpenAI 호출 시작 - 메시지 수: {len(messages)}")
+            
+            # 동적으로 temperature 설정
+            if temperature is not None:
+                original_temp = self.llm.temperature
+                self.llm.temperature = temperature
+                
+                try:
+                    response = self.llm.invoke(messages)
+                finally:
+                    self.llm.temperature = original_temp
+            else:
+                response = self.llm.invoke(messages)
+            
+            if not response.content:
+                raise ExternalAPIError("LangChain OpenAI에서 빈 응답을 반환했습니다.")
+            
+            self.logger.info(f"LangChain OpenAI 응답 수신 완료 - 길이: {len(response.content)}")
+            return response.content
+                
+        except Exception as e:
+            error_msg = f"LangChain OpenAI 컨텐츠 생성 실패: {str(e)}"
+            self.logger.error(error_msg)
+            raise ExternalAPIError(error_msg)
+    
+    def generate_json_content_with_messages(
+        self,
+        messages: List[BaseMessage],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        LangChain Messages를 사용한 JSON 컨텐츠 생성 (자동 LangSmith 추적)
+        
+        Args:
+            messages: LangChain 메시지 리스트
+            temperature: 창의성 수준
+            max_tokens: 최대 토큰 수
+            **kwargs: 추가 파라미터
+            
+        Returns:
+            JSON 형태로 파싱된 응답
+            
+        Raises:
+            ExternalAPIError: 생성 실패 시
+        """
+        try:
+            from langchain_core.messages import SystemMessage
+            
+            # JSON 출력을 위한 시스템 메시지 추가/수정
+            enhanced_messages = []
+            system_found = False
+            
+            for message in messages:
+                if isinstance(message, SystemMessage):
+                    json_instruction = (
+                        f"{message.content}\n\n"
+                        "**중요**: 반드시 유효한 JSON 형식으로만 응답해주세요. "
+                        "추가적인 설명이나 마크다운 포맷팅은 사용하지 마세요."
+                    )
+                    enhanced_messages.append(SystemMessage(content=json_instruction))
+                    system_found = True
+                else:
+                    enhanced_messages.append(message)
+            
+            if not system_found:
+                json_system_msg = SystemMessage(
+                    content="반드시 유효한 JSON 형식으로만 응답해주세요. "
+                           "추가적인 설명이나 마크다운 포맷팅은 사용하지 마세요."
+                )
+                enhanced_messages.insert(0, json_system_msg)
+            
+            self.logger.info(f"LangChain OpenAI JSON 생성 시작 - 메시지 수: {len(enhanced_messages)}")
+            
+            # 동적으로 temperature 설정
+            if temperature is not None:
+                original_temp = self.llm.temperature
+                self.llm.temperature = temperature
+                
+                try:
+                    chain = self.llm | self.json_parser
+                    response = chain.invoke(enhanced_messages)
+                finally:
+                    self.llm.temperature = original_temp
+            else:
+                chain = self.llm | self.json_parser
+                response = chain.invoke(enhanced_messages)
+            
+            self.logger.info("LangChain OpenAI JSON 생성 완료")
+            return response
+                
+        except Exception as e:
+            error_msg = f"LangChain OpenAI JSON 컨텐츠 생성 실패: {str(e)}"
+            self.logger.error(error_msg)
+            raise ExternalAPIError(error_msg)
+    
+    def generate_embedding(self, text: str) -> List[float]:
+        """
+        LangChain을 사용한 임베딩 생성 (자동 LangSmith 추적)
         
         Args:
             text: 임베딩할 텍스트
-            model: 사용할 임베딩 모델 (선택사항)
             
         Returns:
             임베딩 벡터 (실수 리스트)
@@ -63,48 +197,25 @@ class OpenAIClient:
             if not text or not text.strip():
                 raise ValueError("임베딩할 텍스트가 비어있습니다.")
             
-            # 사용할 모델 결정
-            embedding_model = model if model else self.embedding_model
+            self.logger.debug(f"LangChain 임베딩 생성 시작 - 텍스트 길이: {len(text)}")
             
-            self.logger.debug(f"임베딩 생성 시작 - 텍스트 길이: {len(text)}")
+            # LangChain OpenAI 임베딩 호출 (자동 LangSmith 추적)
+            embedding_vector = self.embeddings.embed_query(text)
             
-            # OpenAI API 호출
-            response = self.client.embeddings.create(
-                input=text,
-                model=embedding_model
-            )
-            
-            # 응답 검증
-            if not response.data or len(response.data) == 0:
-                raise ExternalAPIError("OpenAI API에서 빈 임베딩 응답을 반환했습니다.")
-            
-            embedding_vector = response.data[0].embedding
-            
-            self.logger.debug(f"임베딩 생성 성공 - 벡터 차원: {len(embedding_vector)}")
+            self.logger.debug(f"LangChain 임베딩 생성 성공 - 벡터 차원: {len(embedding_vector)}")
             return embedding_vector
             
-        except openai.APIError as e:
-            error_msg = f"OpenAI API 오류: {str(e)}"
-            self.logger.error(error_msg)
-            raise ExternalAPIError(error_msg)
         except Exception as e:
-            error_msg = f"임베딩 생성 실패: {str(e)}"
+            error_msg = f"LangChain 임베딩 생성 실패: {str(e)}"
             self.logger.error(error_msg)
             raise ExternalAPIError(error_msg)
     
-    def create_batch_embeddings(
-        self,
-        texts: List[str],
-        model: Optional[str] = None,
-        batch_size: int = 100
-    ) -> List[List[float]]:
+    def generate_batch_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        여러 텍스트에 대한 배치 임베딩 생성
+        LangChain을 사용한 배치 임베딩 생성 (자동 LangSmith 추적)
         
         Args:
             texts: 임베딩할 텍스트 리스트
-            model: 사용할 임베딩 모델 (선택사항)
-            batch_size: 배치 크기 (API 제한 고려)
             
         Returns:
             임베딩 벡터들의 리스트
@@ -121,84 +232,29 @@ class OpenAIClient:
             if not valid_texts:
                 raise ValueError("유효한 텍스트가 없습니다.")
             
-            # 사용할 모델 결정
-            embedding_model = model if model else self.embedding_model
+            self.logger.info(f"LangChain 배치 임베딩 생성 시작 - 텍스트 수: {len(valid_texts)}")
             
-            self.logger.info(f"배치 임베딩 생성 시작 - 텍스트 수: {len(valid_texts)}")
+            # LangChain OpenAI 배치 임베딩 호출 (자동 LangSmith 추적)
+            embeddings = self.embeddings.embed_documents(valid_texts)
             
-            all_embeddings = []
-            
-            # 배치 단위로 처리
-            for i in range(0, len(valid_texts), batch_size):
-                batch_texts = valid_texts[i:i + batch_size]
-                
-                self.logger.debug(f"배치 {i//batch_size + 1} 처리 중 - 크기: {len(batch_texts)}")
-                
-                # OpenAI API 호출
-                response = self.client.embeddings.create(
-                    input=batch_texts,
-                    model=embedding_model
-                )
-                
-                # 응답 검증
-                if not response.data or len(response.data) != len(batch_texts):
-                    raise ExternalAPIError("배치 임베딩 응답 수가 요청과 일치하지 않습니다.")
-                
-                # 임베딩 벡터 추출
-                batch_embeddings = [item.embedding for item in response.data]
-                all_embeddings.extend(batch_embeddings)
-            
-            self.logger.info(f"배치 임베딩 생성 완료 - 총 {len(all_embeddings)}개")
-            return all_embeddings
-            
-        except openai.APIError as e:
-            error_msg = f"OpenAI 배치 API 오류: {str(e)}"
-            self.logger.error(error_msg)
-            raise ExternalAPIError(error_msg)
-        except Exception as e:
-            error_msg = f"배치 임베딩 생성 실패: {str(e)}"
-            self.logger.error(error_msg)
-            raise ExternalAPIError(error_msg)
-    
-    def create_query_embedding(self, query: str) -> List[float]:
-        """
-        검색 쿼리용 임베딩 생성 (단일 텍스트 특화)
-        
-        Args:
-            query: 검색 쿼리 텍스트
-            
-        Returns:
-            쿼리 임베딩 벡터
-            
-        Raises:
-            ExternalAPIError: API 호출 실패 시
-        """
-        try:
-            if not query or not query.strip():
-                raise ValueError("검색 쿼리가 비어있습니다.")
-            
-            # 쿼리 전처리 (필요시)
-            processed_query = query.strip()
-            
-            self.logger.debug(f"쿼리 임베딩 생성: {processed_query[:100]}...")
-            
-            return self.create_embedding(processed_query)
+            self.logger.info(f"LangChain 배치 임베딩 생성 완료 - 총 {len(embeddings)}개")
+            return embeddings
             
         except Exception as e:
-            error_msg = f"쿼리 임베딩 생성 실패: {str(e)}"
+            error_msg = f"LangChain 배치 임베딩 생성 실패: {str(e)}"
             self.logger.error(error_msg)
             raise ExternalAPIError(error_msg)
     
     def test_connection(self) -> bool:
         """
-        OpenAI API 연결 테스트
+        LangChain OpenAI 연결 테스트
         
         Returns:
             연결 성공 여부
         """
         try:
             # 간단한 텍스트로 임베딩 테스트
-            test_embedding = self.create_embedding("테스트")
+            test_embedding = self.generate_embedding("테스트")
             
             # 임베딩 벡터가 올바른 형태인지 확인
             success = (
@@ -207,11 +263,11 @@ class OpenAIClient:
                 isinstance(test_embedding[0], float)
             )
             
-            self.logger.info(f"OpenAI API 연결 테스트 {'성공' if success else '실패'}")
+            self.logger.info(f"LangChain OpenAI 연결 테스트 {'성공' if success else '실패'}")
             return success
             
         except Exception as e:
-            self.logger.error(f"OpenAI API 연결 테스트 실패: {str(e)}")
+            self.logger.error(f"LangChain OpenAI 연결 테스트 실패: {str(e)}")
             return False
     
     def get_model_info(self) -> Dict[str, Any]:
@@ -222,9 +278,12 @@ class OpenAIClient:
             모델 설정 정보
         """
         return {
+            "chat_model": self.chat_model,
             "embedding_model": self.embedding_model,
-            "provider": "OpenAI",
-            "purpose": "text embedding"
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "provider": "LangChain OpenAI",
+            "langsmith_tracing": "자동 추적 활성화"
         }
     
     def get_embedding_dimension(self) -> int:

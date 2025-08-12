@@ -4,20 +4,21 @@ import os
 import json
 import logging
 from typing import Dict, Any, Optional, List
-import google.generativeai as genai
-from google.generativeai.types import HarmCategory, HarmBlockThreshold
+
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 
 from app.utils.common.exceptions import ExternalAPIError
 
 
 class GeminiClient:
     """
-    Google Gemini API 클라이언트
-    - 프롬프트 전송 및 응답 처리
-    - 에러 처리 및 재시도 로직
-    - 설정 관리 및 안전 필터링
-    - LangChain Messages 지원 추가
+    LangChain Google Gemini 클라이언트
+    - LangChain ChatGoogleGenerativeAI 사용
+    - 자동 LangSmith 추적 지원
+    - JSON 출력 파서 통합
     """
     
     def __init__(self):
@@ -25,37 +26,35 @@ class GeminiClient:
         self._initialize_client()
     
     def _initialize_client(self):
-        """Gemini API 클라이언트 초기화"""
+        """LangChain Gemini 클라이언트 초기화"""
         try:
-            # 환경변수에서 API 키 로드 (.env.example 형식에 맞춤)
+            # 환경변수에서 API 키 로드
             api_key = os.getenv('GOOGLE_API_KEY')
             if not api_key:
                 raise ValueError("GOOGLE_API_KEY 환경변수가 설정되지 않았습니다.")
             
-            # Gemini API 설정
-            genai.configure(api_key=api_key)
-            
-            # 모델 설정 로드 (.env.example 형식에 맞춤)
+            # 모델 설정 로드
             self.model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash-exp')
             self.max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', '8192'))
             self.temperature = float(os.getenv('GEMINI_TEMPERATURE', '0.7'))
             
-            # 모델 인스턴스 생성
-            self.model = genai.GenerativeModel(
-                model_name=self.model_name,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                }
+            # LangChain ChatGoogleGenerativeAI 모델 생성
+            self.llm = ChatGoogleGenerativeAI(
+                model=self.model_name,
+                google_api_key=api_key,
+                temperature=self.temperature,
+                max_output_tokens=self.max_tokens,
+                convert_system_message_to_human=True  # 시스템 메시지를 휴먼 메시지로 변환
             )
             
-            self.logger.info(f"Gemini 클라이언트 초기화 완료 - 모델: {self.model_name}")
+            # JSON 출력 파서
+            self.json_parser = JsonOutputParser()
+            
+            self.logger.info(f"LangChain Gemini 클라이언트 초기화 완료 - 모델: {self.model_name}")
             
         except Exception as e:
-            self.logger.error(f"Gemini 클라이언트 초기화 실패: {str(e)}")
-            raise ExternalAPIError(f"Gemini API 초기화 오류: {str(e)}")
+            self.logger.error(f"LangChain Gemini 클라이언트 초기화 실패: {str(e)}")
+            raise ExternalAPIError(f"LangChain Gemini API 초기화 오류: {str(e)}")
     
     def generate_content(
         self,
@@ -65,7 +64,7 @@ class GeminiClient:
         max_tokens: Optional[int] = None
     ) -> str:
         """
-        Gemini API를 통해 컨텐츠 생성
+        LangChain을 통해 컨텐츠 생성 (자동 LangSmith 추적)
         
         Args:
             prompt: 사용자 프롬프트
@@ -80,38 +79,26 @@ class GeminiClient:
             ExternalAPIError: API 호출 실패 시
         """
         try:
-            # 파라미터 설정
-            gen_temperature = temperature if temperature is not None else self.temperature
-            gen_max_tokens = max_tokens if max_tokens is not None else self.max_tokens
-            
-            # 시스템 지시사항이 있는 경우 프롬프트에 포함
+            # 메시지 생성
+            messages = []
             if system_instruction:
-                full_prompt = f"{system_instruction}\n\n{prompt}"
-            else:
-                full_prompt = prompt
+                messages.append(SystemMessage(content=system_instruction))
+            messages.append(HumanMessage(content=prompt))
             
-            self.logger.info(f"Gemini API 호출 시작 - 모델: {self.model_name}")
-            self.logger.debug(f"프롬프트 길이: {len(full_prompt)}")
+            self.logger.info(f"LangChain Gemini 호출 시작 - 모델: {self.model_name}")
             
-            # Gemini API 호출
-            response = self.model.generate_content(
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=gen_temperature,
-                    max_output_tokens=gen_max_tokens,
-                    candidate_count=1
-                )
-            )
+            # LangChain을 통한 호출 (자동 LangSmith 추적)
+            response = self.llm.invoke(messages)
             
             # 응답 검증
-            if not response.text:
-                raise ExternalAPIError("Gemini API에서 빈 응답을 반환했습니다.")
+            if not response.content:
+                raise ExternalAPIError("LangChain Gemini에서 빈 응답을 반환했습니다.")
             
-            self.logger.info(f"Gemini API 응답 수신 완료 - 길이: {len(response.text)}")
-            return response.text
+            self.logger.info(f"LangChain Gemini 응답 수신 완료 - 길이: {len(response.content)}")
+            return response.content
             
         except Exception as e:
-            error_msg = f"Gemini API 컨텐츠 생성 실패: {str(e)}"
+            error_msg = f"LangChain Gemini 컨텐츠 생성 실패: {str(e)}"
             self.logger.error(error_msg)
             raise ExternalAPIError(error_msg)
     
@@ -123,7 +110,7 @@ class GeminiClient:
         **kwargs
     ) -> str:
         """
-        LangChain Messages를 사용한 컨텐츠 생성
+        LangChain Messages를 직접 사용한 컨텐츠 생성 (자동 LangSmith 추적)
         
         Args:
             messages: LangChain 메시지 리스트 (SystemMessage, HumanMessage 등)
@@ -138,29 +125,33 @@ class GeminiClient:
             ExternalAPIError: 생성 실패 시
         """
         try:
-            # Messages를 기존 인터페이스로 변환
-            system_instruction = None
-            user_prompt = ""
+            self.logger.info(f"LangChain Gemini Messages 호출 시작 - 메시지 수: {len(messages)}")
             
-            for message in messages:
-                if isinstance(message, SystemMessage):
-                    system_instruction = message.content
-                elif isinstance(message, HumanMessage):
-                    user_prompt = message.content
+            # 동적으로 temperature 설정
+            if temperature is not None:
+                # 임시로 temperature 변경
+                original_temp = self.llm.temperature
+                self.llm.temperature = temperature
+                
+                try:
+                    # LangChain을 통한 직접 호출 (자동 LangSmith 추적)
+                    response = self.llm.invoke(messages)
+                finally:
+                    # temperature 복원
+                    self.llm.temperature = original_temp
+            else:
+                # LangChain을 통한 직접 호출 (자동 LangSmith 추적)
+                response = self.llm.invoke(messages)
             
-            if not user_prompt:
-                raise ExternalAPIError("유효한 사용자 메시지가 없습니다.")
+            # 응답 검증
+            if not response.content:
+                raise ExternalAPIError("LangChain Gemini에서 빈 응답을 반환했습니다.")
             
-            # 기존 generate_content 메서드 활용
-            return self.generate_content(
-                prompt=user_prompt,
-                system_instruction=system_instruction,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
+            self.logger.info(f"LangChain Gemini Messages 응답 수신 완료 - 길이: {len(response.content)}")
+            return response.content
                 
         except Exception as e:
-            error_msg = f"Messages 기반 컨텐츠 생성 실패: {str(e)}"
+            error_msg = f"LangChain Messages 기반 컨텐츠 생성 실패: {str(e)}"
             self.logger.error(error_msg)
             raise ExternalAPIError(error_msg)
     
@@ -233,7 +224,7 @@ class GeminiClient:
         **kwargs
     ) -> Dict[str, Any]:
         """
-        LangChain Messages를 사용한 JSON 컨텐츠 생성
+        LangChain Messages를 사용한 JSON 컨텐츠 생성 (자동 LangSmith 추적)
         
         Args:
             messages: LangChain 메시지 리스트 (SystemMessage, HumanMessage 등)
@@ -248,31 +239,71 @@ class GeminiClient:
             ExternalAPIError: 생성 실패 시
         """
         try:
-            # Messages를 기존 인터페이스로 변환
-            system_instruction = None
-            user_prompt = ""
+            # JSON 출력을 위한 시스템 메시지 추가/수정
+            enhanced_messages = []
+            system_found = False
             
             for message in messages:
                 if isinstance(message, SystemMessage):
-                    system_instruction = message.content
-                elif isinstance(message, HumanMessage):
-                    user_prompt = message.content
+                    # 기존 시스템 메시지에 JSON 지시사항 추가
+                    json_instruction = (
+                        f"{message.content}\n\n"
+                        "**중요**: 반드시 유효한 JSON 형식으로만 응답해주세요. "
+                        "추가적인 설명이나 마크다운 포맷팅은 사용하지 마세요."
+                    )
+                    enhanced_messages.append(SystemMessage(content=json_instruction))
+                    system_found = True
+                else:
+                    enhanced_messages.append(message)
             
-            if not user_prompt:
-                raise ExternalAPIError("유효한 사용자 메시지가 없습니다.")
+            # 시스템 메시지가 없으면 JSON 전용 시스템 메시지 추가
+            if not system_found:
+                json_system_msg = SystemMessage(
+                    content="반드시 유효한 JSON 형식으로만 응답해주세요. "
+                           "추가적인 설명이나 마크다운 포맷팅은 사용하지 마세요."
+                )
+                enhanced_messages.insert(0, json_system_msg)
             
-            # 기존 generate_json_content 메서드 활용
-            return self.generate_json_content(
-                prompt=user_prompt,
-                system_instruction=system_instruction,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
+            self.logger.info(f"LangChain Gemini JSON 생성 시작 - 메시지 수: {len(enhanced_messages)}")
+            
+            # 동적으로 temperature 설정
+            if temperature is not None:
+                original_temp = self.llm.temperature
+                self.llm.temperature = temperature
+                
+                try:
+                    # LangChain + JSON Parser 체인 생성 및 실행 (자동 LangSmith 추적)
+                    chain = self.llm | self.json_parser
+                    response = chain.invoke(enhanced_messages)
+                finally:
+                    self.llm.temperature = original_temp
+            else:
+                # LangChain + JSON Parser 체인 생성 및 실행 (자동 LangSmith 추적)
+                chain = self.llm | self.json_parser
+                response = chain.invoke(enhanced_messages)
+            
+            self.logger.info("LangChain Gemini JSON 생성 완료")
+            return response
                 
         except Exception as e:
-            error_msg = f"Messages 기반 JSON 컨텐츠 생성 실패: {str(e)}"
+            error_msg = f"LangChain JSON 컨텐츠 생성 실패: {str(e)}"
             self.logger.error(error_msg)
-            raise ExternalAPIError(error_msg)
+            
+            # Fallback: 일반 텍스트로 생성 후 JSON 파싱 시도
+            try:
+                self.logger.info("JSON 파싱 실패, 일반 텍스트로 재시도")
+                text_response = self.generate_content_with_messages(messages, temperature, max_tokens)
+                
+                # JSON 추출 시도
+                cleaned_response = self._extract_json_from_response(text_response)
+                parsed_response = json.loads(cleaned_response)
+                
+                self.logger.info("Fallback JSON 파싱 성공")
+                return parsed_response
+                
+            except Exception as fallback_error:
+                self.logger.error(f"Fallback JSON 파싱도 실패: {str(fallback_error)}")
+                raise ExternalAPIError(f"JSON 컨텐츠 생성 완전 실패: {error_msg}")
     
     def _extract_json_from_response(self, response_text: str) -> str:
         """
@@ -303,7 +334,7 @@ class GeminiClient:
     
     def test_connection(self) -> bool:
         """
-        Gemini API 연결 테스트
+        LangChain Gemini 연결 테스트
         
         Returns:
             연결 성공 여부
@@ -315,11 +346,11 @@ class GeminiClient:
             )
             
             success = "성공" in test_response or "success" in test_response.lower()
-            self.logger.info(f"Gemini API 연결 테스트 {'성공' if success else '실패'}")
+            self.logger.info(f"LangChain Gemini 연결 테스트 {'성공' if success else '실패'}")
             return success
             
         except Exception as e:
-            self.logger.error(f"Gemini API 연결 테스트 실패: {str(e)}")
+            self.logger.error(f"LangChain Gemini 연결 테스트 실패: {str(e)}")
             return False
     
     def get_model_info(self) -> Dict[str, Any]:
@@ -333,5 +364,6 @@ class GeminiClient:
             "model_name": self.model_name,
             "max_tokens": self.max_tokens,
             "temperature": self.temperature,
-            "provider": "Google Gemini"
+            "provider": "LangChain Google Gemini",
+            "langsmith_tracing": "자동 추적 활성화"
         }
