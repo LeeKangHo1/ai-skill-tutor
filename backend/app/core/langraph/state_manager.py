@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import json
 import copy
 
-# TutorState 클래스 정의 (PRD v1.3 기준)
+# TutorState 클래스 정의 (PRD v1.3 기준 + 섹션 관리 추가)
 class TutorState(TypedDict):
     # === 기본 사용자 정보 ===
     user_id: int
@@ -14,6 +14,7 @@ class TutorState(TypedDict):
     
     # === 학습 진행 상태 ===
     current_chapter: int
+    current_section: int  # 현재 섹션 번호 (1학습 세션 = 1섹션)
     current_agent: str  # 현재 활성화된 에이전트 이름 (스네이크 케이스)
     
     # === 학습 세션 진행 단계 ===
@@ -23,7 +24,7 @@ class TutorState(TypedDict):
     ui_mode: str  # "chat": 채팅 모드, "quiz": 퀴즈 모드
     
     # === 퀴즈 관련 정보 ===
-    current_question_type: str        # "multiple_choice": 객관식, "subjective": 주관식
+    current_question_type: str        # "multiple_choice": 객관식, "subjective": 주관식 (JSON에서 로드)
     current_question_number: int      # 문제 번호 (기본키)
     current_question_content: str     # 현재 문제 내용
     current_question_answer: str      # 사용자 답변
@@ -69,6 +70,7 @@ class StateManager:
             
             # 학습 진행 상태
             current_chapter=1,
+            current_section=1,
             current_agent="session_manager",
             
             # 학습 세션 진행 단계
@@ -105,7 +107,7 @@ class StateManager:
             recent_sessions_summary=[]
         )
     
-    def initialize_state(self, user_id: int, user_type: str, current_chapter: int = 1) -> TutorState:
+    def initialize_state(self, user_id: int, user_type: str, current_chapter: int = 1, current_section: int = 1) -> TutorState:
         """
         새로운 사용자 State 초기화
         
@@ -113,6 +115,7 @@ class StateManager:
             user_id: 사용자 ID
             user_type: 사용자 유형 ("beginner" or "advanced")
             current_chapter: 시작할 챕터 번호 (기본값: 1)
+            current_section: 시작할 섹션 번호 (기본값: 1)
         
         Returns:
             초기화된 TutorState
@@ -122,9 +125,32 @@ class StateManager:
             "user_id": user_id,
             "user_type": user_type,
             "current_chapter": current_chapter,
+            "current_section": current_section,
             "session_start_time": datetime.now()
         })
         return state
+    
+    def update_section_progress(self, state: TutorState, next_section: int = None, next_chapter: int = None) -> TutorState:
+        """
+        섹션/챕터 진행 업데이트
+        
+        Args:
+            state: 현재 State
+            next_section: 다음 섹션 번호 (선택사항)
+            next_chapter: 다음 챕터 번호 (선택사항)
+        
+        Returns:
+            업데이트된 State
+        """
+        updated_state = copy.deepcopy(state)
+        
+        if next_chapter is not None:
+            updated_state["current_chapter"] = next_chapter
+            updated_state["current_section"] = 1  # 새 챕터 시작 시 섹션 1부터
+        elif next_section is not None:
+            updated_state["current_section"] = next_section
+        
+        return updated_state
     
     def update_agent_transition(self, state: TutorState, new_agent: str) -> TutorState:
         """
@@ -326,10 +352,71 @@ class StateManager:
         if new_chapter:
             updated_state.update({
                 "current_session_count": 0,
+                "current_section": 1,
                 "current_question_content": ""
             })
         
         return updated_state
+    
+    def get_quiz_type_from_section(self, state: TutorState, chapter_data: Dict[str, Any]) -> str:
+        """
+        현재 섹션의 퀴즈 타입 반환
+        
+        Args:
+            state: 현재 State
+            chapter_data: 전체 챕터 데이터
+        
+        Returns:
+            퀴즈 타입 ("multiple_choice" or "subjective")
+        """
+        current_section = self.get_current_section_data(state, chapter_data)
+        quiz_data = current_section.get('quiz', {})
+        
+        # JSON에서 quiz_type 필드를 읽어옴 (기본값: multiple_choice)
+        quiz_type = quiz_data.get('quiz_type', 'multiple_choice')
+        
+        # 유효한 타입인지 검증
+        valid_types = ['multiple_choice', 'subjective']
+        if quiz_type not in valid_types:
+            quiz_type = 'multiple_choice'  # 기본값으로 fallback
+        
+        return quiz_type
+    
+    def update_quiz_type_from_section(self, state: TutorState, chapter_data: Dict[str, Any]) -> TutorState:
+        """
+        현재 섹션의 퀴즈 타입으로 State 업데이트
+        
+        Args:
+            state: 현재 State
+            chapter_data: 전체 챕터 데이터
+        
+        Returns:
+            퀴즈 타입이 업데이트된 State
+        """
+        quiz_type = self.get_quiz_type_from_section(state, chapter_data)
+        
+        updated_state = copy.deepcopy(state)
+        updated_state["current_question_type"] = quiz_type
+        
+        return updated_state
+        """
+        현재 섹션 데이터 반환
+        
+        Args:
+            state: 현재 State
+            chapter_data: 전체 챕터 데이터
+        
+        Returns:
+            현재 섹션 데이터
+        """
+        sections = chapter_data.get('sections', [])
+        current_section_index = state["current_section"] - 1  # 0-based index
+        
+        if 0 <= current_section_index < len(sections):
+            return sections[current_section_index]
+        
+        # 섹션을 찾을 수 없으면 첫 번째 섹션 반환
+        return sections[0] if sections else {}
     
     def to_dict(self, state: TutorState) -> Dict[str, Any]:
         """
@@ -380,7 +467,7 @@ class StateManager:
             유효성 여부
         """
         required_fields = [
-            "user_id", "user_type", "current_chapter", "current_agent",
+            "user_id", "user_type", "current_chapter", "current_section", "current_agent",
             "session_progress_stage", "ui_mode"
         ]
         
@@ -398,6 +485,8 @@ class StateManager:
         if state["session_progress_stage"] not in valid_progress_stages:
             return False
         if state["ui_mode"] not in valid_ui_modes:
+            return False
+        if state["current_chapter"] < 1 or state["current_section"] < 1:
             return False
         
         return True
