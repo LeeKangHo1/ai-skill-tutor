@@ -7,6 +7,7 @@ backend/
 │   ├── config/                       # 설정 파일들
 │   │   ├── __init__.py
 │   │   ├── base.py                   # 기본 설정
+│   │   ├── db_config.py              # 데이터베이스 설정 전용
 │   │   ├── development.py            # 개발 환경 설정
 │   │   ├── production.py             # 운영 환경 설정
 │   │   └── testing.py                # 테스트 환경 설정
@@ -81,35 +82,35 @@ backend/
 │   │       ├── dashboard_service.py  # 대시보드 통계
 │   │       └── report_service.py     # 리포트 생성
 │   ├── agents/                       # LangGraph 에이전트 시스템 (부분 구현)
-│   │   ├── __init__.py               # ✅ 수정됨: 실제 구조에 맞춰 import 정리
-│   │   ├── base/                     # 기본 에이전트 구성 요소
-│   │   │   ├── __init__.py           # ✅ 구현됨: BaseAgent, AgentConfig 등 export
-│   │   │   ├── base_agent.py         # ✅ 구현됨: 기본 에이전트 클래스
-│   │   │   └── agent_config.py       # ✅ 구현됨: 에이전트 설정
+│   │   ├── __init__.py               # 
+│   │   ├── base/                     # 기본 에이전트 구성 요소 (미구현)
+│   │   │   ├── __init__.py           # BaseAgent, AgentConfig 등 export
+│   │   │   ├── base_agent.py         # 기본 에이전트 클래스
+│   │   │   └── agent_config.py       # 에이전트 설정
 │   │   ├── session_manager/          # 세션 관리 에이전트
-│   │   │   ├── __init__.py           # ✅ 수정됨: SessionManager, SessionHandlers export
-│   │   │   ├── agent.py              # SessionManager 에이전트
-│   │   │   └── handlers.py           # 세션 처리 핸들러
+│   │   │   ├── __init__.py           # 
+│   │   │   ├── session_manager_agent.py # SessionManager 에이전트
+│   │   │   └── session_handlers.py   # 세션 처리 핸들러
 │   │   ├── learning_supervisor/      # 학습 감독 에이전트
-│   │   │   ├── __init__.py           # ✅ 수정됨: LearningSupervisor 등 export
-│   │   │   ├── agent.py              # LearningSupervisor 에이전트
-│   │   │   ├── router.py             # 라우팅 로직
+│   │   │   ├── __init__.py           # 
+│   │   │   ├── learning_supervisor_agent.py # LearningSupervisor 에이전트
+│   │   │   ├── supervisor_router.py  # 라우팅 로직
 │   │   │   └── response_generator.py # 응답 생성기
 │   │   ├── theory_educator/          # 이론 교육 에이전트
-│   │   │   ├── __init__.py           # ✅ 수정됨: TheoryEducator만 export (간소화)
-│   │   │   └── agent.py              # TheoryEducator 에이전트
+│   │   │   ├── __init__.py           # 
+│   │   │   └── theory_educator_agent.py # theoryEducator 에이전트
 │   │   ├── quiz_generator/           # 퀴즈 생성 에이전트
-│   │   │   ├── __init__.py           # ✅ 수정됨: QuizGenerator만 export (간소화)
-│   │   │   └── agent.py              # QuizGenerator 에이전트
+│   │   │   ├── __init__.py           # 
+│   │   │   └── quiz_generator_agent.py # QuizGenerator 에이전트
 │   │   ├── evaluation_feedback/      # 평가 피드백 에이전트
-│   │   │   ├── __init__.py           # ✅ 수정됨: EvaluationFeedbackAgent만 export (간소화)
-│   │   │   └── agent.py              # EvaluationFeedbackAgent
+│   │   │   ├── __init__.py           # 
+│   │   │   └── evaluation_feedback_agent.py # EvaluationFeedbackAgent
 │   │   └── qna_resolver/             # 질문 답변 에이전트
-│   │       ├── __init__.py           # ✅ 수정됨: QnAResolver 등 export
-│   │       ├── agent.py              # QnAResolver 에이전트
+│   │       ├── __init__.py           # 
+│   │       ├── qna_resolver_agent.py # QnAResolver 에이전트
 │   │       ├── query_processor.py    # 질문 처리기
 │   │       └── answer_generator.py   # 답변 생성기
-│   ├── tools/                        # LangGraph 도구 함수들 (미구현)
+│   ├── tools/                        # LangGraph 도구 함수들 (부분 구현)
 │   │   ├── __init__.py
 │   │   ├── content/                  # 컨텐츠 생성 도구
 │   │   │   ├── __init__.py
@@ -141,6 +142,8 @@ backend/
 │   │   │   ├── __init__.py
 │   │   │   ├── jwt_handler.py        # ✅ 구현됨: JWT 토큰 생성/검증/데코레이터
 │   │   │   └── password_handler.py   # ✅ 구현됨: bcrypt 비밀번호 해시화/검증
+│   │   ├── logging/                  # ✅ 신규: 로깅 유틸리티
+│   │   │   └── __init__.py
 │   │   ├── validation/               # 검증 유틸리티
 │   │   │   ├── __init__.py
 │   │   │   ├── input_validators.py   # 입력 검증
@@ -149,29 +152,34 @@ backend/
 │   │   │   ├── __init__.py
 │   │   │   ├── formatter.py          # ✅ 구현됨: 표준화된 응답 포맷터
 │   │   │   └── error_formatter.py    # ✅ 구현됨: 에러 응답 전용 포맷터
-│   │   └── common/                   # ✅ 공통 유틸리티 (완성됨)
+│   │   └── common/                   # 공통 유틸리티
 │   │       ├── __init__.py
-│   │       ├── exceptions.py         # ✅ 구현됨: 계층적 커스텀 예외 클래스
+│   │       ├── exceptions.py         # 일부 구현: 계층적 커스텀 예외 클래스
 │   │       ├── constants.py          # 상수 정의
 │   │       └── helpers.py            # 헬퍼 함수들
-│   ├── core/                         # 핵심 시스템 구성 요소 (미구현)
+│   ├── core/                         # 핵심 시스템 구성 요소 (부분 구현)
 │   │   ├── __init__.py
-│   │   ├── langraph/                 # LangGraph 관련
+│   │   ├── langraph/                 # ✅ LangGraph 관련 (구현됨)
 │   │   │   ├── __init__.py
 │   │   │   ├── workflow.py           # 워크플로우 정의
-│   │   │   ├── state_manager.py      # State 관리 시스템
+│   │   │   ├── state_manager.py      # ✅ 구현됨: State 관리 시스템
 │   │   │   └── graph_builder.py      # 그래프 빌더
-│   │   ├── database/                 # 데이터베이스 관련
+│   │   ├── langsmith/                # ✅ 신규: LangSmith 연동 (구현됨)
 │   │   │   ├── __init__.py
-│   │   │   ├── mysql_client.py       # MySQL 클라이언트
-│   │   │   └── migration_runner.py   # 마이그레이션 실행기
-│   │   ├── external/                 # 외부 서비스 연동
+│   │   │   └── langsmith_client.py   # ✅ 구현됨: LangSmith 클라이언트
+│   │   ├── database/                 # ✅ 데이터베이스 관련 (구현됨)
 │   │   │   ├── __init__.py
-│   │   │   ├── vector_db.py          # ChromaDB 연동
-│   │   │   └── chatgpt_client.py     # ChatGPT API 클라이언트
+│   │   │   ├── mysql_client.py       # ✅ 구현됨: MySQL 클라이언트
+│   │   │   └── migration_runner.py   # ✅ 구현됨: 마이그레이션 실행기
+│   │   ├── external/                 # 외부 서비스 연동 (일부 구현)
+│   │   │   ├── __init__.py
+│   │   │   ├── ai_client_manager.py  # ✅ 구현됨: AI 클라이언트 매니저
+│   │   │   ├── gemini_client.py      # ✅ 구현됨: Gemini API 클라이언트
+│   │   │   ├── openai_client.py      # ✅ 구현됨: OpenAI API 클라이언트
+│   │   │   └── vector_db.py          # ChromaDB 연동
 │   │   └── cache/                    # 캐시 관련
 │   │       ├── __init__.py
-│   │       └── redis_client.py       # Redis 클라이언트 (선택사항)
+│   │       └── redis_client.py       # Redis 클라이언트
 │   └── middleware/                   # ✅ 미들웨어 (부분 구현)
 │       ├── __init__.py               # ✅ 구현됨: 미들웨어 초기화 함수
 │       ├── auth/                     # ✅ 인증 미들웨어 (완성됨)
@@ -189,27 +197,21 @@ backend/
 │           └── exception_mapper.py   # 예외 매핑
 ├── tests/                            # 테스트 코드
 │   ├── __init__.py
-│   ├── test_auth.py                  # 인증 테스트
-│   ├── test_agents.py                # 에이전트 테스트
-│   ├── test_services.py              # 서비스 테스트
-│   ├── test_diagnosis.py             # ✅ 신규: 진단 시스템 테스트
-│   └── test_tools.py                 # 도구 테스트
+│   └── fixtures/                     # ✅ 신규: 테스트 픽스처
+│       └── __init__.py
 ├── migrations/                       # 데이터베이스 마이그레이션
-│   ├── 001_initial_schema.sql        # 초기 스키마
-│   ├── 002_add_indexes.sql           # 인덱스 추가
-│   └── 003_user_progress.sql         # 사용자 진행 상태
+│   ├── create_schema.py              # ✅ 신규: 스키마 생성 스크립트
+│   └── schema.sql                    # ✅ 신규: SQL 스키마 파일
 ├── data/                            # 정적 데이터
-│   ├── diagnosis_questions.json      # ✅ 구현됨: 진단 퀴즈 문항 (option value 수정)
-│   ├── chapter_contents.json         # 챕터 내용
-│   └── quiz_templates.json           # 퀴즈 템플릿
+│   ├── chapters/                     # ✅ 신규: 챕터별 데이터
+│   ├── contents_beginner.md          # ✅ 신규: 초급자용 컨텐츠
+│   └── diagnosis_questions.json      # ✅ 구현됨: 진단 퀴즈 문항 (option value 수정)
 ├── logs/                            # 로그 파일
 │   ├── app.log                      # 애플리케이션 로그
 │   ├── error.log                    # 에러 로그
 │   └── access.log                   # 액세스 로그
 ├── scripts/                         # 스크립트
-│   ├── init_db.py                   # DB 초기화 스크립트
-│   ├── seed_data.py                 # 시드 데이터 생성
-│   └── backup_db.py                 # DB 백업 스크립트
+│   └── .gitkeep                     # 현재: 빈 폴더 유지용 파일
 ├── requirements.txt                  # Python 패키지 의존성
 ├── .env.example                     # 환경변수 예시 파일
 ├── .env                            # 환경변수 파일 (gitignore)
