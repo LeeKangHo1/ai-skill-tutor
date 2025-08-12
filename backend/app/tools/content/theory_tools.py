@@ -8,7 +8,13 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.core.external.ai_client_manager import get_ai_client_manager, AIProvider
-from app.core.langsmith.langsmith_client import get_langsmith_client, is_langsmith_enabled
+from app.core.langsmith.langsmith_client import (
+    get_langsmith_client, 
+    is_langsmith_enabled,
+    create_langsmith_run,
+    update_langsmith_run,
+    end_langsmith_run
+)
 from app.utils.common.exceptions import ExternalAPIError
 
 
@@ -35,52 +41,56 @@ def theory_generation_tool(
     logger = logging.getLogger(__name__)
     
     # LangSmith 추적 시작
-    langsmith_client = None
     run_id = None
+    if is_langsmith_enabled():
+        run_id = create_langsmith_run(
+            name="theory_generation_tool",
+            run_type="tool",
+            inputs={
+                "chapter_number": chapter_data.get('chapter_number', 1),
+                "user_type": user_type,
+                "current_section": learning_context.get('current_section', 1),
+                "session_count": learning_context.get('session_count', 0),
+                "is_retry_session": learning_context.get('is_retry_session', False)
+            }
+        )
+        logger.info(f"LangSmith 추적 시작: {run_id}")
+    
+    logger.info(f"이론 생성 도구 시작 - LangSmith 추적: {is_langsmith_enabled()}")
     
     try:
-        # 1. LangSmith 설정
-        if is_langsmith_enabled():
-            langsmith_client = get_langsmith_client()
-            run_id = langsmith_client.create_run(
-                name="theory_generation_tool",
-                run_type="tool",
-                inputs={
-                    "chapter_number": chapter_data.get('chapter_number', 1),
-                    "user_type": user_type,
-                    "session_count": learning_context.get('session_count', 0),
-                    "is_retry_session": learning_context.get('is_retry_session', False)
-                }
-            )
-        
-        # 2. AI 클라이언트 관리자 가져오기
+        # 1. AI 클라이언트 관리자 가져오기
         ai_manager = get_ai_client_manager()
         
-        # 3. 현재 섹션 데이터 추출
+        # 2. 현재 섹션 데이터 추출
         current_section = _get_current_section_data(chapter_data, learning_context)
         if not current_section:
             raise ValueError("현재 섹션 데이터를 찾을 수 없습니다.")
         
-        # 4. LangChain 프롬프트 템플릿 생성
+        # 3. LangChain 프롬프트 템플릿 생성
         system_template, user_template = _create_prompt_templates(user_type, learning_context)
         
-        # 5. 프롬프트 데이터 준비
+        # 4. 프롬프트 데이터 준비
         prompt_data = _prepare_prompt_data(chapter_data, current_section, learning_context)
         
-        # 6. 메시지 생성
+        # 5. 메시지 생성
         system_message = SystemMessage(content=system_template.format(**prompt_data))
         user_message = HumanMessage(content=user_template.format(**prompt_data))
         
         logger.info(f"AI 이론 설명 생성 - 챕터 {chapter_data.get('chapter_number', 1)} 섹션 {current_section.get('section_number', 1)} ({user_type})")
         
-        # 7. LangSmith에 프롬프트 로깅
-        if langsmith_client and run_id:
-            langsmith_client.update_run(
+        # LangSmith에 프롬프트 정보 업데이트
+        if run_id:
+            update_langsmith_run(
                 run_id,
-                outputs={"prompt_created": True, "system_message_length": len(system_message.content)}
+                outputs={
+                    "system_prompt_length": len(system_message.content),
+                    "user_prompt_length": len(user_message.content),
+                    "ai_provider": "gemini"
+                }
             )
         
-        # 8. AI 호출 (LangChain Messages 사용)
+        # 6. AI 호출
         generated_response = ai_manager.generate_json_content_with_messages(
             messages=[system_message, user_message],
             provider=AIProvider.GEMINI,
@@ -88,7 +98,7 @@ def theory_generation_tool(
             langsmith_run_id=run_id
         )
         
-        # 9. 응답 검증 및 보완
+        # 7. 응답 검증 및 보완
         validated_response = _validate_response(
             generated_response, 
             chapter_data, 
@@ -96,9 +106,9 @@ def theory_generation_tool(
             user_type
         )
         
-        # 10. LangSmith에 성공 결과 로깅
-        if langsmith_client and run_id:
-            langsmith_client.update_run(
+        # LangSmith에 성공 결과 업데이트
+        if run_id:
+            update_langsmith_run(
                 run_id,
                 outputs={
                     "success": True,
@@ -109,25 +119,30 @@ def theory_generation_tool(
             )
         
         logger.info("AI 이론 설명 생성 완료")
+        
+        # LangSmith 추적 종료
+        if run_id:
+            end_langsmith_run(
+                run_id,
+                outputs={
+                    "final_status": "completed",
+                    "content_type": "theory"
+                }
+            )
+        
         return json.dumps(validated_response, ensure_ascii=False, indent=2)
         
     except Exception as e:
         logger.error(f"AI 이론 설명 생성 실패: {str(e)}")
         
-        # LangSmith에 오류 로깅
-        if langsmith_client and run_id:
-            langsmith_client.update_run(
+        # LangSmith에 오류 기록
+        if run_id:
+            end_langsmith_run(
                 run_id,
-                error=str(e),
-                outputs={"success": False, "error_type": type(e).__name__}
+                error=f"theory_generation_tool 실패: {str(e)}"
             )
         
         return _generate_fallback_response(chapter_data, user_type, str(e))
-    
-    finally:
-        # LangSmith 추적 종료
-        if langsmith_client and run_id:
-            langsmith_client.end_run(run_id)
 
 
 def _create_prompt_templates(user_type: str, learning_context: Dict[str, Any]) -> tuple:

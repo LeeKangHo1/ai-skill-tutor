@@ -4,8 +4,8 @@
 사용자의 질문에 대한 답변을 제공하는 에이전트입니다.
 """
 
-from .qna_resolver_agent import QnAResolver
+from .qna_resolver_agent import QnAResolverAgent
 from .query_processor import QueryProcessor
 from .answer_generator import AnswerGenerator
 
-__all__ = ['QnAResolver', 'QueryProcessor', 'AnswerGenerator']
+__all__ = ['QnAResolverAgent', 'QueryProcessor', 'AnswerGenerator']

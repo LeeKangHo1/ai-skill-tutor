@@ -25,15 +25,15 @@ class GeminiClient:
     def _initialize_client(self):
         """Gemini API 클라이언트 초기화"""
         try:
-            # 환경변수에서 API 키 로드
-            api_key = os.getenv('GEMINI_API_KEY')
+            # 환경변수에서 API 키 로드 (.env.example 형식에 맞춤)
+            api_key = os.getenv('GOOGLE_API_KEY')
             if not api_key:
-                raise ValueError("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
+                raise ValueError("GOOGLE_API_KEY 환경변수가 설정되지 않았습니다.")
             
             # Gemini API 설정
             genai.configure(api_key=api_key)
             
-            # 모델 설정 로드
+            # 모델 설정 로드 (.env.example 형식에 맞춤)
             self.model_name = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
             self.max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', '8192'))
             self.temperature = float(os.getenv('GEMINI_TEMPERATURE', '0.7'))
