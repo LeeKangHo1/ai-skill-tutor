@@ -1,6 +1,22 @@
 # 구현 로그 (Implementation Log)
 
-## 📅 2025년 8월 12일 수정 내용
+## 📅 2025년 8월 12일 - LangChain 모델 전환 및 LangSmith 자동 추적 통합
+
+### 🎯 주요 문제 해결
+- **LangSmith pending 상태 문제**: 모든 run이 pending으로 남아있던 문제 해결
+- **중복 추적 제거**: 수동 LangSmith 추적과 LangChain 자동 추적 간 충돌 해결
+- **코드 간소화**: 복잡한 수동 추적 로직을 LangChain 자동 추적으로 대체
+
+### LangChain 모델 전환
+- **Gemini 클라이언트**: `google.generativeai` → `ChatGoogleGenerativeAI` 전환
+- **OpenAI 클라이언트**: 직접 API 호출 → `ChatOpenAI` + `OpenAIEmbeddings` 전환
+- **자동 추적**: 모든 LLM 호출이 LangChain을 통해 자동으로 LangSmith에 추적됨
+
+### 🛠️ 주요 수정 파일
+- **theory_tools.py / quiz_tools.py**: 중복 LangSmith 추적 코드 제거, AI Client Manager만 호출
+- **gemini_client.py / openai_client.py**: LangChain 모델로 전환, JsonOutputParser 통합
+- **ai_client_manager.py**: 수동 추적 로직 제거, 클라이언트 직접 호출로 간소화
+- **langsmith_client.py**: 환경변수 관리만 담당, 수동 추적 관련 메서드 제거
 
 ### 🔄 State 구조 개선
 - **섹션 번호 추가**: State에 `section_number` 필드 추가하여 챕터 내 세부 구간 관리
@@ -11,27 +27,6 @@
 
 ### 🔄 개발 전략 수정
  - BaseAgent 사용 중단: 개별 에이전트 직접 구현 후 공통 패턴 파악하여 리팩터링 시점에 BaseAgent 도입 예정
-
-### ⚠️ LLM 호출 코드 작성 시 필수 사항
-- **LangSmith 추적 필수**: 모든 LLM 호출 관련 코드 작성 시 반드시 `langsmith_client.py`를 참고하여 LangSmith 추적 설정을 포함해야 함
-- **추적 설정 방법**: `get_langsmith_client()` 함수를 사용하여 클라이언트 가져오기, `is_langsmith_enabled()` 함수로 활성화 여부 확인
-- **적용 대상**: AI 에이전트, Tool 함수, LLM API 호출이 포함된 모든 코드
-- **목적**: 성능 모니터링, 디버깅, 토큰 사용량 추적을 위한 필수 설정
-
-### 🛠️ StateManager 구조 개선 작업
-- **backend/app/core/langraph/state_manager.py**: `quiz_type`과 `current_question_type` 중복 제거, 단일 필드로 통합하여 동기화 문제 해결
-- **JSON 필드명 정정**: `quiz_data.get('quiz_type')` → `quiz_data.get('type')` 수정하여 실제 JSON 구조와 일치
-
-### 🧠 Theory 모듈 LangChain 통합 작업
-- **backend/app/tools/content/theory_tools.py**: PromptTemplate, SystemMessage/HumanMessage 구조 적용, LangSmith 추적 통합
-- **backend/app/agents/theory_educator/theory_educator_agent.py**: Tool 호출 파라미터 수정, `recent_sessions` 제거하고 `learning_context` 올바른 전달
-
-### 🧩 Quiz 모듈 LangChain 통합 작업  
-- **backend/app/tools/content/quiz_tools.py**: PromptTemplate, SystemMessage/HumanMessage 구조 적용, 객관식/주관식 템플릿 분리, LangSmith 추적 통합
-- **backend/app/agents/quiz_generator/quiz_generator_agent.py**: Tool 호출 파라미터 수정, 파일 경로 주석 정정, 퀴즈 타입 동기화 로직 추가
-
-### 🔗 AI Client Manager 확장 작업
-- **backend/app/core/external/ai_client_manager.py**: `generate_json_content_with_messages()` 메서드 추가, LangChain Messages 지원, 모든 메서드에 `langsmith_run_id` 파라미터 추가하여 LangSmith 추적 통합
 
 ## 2025.08.11 - 로그인 상태 유지 및 사용자 정보 표시 개선
 

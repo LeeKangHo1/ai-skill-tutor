@@ -8,7 +8,7 @@ from langchain_core.messages import BaseMessage
 
 from app.core.external.gemini_client import GeminiClient
 from app.core.external.openai_client import OpenAIClient
-from app.core.langsmith.langsmith_client import get_langsmith_client, is_langsmith_enabled
+from app.core.langsmith.langsmith_client import is_langsmith_enabled
 from app.utils.common.exceptions import ExternalAPIError
 
 
@@ -346,9 +346,15 @@ class AIClientManager:
         for provider, client in self._clients.items():
             try:
                 if hasattr(client, 'get_model_info'):
-                    info[provider.value] = client.get_model_info()
+                    client_info = client.get_model_info()
+                    # LangSmith 추적 상태 추가
+                    client_info["langsmith_enabled"] = is_langsmith_enabled()
+                    info[provider.value] = client_info
                 else:
-                    info[provider.value] = {"status": "initialized"}
+                    info[provider.value] = {
+                        "status": "initialized",
+                        "langsmith_enabled": is_langsmith_enabled()
+                    }
             except Exception as e:
                 self.logger.error(f"{provider.value} 정보 조회 실패: {str(e)}")
                 info[provider.value] = {"error": str(e)}

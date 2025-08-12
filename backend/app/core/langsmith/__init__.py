@@ -2,13 +2,13 @@
 from .langsmith_client import (
    LangSmithManager,
    langsmith_manager,
-   get_langsmith_client,
-   is_langsmith_enabled
+   is_langsmith_enabled,
+   get_langsmith_project
 )
 
 __all__ = [
    'LangSmithManager',
    'langsmith_manager',
-   'get_langsmith_client',
-   'is_langsmith_enabled'
+   'is_langsmith_enabled',
+   'get_langsmith_project'
 ]
