@@ -1,4 +1,4 @@
-# backend/app/agents/theory_educator/agent.py
+# backend/app/agents/theory_educator/theory_educator_agent.py
 
 from typing import Dict, Any, List
 import json
@@ -15,6 +15,7 @@ class TheoryEducator:
     - 사용자 레벨별 맞춤 개념 설명 생성
     - JSON 파일 기반 챕터 데이터 참조
     - 사용자와 직접 소통하지 않고 대본만 생성
+    - LangChain + LangSmith 통합
     """
     
     def __init__(self):
@@ -32,7 +33,7 @@ class TheoryEducator:
             업데이트된 TutorState (theory_draft 포함)
         """
         try:
-            print(f"[{self.agent_name}] 이론 설명 생성 시작 - 챕터 {state['current_chapter']}")
+            print(f"[{self.agent_name}] 이론 설명 생성 시작 - 챕터 {state['current_chapter']} 섹션 {state['current_section']}")
             
             # 1. 챕터 데이터 로드
             chapter_data = self._load_chapter_data(state["current_chapter"])
@@ -45,33 +46,32 @@ class TheoryEducator:
             # 3. 벡터 DB에서 관련 자료 검색 (추후 활용)
             vector_materials = self._get_vector_search_materials(chapter_data, state["user_type"])
             
-            # 4. 이론 설명 대본 생성
+            # 4. 이론 설명 대본 생성 (수정된 파라미터)
             theory_content = theory_generation_tool(
                 chapter_data=chapter_data,
                 user_type=state["user_type"],
                 learning_context=learning_context,
-                recent_sessions=state["recent_sessions_summary"],
-                vector_materials=vector_materials  # 벡터 검색 결과 추가
+                vector_materials=vector_materials
             )
             
-            # 4. State 업데이트 - 대본 저장
+            # 5. State 업데이트 - 대본 저장
             updated_state = state_manager.update_agent_draft(
                 state, 
                 self.agent_name, 
                 theory_content
             )
             
-            # 5. 세션 진행 단계 업데이트
+            # 6. 세션 진행 단계 업데이트
             updated_state = state_manager.update_session_progress(
                 updated_state, 
                 self.agent_name
             )
             
-            # 6. 대화 기록 추가
+            # 7. 대화 기록 추가
             updated_state = state_manager.add_conversation(
                 updated_state,
                 agent_name=self.agent_name,
-                message=f"챕터 {state['current_chapter']} 이론 설명 대본 생성 완료",
+                message=f"챕터 {state['current_chapter']} 섹션 {state['current_section']} 이론 설명 대본 생성 완료",
                 message_type="system"
             )
             
@@ -80,11 +80,11 @@ class TheoryEducator:
             
         except Exception as e:
             print(f"[{self.agent_name}] 오류 발생: {str(e)}")
-            # 오류 시에도 State는 반환 (빈 대본으로)
+            # 오류 시에도 State는 반환 (오류 메시지 대본으로)
             error_state = state_manager.update_agent_draft(
                 state, 
                 self.agent_name, 
-                f"이론 설명 생성 중 오류가 발생했습니다: {str(e)}"
+                self._create_error_response(str(e))
             )
             return error_state
     
@@ -144,7 +144,7 @@ class TheoryEducator:
     
     def _analyze_learning_context(self, state: TutorState) -> Dict[str, Any]:
         """
-        사용자의 학습 맥락 분석
+        사용자의 학습 맥락 분석 (learning_context 생성)
         
         Args:
             state: 현재 TutorState
@@ -155,6 +155,7 @@ class TheoryEducator:
         context = {
             "user_type": state["user_type"],
             "current_chapter": state["current_chapter"],
+            "current_section": state["current_section"],  # 섹션 정보 추가
             "session_count": state["current_session_count"],
             "is_retry_session": state["current_session_count"] > 0,
             "has_recent_sessions": len(state["recent_sessions_summary"]) > 0,
@@ -180,3 +181,34 @@ class TheoryEducator:
             context["detailed_examples"] = False
         
         return context
+    
+    def _create_error_response(self, error_message: str) -> str:
+        """
+        오류 발생 시 기본 응답 생성
+        
+        Args:
+            error_message: 오류 메시지
+            
+        Returns:
+            오류 응답 JSON 문자열
+        """
+        error_response = {
+            "content_type": "theory",
+            "chapter_info": {
+                "chapter_number": 1,
+                "title": "오류 발생",
+                "user_type": "beginner"
+            },
+            "section_info": {
+                "section_number": 1,
+                "title": "시스템 오류"
+            },
+            "main_content": f"이론 설명을 생성하는 중 문제가 발생했습니다: {error_message}",
+            "key_points": ["시스템 일시 오류", "질문으로 학습 계속 가능", "잠시 후 재시도"],
+            "analogy": "",
+            "examples": [],
+            "user_guidance": "시스템 문제로 설명이 생성되지 않았습니다. 궁금한 점을 질문해주세요.",
+            "next_step_preview": "질문이 있으시면 언제든 말씀해주세요."
+        }
+        
+        return json.dumps(error_response, ensure_ascii=False, indent=2)

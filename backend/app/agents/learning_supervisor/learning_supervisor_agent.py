@@ -1,4 +1,4 @@
-# backend/app/agents/learning_supervisor/agent.py
+# backend/app/agents/learning_supervisor/learning_supervisor_agent.py
 """
 학습 감독 에이전트
 사용자 대면 인터페이스 역할과 다른 에이전트들의 라우팅을 담당합니다.

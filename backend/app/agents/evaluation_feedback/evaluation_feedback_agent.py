@@ -1,4 +1,4 @@
-# backend/app/agents/evaluation_feedback/agent.py
+# backend/app/agents/evaluation_feedback/evaluation_feedback_agent.py
 """
 평가 피드백 에이전트
 사용자의 답변을 평가하고 맞춤형 피드백을 제공합니다.

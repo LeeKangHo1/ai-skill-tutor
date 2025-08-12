@@ -1,4 +1,4 @@
-# backend/app/agents/learning_supervisor/router.py
+# backend/app/agents/learning_supervisor/supervisor_router.py
 """
 감독 에이전트 라우터
 사용자 입력을 분석하여 적절한 에이전트로 라우팅합니다.

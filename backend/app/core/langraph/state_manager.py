@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 import json
 import copy
 
-# TutorState 클래스 정의 (PRD v1.3 기준 + 섹션 관리 추가)
+# TutorState 클래스 정의 (PRD v1.3 기준 + 섹션 관리 + 퀴즈 타입 개선)
 class TutorState(TypedDict):
     # === 기본 사용자 정보 ===
     user_id: int
@@ -24,7 +24,7 @@ class TutorState(TypedDict):
     ui_mode: str  # "chat": 채팅 모드, "quiz": 퀴즈 모드
     
     # === 퀴즈 관련 정보 ===
-    current_question_type: str        # "multiple_choice": 객관식, "subjective": 주관식 (JSON에서 로드)
+    current_question_type: str        # 퀴즈 타입 ("multiple_choice" or "subjective") - JSON에서 로드
     current_question_number: int      # 문제 번호 (기본키)
     current_question_content: str     # 현재 문제 내용
     current_question_answer: str      # 사용자 답변
@@ -80,7 +80,7 @@ class StateManager:
             ui_mode="chat",
             
             # 퀴즈 관련 정보
-            current_question_type="",
+            current_question_type="multiple_choice",  # 기본값: 객관식
             current_question_number=0,
             current_question_content="",
             current_question_answer="",
@@ -217,7 +217,7 @@ class StateManager:
         
         Args:
             state: 현재 State
-            question_type: 문제 유형
+            question_type: 퀴즈 타입 ("multiple_choice" or "subjective")
             question_number: 문제 번호
             question_content: 문제 내용
             user_answer: 사용자 답변
@@ -353,7 +353,8 @@ class StateManager:
             updated_state.update({
                 "current_session_count": 0,
                 "current_section": 1,
-                "current_question_content": ""
+                "current_question_content": "",
+                "current_question_type": "multiple_choice"  # 새 챕터 시작 시 기본값으로 초기화
             })
         
         return updated_state
@@ -372,8 +373,8 @@ class StateManager:
         current_section = self.get_current_section_data(state, chapter_data)
         quiz_data = current_section.get('quiz', {})
         
-        # JSON에서 quiz_type 필드를 읽어옴 (기본값: multiple_choice)
-        quiz_type = quiz_data.get('quiz_type', 'multiple_choice')
+        # JSON에서 type 필드를 읽어옴 (기본값: multiple_choice)
+        quiz_type = quiz_data.get('type', 'multiple_choice')
         
         # 유효한 타입인지 검증
         valid_types = ['multiple_choice', 'subjective']
@@ -399,6 +400,8 @@ class StateManager:
         updated_state["current_question_type"] = quiz_type
         
         return updated_state
+    
+    def get_current_section_data(self, state: TutorState, chapter_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         현재 섹션 데이터 반환
         
@@ -417,6 +420,20 @@ class StateManager:
         
         # 섹션을 찾을 수 없으면 첫 번째 섹션 반환
         return sections[0] if sections else {}
+    
+    def sync_quiz_types(self, state: TutorState) -> TutorState:
+        """
+        현재 섹션의 퀴즈 타입을 State에 동기화
+        quiz_generator 호출 전에 사용하여 JSON과 State 간 일관성 보장
+        
+        Args:
+            state: 현재 State
+        
+        Returns:
+            동기화된 State
+        """
+        # 이제 current_question_type 하나만 사용하므로 동기화 로직이 단순해짐
+        return copy.deepcopy(state)
     
     def to_dict(self, state: TutorState) -> Dict[str, Any]:
         """
@@ -468,7 +485,7 @@ class StateManager:
         """
         required_fields = [
             "user_id", "user_type", "current_chapter", "current_section", "current_agent",
-            "session_progress_stage", "ui_mode"
+            "session_progress_stage", "ui_mode", "current_question_type"
         ]
         
         for field in required_fields:
@@ -479,12 +496,15 @@ class StateManager:
         valid_user_types = ["beginner", "advanced", "unassigned"]
         valid_progress_stages = ["session_start", "theory_completed", "quiz_and_feedback_completed"]
         valid_ui_modes = ["chat", "quiz"]
+        valid_quiz_types = ["multiple_choice", "subjective"]
         
         if state["user_type"] not in valid_user_types:
             return False
         if state["session_progress_stage"] not in valid_progress_stages:
             return False
         if state["ui_mode"] not in valid_ui_modes:
+            return False
+        if state["current_question_type"] not in valid_quiz_types:
             return False
         if state["current_chapter"] < 1 or state["current_section"] < 1:
             return False

@@ -1,4 +1,4 @@
-# backend/app/agents/qna_resolver/agent.py
+# backend/app/agents/qna_resolver/qna_resolver_agent.py
 """
 질문 답변 에이전트
 사용자의 질문을 분석하고 적절한 답변을 제공합니다.
