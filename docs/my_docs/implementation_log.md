@@ -18,6 +18,21 @@
 - **적용 대상**: AI 에이전트, Tool 함수, LLM API 호출이 포함된 모든 코드
 - **목적**: 성능 모니터링, 디버깅, 토큰 사용량 추적을 위한 필수 설정
 
+### 🛠️ StateManager 구조 개선 작업
+- **backend/app/core/langraph/state_manager.py**: `quiz_type`과 `current_question_type` 중복 제거, 단일 필드로 통합하여 동기화 문제 해결
+- **JSON 필드명 정정**: `quiz_data.get('quiz_type')` → `quiz_data.get('type')` 수정하여 실제 JSON 구조와 일치
+
+### 🧠 Theory 모듈 LangChain 통합 작업
+- **backend/app/tools/content/theory_tools.py**: PromptTemplate, SystemMessage/HumanMessage 구조 적용, LangSmith 추적 통합
+- **backend/app/agents/theory_educator/theory_educator_agent.py**: Tool 호출 파라미터 수정, `recent_sessions` 제거하고 `learning_context` 올바른 전달
+
+### 🧩 Quiz 모듈 LangChain 통합 작업  
+- **backend/app/tools/content/quiz_tools.py**: PromptTemplate, SystemMessage/HumanMessage 구조 적용, 객관식/주관식 템플릿 분리, LangSmith 추적 통합
+- **backend/app/agents/quiz_generator/quiz_generator_agent.py**: Tool 호출 파라미터 수정, 파일 경로 주석 정정, 퀴즈 타입 동기화 로직 추가
+
+### 🔗 AI Client Manager 확장 작업
+- **backend/app/core/external/ai_client_manager.py**: `generate_json_content_with_messages()` 메서드 추가, LangChain Messages 지원, 모든 메서드에 `langsmith_run_id` 파라미터 추가하여 LangSmith 추적 통합
+
 ## 2025.08.11 - 로그인 상태 유지 및 사용자 정보 표시 개선
 
 ### 🎯 개선된 동작 방식

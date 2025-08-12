@@ -4,8 +4,11 @@ import logging
 from typing import Dict, Any, List, Optional
 from enum import Enum
 
+from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
+
 from app.core.external.gemini_client import GeminiClient
 from app.core.external.openai_client import OpenAIClient
+from app.core.langsmith.langsmith_client import get_langsmith_client, is_langsmith_enabled
 from app.utils.common.exceptions import ExternalAPIError
 
 
@@ -22,6 +25,8 @@ class AIClientManager:
     - 클라이언트 인스턴스 생성 및 캐싱
     - 공통 인터페이스 제공
     - 장애 시 대체 제공자 활용
+    - LangChain Messages 지원
+    - LangSmith 추적 통합
     """
     
     def __init__(self):
@@ -110,6 +115,7 @@ class AIClientManager:
         prompt: str,
         system_instruction: Optional[str] = None,
         provider: AIProvider = AIProvider.GEMINI,
+        langsmith_run_id: Optional[str] = None,
         **kwargs
     ) -> str:
         """
@@ -119,6 +125,7 @@ class AIClientManager:
             prompt: 사용자 프롬프트
             system_instruction: 시스템 지시사항
             provider: AI 제공자
+            langsmith_run_id: LangSmith 추적 ID
             **kwargs: 추가 파라미터
             
         Returns:
@@ -128,6 +135,14 @@ class AIClientManager:
             ExternalAPIError: 생성 실패 시
         """
         try:
+            # LangSmith 추적 정보 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    outputs={"ai_provider": provider.value, "method": "generate_content"}
+                )
+            
             client = self.get_text_client(provider)
             
             # Gemini 클라이언트인 경우
@@ -144,6 +159,15 @@ class AIClientManager:
                 
         except Exception as e:
             self.logger.error(f"컨텐츠 생성 실패: {str(e)}")
+            
+            # LangSmith에 오류 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    error=f"generate_content 실패: {str(e)}"
+                )
+            
             raise
     
     def generate_json_content(
@@ -151,6 +175,7 @@ class AIClientManager:
         prompt: str,
         system_instruction: Optional[str] = None,
         provider: AIProvider = AIProvider.GEMINI,
+        langsmith_run_id: Optional[str] = None,
         **kwargs
     ) -> Dict[str, Any]:
         """
@@ -160,6 +185,7 @@ class AIClientManager:
             prompt: 사용자 프롬프트
             system_instruction: 시스템 지시사항
             provider: AI 제공자
+            langsmith_run_id: LangSmith 추적 ID
             **kwargs: 추가 파라미터
             
         Returns:
@@ -169,6 +195,14 @@ class AIClientManager:
             ExternalAPIError: 생성 실패 시
         """
         try:
+            # LangSmith 추적 정보 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    outputs={"ai_provider": provider.value, "method": "generate_json_content"}
+                )
+            
             client = self.get_text_client(provider)
             
             # Gemini 클라이언트인 경우
@@ -185,11 +219,162 @@ class AIClientManager:
                 
         except Exception as e:
             self.logger.error(f"JSON 컨텐츠 생성 실패: {str(e)}")
+            
+            # LangSmith에 오류 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    error=f"generate_json_content 실패: {str(e)}"
+                )
+            
+            raise
+    
+    def generate_json_content_with_messages(
+        self,
+        messages: List[BaseMessage],
+        provider: AIProvider = AIProvider.GEMINI,
+        langsmith_run_id: Optional[str] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        LangChain Messages를 사용한 JSON 컨텐츠 생성
+        
+        Args:
+            messages: LangChain 메시지 리스트 (SystemMessage, HumanMessage 등)
+            provider: AI 제공자
+            langsmith_run_id: LangSmith 추적 ID
+            **kwargs: 추가 파라미터 (temperature 등)
+            
+        Returns:
+            JSON 형태로 파싱된 응답
+            
+        Raises:
+            ExternalAPIError: 생성 실패 시
+        """
+        try:
+            # LangSmith 추적 정보 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    outputs={
+                        "ai_provider": provider.value, 
+                        "method": "generate_json_content_with_messages",
+                        "message_count": len(messages)
+                    }
+                )
+            
+            # Messages를 기존 인터페이스로 변환
+            system_instruction = None
+            user_prompt = ""
+            
+            for message in messages:
+                if isinstance(message, SystemMessage):
+                    system_instruction = message.content
+                elif isinstance(message, HumanMessage):
+                    user_prompt = message.content
+                # 필요시 다른 메시지 타입 추가 가능
+            
+            if not user_prompt:
+                raise ExternalAPIError("유효한 사용자 메시지가 없습니다.")
+            
+            # 기존 generate_json_content 메서드 활용
+            return self.generate_json_content(
+                prompt=user_prompt,
+                system_instruction=system_instruction,
+                provider=provider,
+                langsmith_run_id=langsmith_run_id,
+                **kwargs
+            )
+                
+        except Exception as e:
+            self.logger.error(f"Messages 기반 JSON 컨텐츠 생성 실패: {str(e)}")
+            
+            # LangSmith에 오류 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    error=f"generate_json_content_with_messages 실패: {str(e)}"
+                )
+            
+            raise
+    
+    def generate_content_with_messages(
+        self,
+        messages: List[BaseMessage],
+        provider: AIProvider = AIProvider.GEMINI,
+        langsmith_run_id: Optional[str] = None,
+        **kwargs
+    ) -> str:
+        """
+        LangChain Messages를 사용한 텍스트 컨텐츠 생성
+        
+        Args:
+            messages: LangChain 메시지 리스트 (SystemMessage, HumanMessage 등)
+            provider: AI 제공자
+            langsmith_run_id: LangSmith 추적 ID
+            **kwargs: 추가 파라미터
+            
+        Returns:
+            생성된 텍스트
+            
+        Raises:
+            ExternalAPIError: 생성 실패 시
+        """
+        try:
+            # LangSmith 추적 정보 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    outputs={
+                        "ai_provider": provider.value,
+                        "method": "generate_content_with_messages",
+                        "message_count": len(messages)
+                    }
+                )
+            
+            # Messages를 기존 인터페이스로 변환
+            system_instruction = None
+            user_prompt = ""
+            
+            for message in messages:
+                if isinstance(message, SystemMessage):
+                    system_instruction = message.content
+                elif isinstance(message, HumanMessage):
+                    user_prompt = message.content
+            
+            if not user_prompt:
+                raise ExternalAPIError("유효한 사용자 메시지가 없습니다.")
+            
+            # 기존 generate_content 메서드 활용
+            return self.generate_content(
+                prompt=user_prompt,
+                system_instruction=system_instruction,
+                provider=provider,
+                langsmith_run_id=langsmith_run_id,
+                **kwargs
+            )
+                
+        except Exception as e:
+            self.logger.error(f"Messages 기반 컨텐츠 생성 실패: {str(e)}")
+            
+            # LangSmith에 오류 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    error=f"generate_content_with_messages 실패: {str(e)}"
+                )
+            
             raise
     
     def create_embedding(
         self,
         text: str,
+        langsmith_run_id: Optional[str] = None,
         **kwargs
     ) -> List[float]:
         """
@@ -197,6 +382,7 @@ class AIClientManager:
         
         Args:
             text: 임베딩할 텍스트
+            langsmith_run_id: LangSmith 추적 ID
             **kwargs: 추가 파라미터
             
         Returns:
@@ -206,16 +392,34 @@ class AIClientManager:
             ExternalAPIError: 생성 실패 시
         """
         try:
+            # LangSmith 추적 정보 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    outputs={"method": "create_embedding", "text_length": len(text)}
+                )
+            
             client = self.get_embedding_client()
             return client.create_embedding(text, **kwargs)
             
         except Exception as e:
             self.logger.error(f"임베딩 생성 실패: {str(e)}")
+            
+            # LangSmith에 오류 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    error=f"create_embedding 실패: {str(e)}"
+                )
+            
             raise
     
     def create_batch_embeddings(
         self,
         texts: List[str],
+        langsmith_run_id: Optional[str] = None,
         **kwargs
     ) -> List[List[float]]:
         """
@@ -223,6 +427,7 @@ class AIClientManager:
         
         Args:
             texts: 임베딩할 텍스트 리스트
+            langsmith_run_id: LangSmith 추적 ID
             **kwargs: 추가 파라미터
             
         Returns:
@@ -232,11 +437,28 @@ class AIClientManager:
             ExternalAPIError: 생성 실패 시
         """
         try:
+            # LangSmith 추적 정보 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    outputs={"method": "create_batch_embeddings", "batch_size": len(texts)}
+                )
+            
             client = self.get_embedding_client()
             return client.create_batch_embeddings(texts, **kwargs)
             
         except Exception as e:
             self.logger.error(f"배치 임베딩 생성 실패: {str(e)}")
+            
+            # LangSmith에 오류 로깅
+            if langsmith_run_id and is_langsmith_enabled():
+                langsmith_client = get_langsmith_client()
+                langsmith_client.update_run(
+                    langsmith_run_id,
+                    error=f"create_batch_embeddings 실패: {str(e)}"
+                )
+            
             raise
     
     def test_all_connections(self) -> Dict[str, bool]:
