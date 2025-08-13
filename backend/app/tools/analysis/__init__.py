@@ -7,8 +7,10 @@
 from .evaluation_tools import (
     evaluate_multiple_choice,
     determine_next_step,
-    create_evaluation_summary,
-    validate_quiz_data
+    validate_quiz_data,
+    get_user_answer_info,
+    extract_subjective_feedback,
+    create_simple_evaluation_summary
 )
 
 from .feedback_tools_chatgpt import (
@@ -18,10 +20,15 @@ from .feedback_tools_chatgpt import (
 )
 
 __all__ = [
+    # evaluation_tools
     'evaluate_multiple_choice',
     'determine_next_step', 
-    'create_evaluation_summary',
     'validate_quiz_data',
+    'get_user_answer_info',
+    'extract_subjective_feedback',
+    'create_simple_evaluation_summary',
+    
+    # feedback_tools_chatgpt
     'evaluate_subjective_with_feedback',
     'generate_multiple_choice_feedback',
     'generate_simple_feedback'

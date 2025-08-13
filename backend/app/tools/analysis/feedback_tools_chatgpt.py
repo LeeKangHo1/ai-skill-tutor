@@ -19,9 +19,9 @@ def evaluate_subjective_with_feedback(
     quiz_data: Dict[str, Any],
     user_answer: str,
     user_type: str
-) -> Tuple[int, Dict[str, Any]]:
+) -> Tuple[int, str]:
     """
-    ChatGPT를 활용한 주관식 답변 평가 및 피드백 생성 (1회 호출)
+    ChatGPT를 활용한 주관식 답변 평가 및 피드백 생성 (간소화)
     
     Args:
         quiz_data: 퀴즈 JSON 데이터 (sample_answer, evaluation_criteria 포함)
@@ -29,7 +29,7 @@ def evaluate_subjective_with_feedback(
         user_type: 사용자 유형 ("beginner" or "advanced")
         
     Returns:
-        Tuple[점수(0-100), 평가상세정보]
+        Tuple[점수(0-100), 피드백텍스트]
     """
     
     logger = logging.getLogger(__name__)
@@ -54,25 +54,60 @@ def evaluate_subjective_with_feedback(
         # 점수 추출
         score = result.get('evaluation', {}).get('score', 0)
         
-        # 상세 정보 구성
-        evaluation_detail = {
-            "score": score,
-            "evaluation_type": "subjective",
-            "user_answer": user_answer,
-            "sample_answer": quiz_data.get('sample_answer', ''),
-            "evaluation_criteria": quiz_data.get('evaluation_criteria', []),
-            "criteria_analysis": result.get('evaluation', {}).get('criteria_analysis', {}),
-            "scoring_rationale": result.get('evaluation', {}).get('scoring_rationale', ''),
-            "detailed_feedback": result.get('feedback', {}).get('content', ''),
-            "next_step_recommendation": result.get('feedback', {}).get('next_step_recommendation', 'proceed')
-        }
+        # 피드백 텍스트 추출
+        feedback_text = result.get('feedback', {}).get('content', '')
         
         logger.info(f"ChatGPT 주관식 평가 완료 - 점수: {score}")
-        return score, evaluation_detail
+        return score, feedback_text
         
     except Exception as e:
         logger.error(f"ChatGPT 주관식 평가 실패: {str(e)}")
         return _generate_fallback_evaluation(user_answer, str(e))
+
+
+def generate_multiple_choice_feedback(
+    quiz_data: Dict[str, Any],
+    user_answer: str,
+    is_correct: bool,
+    user_type: str
+) -> str:
+    """
+    ChatGPT를 활용한 객관식 피드백 생성 (간소화)
+    
+    Args:
+        quiz_data: 퀴즈 JSON 데이터
+        user_answer: 사용자 답변
+        is_correct: 정답 여부
+        user_type: 사용자 유형 ("beginner" or "advanced")
+        
+    Returns:
+        생성된 피드백 텍스트
+    """
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info("ChatGPT 객관식 피드백 생성 시작")
+        
+        # LangChain 구성 요소 초기화
+        model = _get_chatgpt_model()
+        prompt_template = _create_multiple_choice_feedback_prompt(user_type)
+        
+        # 간단한 체인 구성: prompt | model
+        chain = prompt_template | model
+        
+        # 입력 데이터 준비
+        input_data = _prepare_mc_feedback_input_data(quiz_data, user_answer, is_correct)
+        
+        # 체인 실행
+        result = chain.invoke(input_data)
+        
+        logger.info("ChatGPT 객관식 피드백 생성 완료")
+        return result.content.strip()
+        
+    except Exception as e:
+        logger.error(f"ChatGPT 객관식 피드백 생성 실패: {str(e)}")
+        return _generate_fallback_mc_feedback(is_correct, user_type, quiz_data.get('explanation', ''))
 
 
 def _get_chatgpt_model() -> ChatOpenAI:
@@ -89,7 +124,7 @@ def _get_chatgpt_model() -> ChatOpenAI:
 
 def _create_evaluation_prompt_template(user_type: str) -> PromptTemplate:
     """
-    사용자 유형별 평가 PromptTemplate 생성
+    사용자 유형별 주관식 평가 PromptTemplate 생성
     """
     
     # 사용자 유형별 피드백 스타일 설정
@@ -160,90 +195,9 @@ def _create_evaluation_prompt_template(user_type: str) -> PromptTemplate:
     )
 
 
-def _prepare_evaluation_input_data(quiz_data: Dict[str, Any], user_answer: str) -> Dict[str, str]:
-    """
-    PromptTemplate에 전달할 입력 데이터 준비
-    """
-    
-    question = quiz_data.get('question', '')
-    sample_answer = quiz_data.get('sample_answer', '')
-    evaluation_criteria = quiz_data.get('evaluation_criteria', [])
-    
-    # 평가 기준을 문자열로 변환
-    criteria_str = "\n".join([f"- {criteria}" for criteria in evaluation_criteria])
-    
-    return {
-        "question": question,
-        "evaluation_criteria": criteria_str,
-        "sample_answer": sample_answer,
-        "user_answer": user_answer
-    }
-
-
-def _generate_fallback_evaluation(user_answer: str, error_msg: str) -> Tuple[int, Dict[str, Any]]:
-    """오류 발생 시 기본 평가 결과 생성"""
-    
-    fallback_detail = {
-        "score": 50,  # 중간 점수로 설정
-        "evaluation_type": "subjective",
-        "user_answer": user_answer,
-        "error": f"평가 중 오류가 발생했습니다: {error_msg}",
-        "criteria_analysis": {},
-        "detailed_feedback": "일시적인 시스템 문제로 상세한 피드백을 제공할 수 없습니다. 잠시 후 다시 시도해주세요. 괜찮습니다! 답변을 작성해주신 것만으로도 훌륭합니다. 계속 학습해보세요! 💪",
-        "next_step_recommendation": "proceed"  # 오류 시에는 진행
-    }
-    
-    return 50, fallback_detail
-
-
-def generate_multiple_choice_feedback(
-    quiz_data: Dict[str, Any],
-    evaluation_result: Dict[str, Any],
-    user_type: str,
-    next_step: str
-) -> str:
-    """
-    ChatGPT를 활용한 객관식 피드백 생성 (최소 프롬프트)
-    
-    Args:
-        quiz_data: 퀴즈 JSON 데이터
-        evaluation_result: 평가 결과 딕셔너리
-        user_type: 사용자 유형 ("beginner" or "advanced")
-        next_step: 다음 단계 (proceed/retry)
-        
-    Returns:
-        생성된 피드백 텍스트
-    """
-    
-    logger = logging.getLogger(__name__)
-    
-    try:
-        logger.info("ChatGPT 객관식 피드백 생성 시작")
-        
-        # LangChain 구성 요소 초기화
-        model = _get_chatgpt_model()
-        prompt_template = _create_multiple_choice_feedback_prompt(user_type)
-        
-        # 간단한 체인 구성: prompt | model
-        chain = prompt_template | model
-        
-        # 입력 데이터 준비
-        input_data = _prepare_mc_feedback_input_data(quiz_data, evaluation_result, next_step)
-        
-        # 체인 실행
-        result = chain.invoke(input_data)
-        
-        logger.info("ChatGPT 객관식 피드백 생성 완료")
-        return result.content.strip()
-        
-    except Exception as e:
-        logger.error(f"ChatGPT 객관식 피드백 생성 실패: {str(e)}")
-        return _generate_fallback_mc_feedback(evaluation_result, next_step, user_type)
-
-
 def _create_multiple_choice_feedback_prompt(user_type: str) -> PromptTemplate:
     """
-    객관식 피드백용 최소 PromptTemplate 생성
+    객관식 피드백용 PromptTemplate 생성
     """
     
     if user_type == "beginner":
@@ -279,86 +233,99 @@ def _create_multiple_choice_feedback_prompt(user_type: str) -> PromptTemplate:
     )
 
 
+def _prepare_evaluation_input_data(quiz_data: Dict[str, Any], user_answer: str) -> Dict[str, str]:
+    """
+    주관식 평가용 입력 데이터 준비
+    """
+    
+    question = quiz_data.get('question', '')
+    sample_answer = quiz_data.get('sample_answer', '')
+    evaluation_criteria = quiz_data.get('evaluation_criteria', [])
+    
+    # 평가 기준을 문자열로 변환
+    criteria_str = "\n".join([f"- {criteria}" for criteria in evaluation_criteria])
+    
+    return {
+        "question": question,
+        "evaluation_criteria": criteria_str,
+        "sample_answer": sample_answer,
+        "user_answer": user_answer
+    }
+
+
 def _prepare_mc_feedback_input_data(
     quiz_data: Dict[str, Any], 
-    evaluation_result: Dict[str, Any],
-    next_step: str
+    user_answer: str,
+    is_correct: bool
 ) -> Dict[str, str]:
     """
     객관식 피드백용 입력 데이터 준비
     """
     
-    user_answer = evaluation_result.get('user_answer', '')
-    is_correct = "정답" if evaluation_result.get("is_correct", False) else "오답"
+    is_correct_text = "정답" if is_correct else "오답"
     
     return {
         "quiz_data": json.dumps(quiz_data, ensure_ascii=False, indent=2),
         "user_answer": str(user_answer),
-        "is_correct": is_correct
+        "is_correct": is_correct_text
     }
 
 
-def _generate_fallback_mc_feedback(
-    evaluation_result: Dict[str, Any],
-    next_step: str, 
-    user_type: str
-) -> str:
-    """객관식 피드백 생성 실패 시 기본 피드백"""
+def _generate_fallback_evaluation(user_answer: str, error_msg: str) -> Tuple[int, str]:
+    """주관식 평가 실패 시 기본 결과 생성"""
     
-    is_correct = evaluation_result.get("is_correct", False)
-    explanation = evaluation_result.get("explanation", "")
+    fallback_feedback = "일시적인 시스템 문제로 상세한 피드백을 제공할 수 없습니다. 잠시 후 다시 시도해주세요. 괜찮습니다! 답변을 작성해주신 것만으로도 훌륭합니다. 계속 학습해보세요! 💪"
+    
+    return 50, fallback_feedback  # 중간 점수로 설정
+
+
+def _generate_fallback_mc_feedback(is_correct: bool, user_type: str, explanation: str) -> str:
+    """객관식 피드백 생성 실패 시 기본 피드백"""
     
     if is_correct:
         if user_type == "beginner":
-            feedback = f"🎉 정답입니다! 훌륭해요!\n\n{explanation}\n\n훌륭합니다! 이 파트를 성공적으로 완료했어요. 다음 파트로 진행할까요?"
+            feedback = f"🎉 정답입니다! 훌륭해요!\n\n{explanation}"
         else:
-            feedback = f"정답입니다.\n\n{explanation}\n\n훌륭합니다! 이 파트를 성공적으로 완료했어요. 다음 파트로 진행할까요?"
+            feedback = f"정답입니다.\n\n{explanation}"
     else:
-        correct_option = evaluation_result.get("correct_option", "")
         if user_type == "beginner":
-            feedback = f"아쉽게도 틀렸어요. 😅 하지만 괜찮습니다!\n\n정답: {correct_option}\n\n{explanation}\n\n한 번 더 복습을 하고 넘어갈까요?"
+            feedback = f"아쉽게도 틀렸어요. 😅 하지만 괜찮습니다!\n\n{explanation}"
         else:
-            feedback = f"오답입니다.\n\n정답: {correct_option}\n\n{explanation}\n\n한 번 더 복습을 하고 넘어갈까요?"
+            feedback = f"오답입니다.\n\n{explanation}"
     
     return feedback
 
 
 def generate_simple_feedback(
-    evaluation_result: Dict[str, Any],
     quiz_type: str,
-    user_type: str,
-    next_step: str
+    score: int,
+    is_correct: bool = None,
+    explanation: str = "",
+    user_type: str = "beginner"
 ) -> str:
     """
-    간단한 피드백 텍스트 생성 (로컬 생성용 - 백업)
+    간단한 피드백 텍스트 생성 (ChatGPT 없이 로컬 생성)
     
     Args:
-        evaluation_result: 평가 결과 딕셔너리
         quiz_type: 퀴즈 타입
+        score: 점수
+        is_correct: 정답 여부 (객관식만)
+        explanation: 설명
         user_type: 사용자 유형
-        next_step: 다음 단계 (proceed/retry)
         
     Returns:
         피드백 텍스트
     """
     
     if quiz_type == "multiple_choice":
-        # 객관식 기본 피드백 (ChatGPT 실패 시 사용)
-        return _generate_fallback_mc_feedback(evaluation_result, next_step, user_type)
+        # 객관식 기본 피드백
+        return _generate_fallback_mc_feedback(is_correct, user_type, explanation)
     
     else:  # subjective
-        # 주관식 피드백 (ChatGPT에서 생성된 상세 피드백 사용)
-        score = evaluation_result.get("score", 0)
-        detailed_feedback = evaluation_result.get("detailed_feedback", "")
-        encouragement = evaluation_result.get("encouragement", "")
-        
-        if detailed_feedback:
-            feedback = f"점수: {score}점\n\n{detailed_feedback}\n\n{encouragement}"
+        # 주관식 기본 피드백
+        if score >= 60:
+            feedback = f"점수: {score}점 - 잘 작성해주셨습니다!"
         else:
-            # ChatGPT 피드백이 없는 경우 기본 피드백
-            if score >= 60:
-                feedback = f"점수: {score}점 - 잘 작성해주셨습니다! 훌륭합니다! 이 파트를 성공적으로 완료했어요. 다음 파트로 진행할까요?"
-            else:
-                feedback = f"점수: {score}점 - 조금 더 구체적으로 작성해보세요. 한 번 더 복습을 하고 넘어갈까요?"
+            feedback = f"점수: {score}점 - 조금 더 구체적으로 작성해보세요."
     
     return feedback

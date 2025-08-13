@@ -12,7 +12,7 @@ backend/
 │   │   │   └── base_agent.py         # 기본 에이전트 클래스
 │   │   ├── evaluation_feedback/      # 평가 피드백 에이전트
 │   │   │   ├── __init__.py           # 
-│   │   │   └── evaluation_feedback_agent.py # EvaluationFeedbackAgent
+│   │   │   └── evaluation_feedback_agent.py # ✅ 구현됨: EvaluationFeedbackAgent
 │   │   ├── learning_supervisor/      # 학습 감독 에이전트
 │   │   │   ├── __init__.py           # 
 │   │   │   ├── learning_supervisor_agent.py # LearningSupervisor 에이전트
@@ -144,7 +144,8 @@ backend/
 │   │   ├── analysis/                 # 분석/평가 도구
 │   │   │   ├── __init__.py
 │   │   │   ├── context_tools.py      # 맥락 통합 도구
-│   │   │   ├── evaluation_tools.py   # 답변 평가 도구
+│   │   │   ├── evaluation_tools.py   # ✅ 구현됨: 로컬 채점
+│   │   │   ├── feedback_tools_chatgpt.py   ✅ 구현됨: ChatGPT 기반 피드백 생성 도구
 │   │   │   └── intent_analysis_tools.py # 의도 분석 도구
 │   │   ├── content/                  # 컨텐츠 생성 도구
 │   │   │   ├── __init__.py
