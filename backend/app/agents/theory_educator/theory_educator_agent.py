@@ -17,7 +17,10 @@ class TheoryEducator:
     
     def __init__(self):
         self.agent_name = "theory_educator"
-        self.chapter_data_path = "data/chapters"
+        # 현재 파일 기준으로 backend/data/chapters 경로 설정
+        current_dir = os.path.dirname(__file__)
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+        self.chapter_data_path = os.path.join(backend_dir, "data", "chapters")
     
     def process(self, state: TutorState) -> TutorState:
         """
