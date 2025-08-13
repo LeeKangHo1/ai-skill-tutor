@@ -71,7 +71,7 @@ def _get_chatgpt_model() -> ChatOpenAI:
     return ChatOpenAI(
         model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
         openai_api_key=os.getenv('OPENAI_API_KEY'),
-        temperature=0.8,
+        temperature=0.4,
         max_tokens=int(os.getenv('OPENAI_MAX_TOKENS', '4096'))
     )
 

@@ -6,6 +6,10 @@ import os
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
+# 환경변수 로드
+from dotenv import load_dotenv
+load_dotenv()
+
 def run_quick_test():
     """빠른 테스트 실행"""
     print("🚀 빠른 테스트 실행 중...")
@@ -46,7 +50,8 @@ def check_environment():
         'langchain_core', 
         'langchain_openai',
         'openai',
-        'python-dotenv'
+        'python-dotenv',
+        'pydantic'
     ]
     
     missing_modules = []
@@ -61,6 +66,9 @@ def check_environment():
     
     # 환경변수 확인
     print("\n환경변수 확인:")
+    from dotenv import load_dotenv
+    load_dotenv()
+    
     env_vars = ['OPENAI_API_KEY', 'LANGSMITH_API_KEY']
     
     for var in env_vars:
@@ -73,15 +81,35 @@ def check_environment():
     # 데이터 파일 확인
     print("\n데이터 파일 확인:")
     data_files = [
-        'data/chapters/chapter_01.json',
-        'data/chapters/chapter_05.json'
+        os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'chapters', 'chapter_01.json'),
+        os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'chapters', 'chapter_05.json')
     ]
     
     for file_path in data_files:
         if os.path.exists(file_path):
-            print(f"✅ {file_path}: 존재함")
+            print(f"✅ {os.path.basename(file_path)}: 존재함")
         else:
-            print(f"❌ {file_path}: 존재하지 않음")
+            print(f"❌ {os.path.basename(file_path)}: 존재하지 않음")
+    
+    # OpenAI API 연결 테스트
+    print("\nOpenAI API 연결 테스트:")
+    try:
+        from langchain_openai import ChatOpenAI
+        
+        api_key = os.getenv('OPENAI_API_KEY')
+        if api_key:
+            model = ChatOpenAI(
+                model='gpt-4o-mini',
+                openai_api_key=api_key,
+                temperature=0.7,
+                max_tokens=50
+            )
+            response = model.invoke("Hello")
+            print("✅ OpenAI API 연결 성공")
+        else:
+            print("❌ OPENAI_API_KEY가 설정되지 않아 연결 테스트를 건너뜁니다.")
+    except Exception as e:
+        print(f"❌ OpenAI API 연결 실패: {str(e)}")
     
     if missing_modules:
         print(f"\n⚠️ 누락된 모듈: {', '.join(missing_modules)}")

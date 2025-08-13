@@ -7,6 +7,10 @@ import json
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
+# 환경변수 로드
+from dotenv import load_dotenv
+load_dotenv()
+
 from app.tools.content.theory_tools_chatgpt import theory_generation_tool
 from app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
 
@@ -17,13 +21,21 @@ def quick_test():
     print("🚀 AI 학습 도구 빠른 테스트 시작")
     print("=" * 60)
     
+    # 환경변수 확인
+    import os
+    if not os.getenv('OPENAI_API_KEY'):
+        print("❌ OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+        print("   .env 파일에 OPENAI_API_KEY를 설정해주세요.")
+        return
+    
     # 1. 이론 생성 테스트
     print("1️⃣ 이론 생성 테스트")
     print("-" * 30)
     
     try:
-        # 챕터 1 섹션 1 데이터 로드
-        with open('data/chapters/chapter_01.json', 'r', encoding='utf-8') as f:
+        # 챕터 1 섹션 1 데이터 로드 (backend/data 기준 경로)
+        data_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'chapters', 'chapter_01.json')
+        with open(data_path, 'r', encoding='utf-8') as f:
             chapter_data = json.load(f)
         
         section_data = chapter_data['sections'][0]  # 첫 번째 섹션
@@ -42,6 +54,8 @@ def quick_test():
         
     except Exception as e:
         print(f"❌ 이론 생성 실패: {str(e)}")
+        import traceback
+        traceback.print_exc()
     
     print("\n" + "=" * 60 + "\n")
     
@@ -76,6 +90,8 @@ def quick_test():
         
     except Exception as e:
         print(f"❌ 객관식 퀴즈 생성 실패: {str(e)}")
+        import traceback
+        traceback.print_exc()
     
     print("\n" + "=" * 60 + "\n")
     
@@ -84,8 +100,9 @@ def quick_test():
     print("-" * 30)
     
     try:
-        # 챕터 5 데이터 로드 (주관식)
-        with open('data/chapters/chapter_05.json', 'r', encoding='utf-8') as f:
+        # 챕터 5 데이터 로드 (주관식) (backend/data 기준 경로)
+        data_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'chapters', 'chapter_05.json')
+        with open(data_path, 'r', encoding='utf-8') as f:
             chapter5_data = json.load(f)
         
         section_data = None
@@ -113,6 +130,8 @@ def quick_test():
         
     except Exception as e:
         print(f"❌ 주관식 퀴즈 생성 실패: {str(e)}")
+        import traceback
+        traceback.print_exc()
     
     print("\n" + "=" * 60)
     print("🎉 빠른 테스트 완료!")

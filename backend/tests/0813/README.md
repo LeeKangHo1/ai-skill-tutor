@@ -63,6 +63,7 @@ langchain-core==0.3.72
 langchain-openai
 openai
 python-dotenv
+pydantic
 ```
 
 ### 환경변수 설정
@@ -99,6 +100,7 @@ LANGSMITH_API_KEY=your_langsmith_api_key_here  # 선택사항
 ### LangChain LCEL 파이프라인
 - **이론 도구**: `PromptTemplate | ChatOpenAI | StrOutputParser`
 - **퀴즈 도구**: `PromptTemplate | ChatOpenAI | JsonOutputParser`
+- **직접 OpenAI API 호출**: 별도 클라이언트 클래스 없이 LangChain 사용
 
 ### JSON 스키마 검증
 - Pydantic 스키마를 사용한 퀴즈 응답 구조 보장
@@ -107,6 +109,10 @@ LANGSMITH_API_KEY=your_langsmith_api_key_here  # 선택사항
 ### 사용자 유형별 맞춤화
 - **beginner**: 친근한 톤, 쉬운 설명
 - **advanced**: 실무 중심, 효율적 설명
+
+### 간소화된 아키텍처
+- ChatGPT 클라이언트, AI 클라이언트 매니저, Gemini 클라이언트 제거
+- LangChain을 통한 직접 OpenAI API 호출로 단순화
 
 ## 🐛 문제 해결
 
@@ -126,7 +132,24 @@ python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.ge
 venv\Scripts\activate
 
 # 필요한 패키지 설치
-pip install langchain langchain-openai openai python-dotenv
+pip install langchain langchain-openai openai python-dotenv pydantic
+```
+
+### OpenAI API 연결 오류
+```bash
+# API 키 확인
+echo $OPENAI_API_KEY  # Linux/Mac
+echo %OPENAI_API_KEY%  # Windows
+
+# 간단한 연결 테스트
+python -c "
+from langchain_openai import ChatOpenAI
+import os
+from dotenv import load_dotenv
+load_dotenv()
+model = ChatOpenAI(model='gpt-4o-mini', openai_api_key=os.getenv('OPENAI_API_KEY'))
+print(model.invoke('Hello').content)
+"
 ```
 
 ### 데이터 파일 오류

@@ -7,6 +7,10 @@ import json
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
+# 환경변수 로드
+from dotenv import load_dotenv
+load_dotenv()
+
 from app.tools.content.theory_tools_chatgpt import theory_generation_tool
 from app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
 
@@ -14,7 +18,8 @@ from app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
 def load_section_data(chapter_num, section_num):
     """챕터와 섹션 번호로 섹션 데이터 로드"""
     try:
-        chapter_file = f'data/chapters/chapter_{chapter_num:02d}.json'
+        # backend/data 기준 경로
+        chapter_file = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'chapters', f'chapter_{chapter_num:02d}.json')
         with open(chapter_file, 'r', encoding='utf-8') as f:
             chapter_data = json.load(f)
         
@@ -161,24 +166,38 @@ def test_subjective_quiz():
 
 
 def test_connection():
-    """ChatGPT 클라이언트 연결 테스트"""
+    """OpenAI API 연결 테스트"""
     print("=" * 60)
-    print("🔗 ChatGPT 클라이언트 연결 테스트")
+    print("🔗 OpenAI API 연결 테스트")
     print("=" * 60)
     
     try:
-        from app.core.external.chatgpt_client import ChatGPTClient
+        import os
+        from langchain_openai import ChatOpenAI
         
-        client = ChatGPTClient()
-        connection_result = client.test_connection()
+        # 환경변수 확인
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            print("❌ OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+            return
         
-        if connection_result:
-            print("✅ ChatGPT 클라이언트 연결 성공")
-        else:
-            print("❌ ChatGPT 클라이언트 연결 실패")
+        # ChatOpenAI 모델 초기화
+        model = ChatOpenAI(
+            model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
+            openai_api_key=api_key,
+            temperature=0.7,
+            max_tokens=100
+        )
+        
+        # 간단한 테스트 메시지
+        test_message = "안녕하세요. 연결 테스트입니다."
+        response = model.invoke(test_message)
+        
+        print("✅ OpenAI API 연결 성공")
+        print(f"📝 테스트 응답: {response.content[:50]}...")
             
     except Exception as e:
-        print(f"❌ ChatGPT 클라이언트 테스트 오류: {str(e)}")
+        print(f"❌ OpenAI API 연결 테스트 오류: {str(e)}")
         import traceback
         traceback.print_exc()
     

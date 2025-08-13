@@ -5,6 +5,5 @@ ChromaDB, AI 클라이언트 등 외부 서비스와의 연동을 관리합니�
 """
 
 from .vector_db import VectorDBClient
-from .ai_client_manager import get_ai_client_manager
 
-__all__ = ['VectorDBClient', 'get_ai_client_manager']
+__all__ = ['VectorDBClient']
