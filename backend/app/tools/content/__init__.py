@@ -6,7 +6,7 @@
 
 from .theory_tools_gemini import theory_generation_tool as theory_generation_tool_gemini
 from .theory_tools_chatgpt import theory_generation_tool as theory_generation_tool_chatgpt
-from .quiz_tools import quiz_generation_tool
+from .quiz_tools_chatgpt import quiz_generation_tool
 # from .feedback_tools import FeedbackTools  # 임시 주석
 
 __all__ = [

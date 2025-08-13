@@ -3,7 +3,9 @@
 import logging
 from typing import Dict, Any, List
 
-from app.core.external.chatgpt_client import ChatGPTClient
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_openai import ChatOpenAI
 
 
 def theory_generation_tool(
@@ -13,7 +15,7 @@ def theory_generation_tool(
     is_retry_session: bool = False
 ) -> str:
     """
-    ChatGPT를 활용한 사용자 맞춤형 이론 설명 대본 생성
+    ChatGPT를 활용한 사용자 맞춤형 이론 설명 대본 생성 (LangChain LCEL 사용)
     
     Args:
         section_data: 특정 섹션 데이터
@@ -28,79 +30,98 @@ def theory_generation_tool(
     logger = logging.getLogger(__name__)
     
     try:
-        logger.info("ChatGPT 이론 생성 도구 시작")
+        logger.info("ChatGPT 이론 생성 도구 시작 (LCEL 파이프라인)")
         
-        # ChatGPT 클라이언트 초기화
-        chatgpt_client = ChatGPTClient()
+        # LangChain 구성 요소 초기화
+        model = _get_chatgpt_model()
+        parser = StrOutputParser()
+        prompt_template = _create_prompt_template(user_type, is_retry_session)
         
-        # 프롬프트 생성
-        system_instruction, user_prompt = _create_prompts(
-            section_data, user_type, is_retry_session
-        )
+        # LCEL 파이프라인 구성: prompt | model | parser
+        chain = prompt_template | model | parser
         
-        # AI 컨텐츠 생성
-        generated_response = chatgpt_client.generate_content(
-            prompt=user_prompt,
-            system_instruction=system_instruction
-        )
+        # 입력 데이터 준비
+        input_data = _prepare_input_data(section_data)
         
-        logger.info("ChatGPT 이론 생성 도구 완료")
-        return generated_response
-    
+        # 파이프라인 실행
+        result = chain.invoke(input_data)
+        
+        logger.info("ChatGPT 이론 생성 파이프라인 완료")
+        return result
+        
     except Exception as e:
         logger.error(f"ChatGPT 이론 설명 생성 실패: {str(e)}")
         return _generate_fallback_response(section_data, str(e))
 
 
-def _create_prompts(
-    section_data: Dict[str, Any],
-    user_type: str,
-    is_retry_session: bool
-) -> tuple:
-    """
-    시스템 instruction과 사용자 프롬프트 생성
+def _get_chatgpt_model() -> ChatOpenAI:
+    """ChatGPT 모델 초기화"""
+    import os
     
-    Args:
-        section_data: 섹션 데이터
-        user_type: 사용자 유형
-        is_retry_session: 재학습 여부
-        
-    Returns:
-        (system_instruction, user_prompt) 튜플
+    return ChatOpenAI(
+        model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
+        openai_api_key=os.getenv('OPENAI_API_KEY'),
+        temperature=0.7,
+        max_tokens=int(os.getenv('OPENAI_MAX_TOKENS', '4096'))
+    )
+
+
+def _create_prompt_template(user_type: str, is_retry_session: bool) -> PromptTemplate:
     """
-    
-    # 섹션 정보 추출
-    section_title = section_data.get('title', '')
-    section_content = section_data.get('theory', {}).get('content', '')
+    사용자 유형에 따른 PromptTemplate 생성
+    """
     
     # 재학습 지시사항
     retry_note = "이전에 어려워했으므로 더 쉽게 설명해주세요." if is_retry_session else ""
     
-    # 사용자 유형별 시스템 instruction
     if user_type == "beginner":
-        system_instruction = f"""당신은 AI 입문자를 위한 친근한 튜터입니다. {retry_note}
+        system_message = f"""당신은 AI 입문자를 위한 친근한 튜터입니다. {retry_note}
 
 다음 지침에 따라 설명하세요:
 - 친근하고 쉬운 언어 사용 (이모지 활용)
 - 일상생활 비유로 설명
 - 기술 용어는 쉬운 말로 풀어서 설명
-- "~해보겠습니다", "~할게요" 친근한 톤"""
+- "~해보겠습니다", "~할게요" 친근한 톤
+- 단계별로 차근차근 설명
+- 예시를 많이 들어서 이해하기 쉽게 만들기"""
     else:  # advanced
-        system_instruction = f"""당신은 실무 응용형 사용자를 위한 효율적인 튜터입니다. {retry_note}
+        system_message = f"""당신은 실무 응용형 사용자를 위한 효율적인 튜터입니다. {retry_note}
 
 다음 지침에 따라 설명하세요:
 - 효율적이고 핵심적인 설명
 - 실무 활용 관점 중심
-- 논리적이고 체계적인 구조"""
+- 논리적이고 체계적인 구조
+- 기술적 원리와 메커니즘 설명
+- 실제 업무에서 어떻게 활용할 수 있는지 포함"""
     
-    # 사용자 프롬프트
-    user_prompt = f""""{section_title}"에 대해 설명해주세요.
+    # PromptTemplate 생성
+    template = f"""{system_message}
 
-참고 내용: {section_content}
+주제: "{{section_title}}"에 대해 설명해주세요.
 
-위 내용을 바탕으로 새롭게 설명을 작성해주세요."""
+참고 내용: {{section_content}}
+
+위 내용을 바탕으로 새롭게 설명을 작성해주세요. 
+참고 내용을 그대로 복사하지 말고, 위의 지침에 따라 새로운 방식으로 설명해주세요."""
     
-    return system_instruction, user_prompt
+    return PromptTemplate(
+        input_variables=["section_title", "section_content"],
+        template=template
+    )
+
+
+def _prepare_input_data(section_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    PromptTemplate에 전달할 입력 데이터 준비
+    """
+    
+    section_title = section_data.get('title', '')
+    section_content = section_data.get('theory', {}).get('content', '')
+    
+    return {
+        "section_title": section_title,
+        "section_content": section_content
+    }
 
 
 def _generate_fallback_response(section_data: Dict[str, Any], error_msg: str) -> str:

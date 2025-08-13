@@ -8,14 +8,14 @@ from unittest.mock import Mock, patch
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app.tools.content.quiz_tools import quiz_generation_tool
+from backend.app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
 
 class TestQuizTools:
     """Quiz Tools 기본 동작 테스트"""
     
     def test_quiz_tools_import(self):
         """Quiz Tools 임포트 테스트"""
-        from app.tools.content.quiz_tools import quiz_generation_tool
+        from backend.app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
         assert quiz_generation_tool is not None
         print("✅ Quiz Tools 임포트 성공")
     

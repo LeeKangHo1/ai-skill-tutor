@@ -10,7 +10,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
-from app.tools.content.quiz_tools import quiz_generation_tool
+from backend.app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
 
 class TestLLMContentGeneration:
     """실제 LLM을 호출하여 컨텐츠 생성 테스트"""

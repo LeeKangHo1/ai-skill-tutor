@@ -5,7 +5,7 @@ import json
 import os
 
 from app.core.langraph.state_manager import TutorState, state_manager
-from app.tools.content.theory_tools_gemini import theory_generation_tool
+from app.tools.content.theory_tools_chatgpt import theory_generation_tool
 
 
 class TheoryEducator:

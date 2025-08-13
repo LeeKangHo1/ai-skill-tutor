@@ -88,7 +88,7 @@ def test_quiz_generation():
     print("=" * 50)
     
     try:
-        from app.tools.content.quiz_tools import quiz_generation_tool
+        from backend.app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
         
         # 테스트 데이터
         chapter_data = {
