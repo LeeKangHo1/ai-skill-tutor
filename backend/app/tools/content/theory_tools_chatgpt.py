@@ -1,9 +1,9 @@
-# backend/app/tools/content/theory_tools_gemini.py
+# backend/app/tools/content/theory_tools_chatgpt.py
 
 import logging
 from typing import Dict, Any, List
 
-from app.core.external.gemini_client import GeminiClient
+from app.core.external.chatgpt_client import ChatGPTClient
 
 
 def theory_generation_tool(
@@ -13,7 +13,7 @@ def theory_generation_tool(
     is_retry_session: bool = False
 ) -> str:
     """
-    AI를 활용한 사용자 맞춤형 이론 설명 대본 생성
+    ChatGPT를 활용한 사용자 맞춤형 이론 설명 대본 생성
     
     Args:
         section_data: 특정 섹션 데이터
@@ -28,10 +28,10 @@ def theory_generation_tool(
     logger = logging.getLogger(__name__)
     
     try:
-        logger.info("이론 생성 도구 시작")
+        logger.info("ChatGPT 이론 생성 도구 시작")
         
-        # Gemini 클라이언트 초기화
-        gemini_client = GeminiClient()
+        # ChatGPT 클라이언트 초기화
+        chatgpt_client = ChatGPTClient()
         
         # 프롬프트 생성
         system_instruction, user_prompt = _create_prompts(
@@ -39,16 +39,16 @@ def theory_generation_tool(
         )
         
         # AI 컨텐츠 생성
-        generated_response = gemini_client.generate_content(
+        generated_response = chatgpt_client.generate_content(
             prompt=user_prompt,
             system_instruction=system_instruction
         )
         
-        logger.info("이론 생성 도구 완료")
+        logger.info("ChatGPT 이론 생성 도구 완료")
         return generated_response
     
     except Exception as e:
-        logger.error(f"AI 이론 설명 생성 실패: {str(e)}")
+        logger.error(f"ChatGPT 이론 설명 생성 실패: {str(e)}")
         return _generate_fallback_response(section_data, str(e))
 
 

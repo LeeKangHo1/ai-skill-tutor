@@ -7,7 +7,8 @@ from enum import Enum
 from langchain_core.messages import BaseMessage
 
 from app.core.external.gemini_client import GeminiClient
-from app.core.external.openai_client import OpenAIClient
+from app.core.external.chatgpt_client import ChatGPTClient
+from app.core.external.vector_db import VectorDBClient
 from app.core.langsmith.langsmith_client import is_langsmith_enabled
 from app.utils.common.exceptions import ExternalAPIError
 
@@ -45,10 +46,10 @@ class AIClientManager:
             except Exception as e:
                 self.logger.warning(f"Gemini 클라이언트 초기화 실패: {str(e)}")
             
-            # OpenAI 클라이언트 초기화
+            # ChatGPT 클라이언트 초기화
             try:
-                self._clients[AIProvider.OPENAI] = OpenAIClient()
-                self.logger.info("OpenAI 클라이언트 초기화 성공")
+                self._clients[AIProvider.OPENAI] = ChatGPTClient()
+                self.logger.info("ChatGPT 클라이언트 초기화 성공")
             except Exception as e:
                 self.logger.warning(f"OpenAI 클라이언트 초기화 실패: {str(e)}")
             
@@ -91,21 +92,22 @@ class AIClientManager:
             self.logger.error(f"텍스트 클라이언트 반환 실패: {str(e)}")
             raise
     
-    def get_embedding_client(self) -> OpenAIClient:
+    def get_embedding_client(self) -> VectorDBClient:
         """
-        임베딩 생성용 클라이언트 반환 (OpenAI 고정)
+        임베딩 생성용 클라이언트 반환 (VectorDB 전용)
         
         Returns:
-            OpenAI 클라이언트 인스턴스
+            VectorDB 클라이언트 인스턴스
             
         Raises:
-            ExternalAPIError: OpenAI 클라이언트를 찾을 수 없을 때
+            ExternalAPIError: VectorDB 클라이언트를 찾을 수 없을 때
         """
         try:
-            if AIProvider.OPENAI not in self._clients:
-                raise ExternalAPIError("OpenAI 클라이언트가 초기화되지 않았습니다.")
+            # VectorDB 클라이언트를 별도로 초기화
+            if not hasattr(self, '_vector_client'):
+                self._vector_client = VectorDBClient()
             
-            return self._clients[AIProvider.OPENAI]
+            return self._vector_client
             
         except Exception as e:
             self.logger.error(f"임베딩 클라이언트 반환 실패: {str(e)}")
@@ -182,10 +184,22 @@ class AIClientManager:
                     **kwargs
                 )
             
-            # OpenAI 클라이언트인 경우 (추후 구현)
-            elif isinstance(client, OpenAIClient):
-                return client.generate_content_with_messages(
-                    messages=messages,
+            # ChatGPT 클라이언트인 경우
+            elif isinstance(client, ChatGPTClient):
+                # ChatGPT는 시스템 메시지와 휴먼 메시지를 분리하여 처리
+                system_instruction = None
+                user_prompt = ""
+                
+                for message in messages:
+                    if hasattr(message, 'type'):
+                        if message.type == 'system':
+                            system_instruction = message.content
+                        elif message.type == 'human':
+                            user_prompt = message.content
+                
+                return client.generate_content(
+                    prompt=user_prompt,
+                    system_instruction=system_instruction,
                     **kwargs
                 )
             
@@ -229,11 +243,9 @@ class AIClientManager:
                     messages=messages,
                     **kwargs
                 )
-            elif isinstance(client, OpenAIClient):
-                json_content = client.generate_json_content_with_messages(
-                    messages=messages,
-                    **kwargs
-                )
+            elif isinstance(client, ChatGPTClient):
+                # ChatGPT 클라이언트는 현재 JSON 생성을 지원하지 않음
+                raise ExternalAPIError("ChatGPT 클라이언트는 JSON 생성을 지원하지 않습니다. Gemini를 사용해주세요.")
             else:
                 raise ExternalAPIError(f"지원하지 않는 클라이언트 타입: {type(client)}")
             

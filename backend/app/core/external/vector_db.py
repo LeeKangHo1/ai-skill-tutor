@@ -1,150 +1,153 @@
 # backend/app/core/external/vector_db.py
-"""
-ChromaDB 벡터 데이터베이스 클라이언트 모듈
-임베딩 저장, 검색 및 관리 기능을 제공합니다.
-"""
 
-import chromadb
-from typing import List, Dict, Any, Optional
 import os
-from chromadb.config import Settings
+import logging
+from typing import List, Dict, Any
+
+from langchain_openai import OpenAIEmbeddings
+
+from app.utils.common.exceptions import ExternalAPIError
+
 
 class VectorDBClient:
-    """ChromaDB 벡터 데이터베이스 클라이언트 클래스"""
+    """
+    벡터 데이터베이스 관련 클라이언트
+    - OpenAI 임베딩 생성 기능
+    - ChromaDB와의 연동을 위한 임베딩 처리
+    """
     
     def __init__(self):
-        """벡터 DB 클라이언트 초기화"""
-        self.client = None
-        self.collections = {}
-        self.db_path = os.getenv('CHROMA_DB_PATH', './data/chroma_db')
+        self.logger = logging.getLogger(__name__)
         self._initialize_client()
     
-    def _initialize_client(self) -> None:
-        """ChromaDB 클라이언트를 초기화합니다."""
+    def _initialize_client(self):
+        """벡터 DB 클라이언트 초기화"""
         try:
-            # 로컬 파일 기반 ChromaDB 클라이언트 생성
-            self.client = chromadb.PersistentClient(
-                path=self.db_path,
-                settings=Settings(
-                    anonymized_telemetry=False,
-                    allow_reset=True
-                )
+            # 환경변수에서 API 키 로드
+            api_key = os.getenv('OPENAI_API_KEY')
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+            
+            # 임베딩 모델 설정
+            self.embedding_model = os.getenv('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-large')
+            
+            # LangChain OpenAI 임베딩 모델 생성
+            self.embeddings = OpenAIEmbeddings(
+                model=self.embedding_model,
+                openai_api_key=api_key
             )
+            
+            self.logger.info(f"벡터 DB 클라이언트 초기화 완료 - 임베딩 모델: {self.embedding_model}")
+            
         except Exception as e:
-            print(f"ChromaDB 클라이언트 초기화 실패: {e}")
-            self.client = None
+            self.logger.error(f"벡터 DB 클라이언트 초기화 실패: {str(e)}")
+            raise ExternalAPIError(f"벡터 DB 초기화 오류: {str(e)}")
     
-    def get_or_create_collection(self, name: str, metadata: Optional[Dict] = None) -> chromadb.Collection:
+    def generate_embedding(self, text: str) -> List[float]:
         """
-        컬렉션을 가져오거나 생성합니다.
+        텍스트 임베딩 생성
         
         Args:
-            name (str): 컬렉션 이름
-            metadata (Optional[Dict]): 컬렉션 메타데이터
+            text: 임베딩할 텍스트
             
         Returns:
-            chromadb.Collection: ChromaDB 컬렉션 객체
-        """
-        if not self.client:
-            raise Exception("ChromaDB 클라이언트가 초기화되지 않았습니다.")
-        
-        if name not in self.collections:
-            self.collections[name] = self.client.get_or_create_collection(
-                name=name,
-                metadata=metadata or {}
-            )
-        
-        return self.collections[name]
-    
-    def add_documents(self, collection_name: str, documents: List[str], 
-                     embeddings: List[List[float]], ids: List[str], 
-                     metadatas: Optional[List[Dict]] = None) -> None:
-        """
-        문서와 임베딩을 컬렉션에 추가합니다.
-        
-        Args:
-            collection_name (str): 컬렉션 이름
-            documents (List[str]): 문서 텍스트 목록
-            embeddings (List[List[float]]): 임베딩 벡터 목록
-            ids (List[str]): 문서 ID 목록
-            metadatas (Optional[List[Dict]]): 메타데이터 목록
-        """
-        collection = self.get_or_create_collection(collection_name)
-        
-        collection.add(
-            documents=documents,
-            embeddings=embeddings,
-            ids=ids,
-            metadatas=metadatas or [{}] * len(documents)
-        )
-    
-    def search_similar(self, collection_name: str, query_embeddings: List[List[float]], 
-                      n_results: int = 5, where: Optional[Dict] = None) -> Dict[str, Any]:
-        """
-        유사한 문서를 검색합니다.
-        
-        Args:
-            collection_name (str): 컬렉션 이름
-            query_embeddings (List[List[float]]): 쿼리 임베딩 벡터
-            n_results (int): 반환할 결과 수
-            where (Optional[Dict]): 필터 조건
+            임베딩 벡터 (실수 리스트)
             
-        Returns:
-            Dict[str, Any]: 검색 결과
+        Raises:
+            ExternalAPIError: API 호출 실패 시
         """
-        collection = self.get_or_create_collection(collection_name)
-        
-        results = collection.query(
-            query_embeddings=query_embeddings,
-            n_results=n_results,
-            where=where
-        )
-        
-        return results
-    
-    def delete_documents(self, collection_name: str, ids: List[str]) -> None:
-        """
-        문서를 삭제합니다.
-        
-        Args:
-            collection_name (str): 컬렉션 이름
-            ids (List[str]): 삭제할 문서 ID 목록
-        """
-        collection = self.get_or_create_collection(collection_name)
-        collection.delete(ids=ids)
-    
-    def get_collection_info(self, collection_name: str) -> Dict[str, Any]:
-        """
-        컬렉션 정보를 가져옵니다.
-        
-        Args:
-            collection_name (str): 컬렉션 이름
-            
-        Returns:
-            Dict[str, Any]: 컬렉션 정보
-        """
-        collection = self.get_or_create_collection(collection_name)
-        
-        return {
-            'name': collection.name,
-            'count': collection.count(),
-            'metadata': collection.metadata
-        }
-    
-    def reset_collection(self, collection_name: str) -> None:
-        """
-        컬렉션을 초기화합니다.
-        
-        Args:
-            collection_name (str): 컬렉션 이름
-        """
-        if not self.client:
-            raise Exception("ChromaDB 클라이언트가 초기화되지 않았습니다.")
-        
         try:
-            self.client.delete_collection(collection_name)
-            if collection_name in self.collections:
-                del self.collections[collection_name]
-        except Exception:
-            # 컬렉션이 존재하지 않는 경우 무시
-            pass
+            if not text or not text.strip():
+                raise ValueError("임베딩할 텍스트가 비어있습니다.")
+            
+            self.logger.debug(f"임베딩 생성 시작 - 텍스트 길이: {len(text)}")
+            
+            # OpenAI 임베딩 호출
+            embedding_vector = self.embeddings.embed_query(text)
+            
+            self.logger.debug(f"임베딩 생성 성공 - 벡터 차원: {len(embedding_vector)}")
+            return embedding_vector
+            
+        except Exception as e:
+            error_msg = f"임베딩 생성 실패: {str(e)}"
+            self.logger.error(error_msg)
+            raise ExternalAPIError(error_msg)
+    
+    def generate_batch_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """
+        배치 임베딩 생성
+        
+        Args:
+            texts: 임베딩할 텍스트 리스트
+            
+        Returns:
+            임베딩 벡터들의 리스트
+            
+        Raises:
+            ExternalAPIError: API 호출 실패 시
+        """
+        try:
+            if not texts:
+                raise ValueError("임베딩할 텍스트 리스트가 비어있습니다.")
+            
+            # 빈 텍스트 필터링
+            valid_texts = [text for text in texts if text and text.strip()]
+            if not valid_texts:
+                raise ValueError("유효한 텍스트가 없습니다.")
+            
+            self.logger.info(f"배치 임베딩 생성 시작 - 텍스트 수: {len(valid_texts)}")
+            
+            # OpenAI 배치 임베딩 호출
+            embeddings = self.embeddings.embed_documents(valid_texts)
+            
+            self.logger.info(f"배치 임베딩 생성 완료 - 총 {len(embeddings)}개")
+            return embeddings
+            
+        except Exception as e:
+            error_msg = f"배치 임베딩 생성 실패: {str(e)}"
+            self.logger.error(error_msg)
+            raise ExternalAPIError(error_msg)
+    
+    def get_embedding_dimension(self) -> int:
+        """
+        현재 임베딩 모델의 차원 수 반환
+        
+        Returns:
+            임베딩 벡터 차원 수
+        """
+        # text-embedding-3-large: 3072차원
+        # text-embedding-3-small: 1536차원
+        # text-embedding-ada-002: 1536차원
+        
+        dimension_map = {
+            'text-embedding-3-large': 3072,
+            'text-embedding-3-small': 1536,
+            'text-embedding-ada-002': 1536
+        }
+        
+        return dimension_map.get(self.embedding_model, 1536)  # 기본값: 1536
+    
+    def test_connection(self) -> bool:
+        """
+        벡터 DB 연결 테스트
+        
+        Returns:
+            연결 성공 여부
+        """
+        try:
+            # 간단한 텍스트로 임베딩 테스트
+            test_embedding = self.generate_embedding("테스트")
+            
+            # 임베딩 벡터가 올바른 형태인지 확인
+            success = (
+                isinstance(test_embedding, list) and 
+                len(test_embedding) > 0 and 
+                isinstance(test_embedding[0], float)
+            )
+            
+            self.logger.info(f"벡터 DB 연결 테스트 {'성공' if success else '실패'}")
+            return success
+            
+        except Exception as e:
+            self.logger.error(f"벡터 DB 연결 테스트 실패: {str(e)}")
+            return False
