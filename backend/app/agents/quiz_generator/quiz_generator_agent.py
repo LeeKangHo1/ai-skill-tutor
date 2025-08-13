@@ -58,13 +58,19 @@ class QuizGenerator:
                 quiz_content
             )
             
-            # 5. 세션 진행 단계 업데이트
+            # 5. UI 모드를 quiz로 변경
+            updated_state = state_manager.update_ui_mode(
+                updated_state, 
+                "quiz"
+            )
+            
+            # 6. 세션 진행 단계 업데이트
             updated_state = state_manager.update_session_progress(
                 updated_state, 
                 self.agent_name
             )
             
-            # 6. 대화 기록 추가
+            # 7. 대화 기록 추가
             updated_state = state_manager.add_conversation(
                 updated_state,
                 agent_name=self.agent_name,
