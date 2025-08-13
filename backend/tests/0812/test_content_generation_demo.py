@@ -9,7 +9,7 @@ from datetime import datetime
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app.tools.content.theory_tools import theory_generation_tool
+from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
 from app.tools.content.quiz_tools import quiz_generation_tool
 
 class TestContentGenerationDemo:

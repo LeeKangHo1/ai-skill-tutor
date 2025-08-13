@@ -107,7 +107,7 @@ def test_with_actual_tool():
     """실제 theory_generation_tool과 함께 테스트"""
     print("\n\n=== 실제 Tool과 함께 LangSmith 테스트 ===")
     
-    from app.tools.content.theory_tools import theory_generation_tool
+    from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
     
     # chapter_01.json에서 데이터 로드
     with open('data/chapters/chapter_01.json', 'r', encoding='utf-8') as f:

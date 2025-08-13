@@ -143,7 +143,7 @@ def test_theory_generation():
         }
         
         # Theory generation tool 실행
-        from app.tools.content.theory_tools import theory_generation_tool
+        from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
         
         result = theory_generation_tool(
             chapter_data=test_chapter_data,

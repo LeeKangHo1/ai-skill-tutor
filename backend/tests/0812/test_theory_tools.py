@@ -8,14 +8,14 @@ from unittest.mock import Mock, patch
 # 프로젝트 루트를 Python 경로에 추가
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from app.tools.content.theory_tools import theory_generation_tool
+from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
 
 class TestTheoryTools:
     """Theory Tools 기본 동작 테스트"""
     
     def test_theory_tools_import(self):
         """Theory Tools 임포트 테스트"""
-        from app.tools.content.theory_tools import theory_generation_tool
+        from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
         assert theory_generation_tool is not None
         print("✅ Theory Tools 임포트 성공")
     

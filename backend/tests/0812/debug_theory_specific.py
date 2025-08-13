@@ -83,7 +83,7 @@ def test_theory_tools_detailed():
         }
         
         # Theory Tools 내부 함수들 단계별 테스트
-        from app.tools.content.theory_tools import (
+        from backend.app.tools.content.theory_tools_gemini import (
             _get_current_section_data,
             _create_prompt_templates,
             _prepare_prompt_data
@@ -137,7 +137,7 @@ def test_theory_tools_detailed():
         # 5. 실제 Theory Tools 호출 테스트
         print(f"\n--- 실제 Theory Tools 호출 테스트 ---")
         
-        from app.tools.content.theory_tools import theory_generation_tool
+        from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
         
         try:
             final_result = theory_generation_tool(

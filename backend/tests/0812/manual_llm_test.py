@@ -44,7 +44,7 @@ def test_theory_generation():
     print("=" * 50)
     
     try:
-        from app.tools.content.theory_tools import theory_generation_tool
+        from backend.app.tools.content.theory_tools_gemini import theory_generation_tool
         
         # 테스트 데이터
         chapter_data = {
