@@ -116,8 +116,7 @@ def test_theory_tools_detailed():
         
         try:
             generated_response = ai_manager.generate_json_content_with_messages(
-                messages=[system_message, user_message],
-                langsmith_run_id=None  # LangSmith 비활성화
+                messages=[system_message, user_message]
             )
             
             print("✅ AI 생성 성공!")

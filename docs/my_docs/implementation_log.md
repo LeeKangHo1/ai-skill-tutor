@@ -6,56 +6,40 @@
 - langgraph==0.6.3
 - langsmith==0.4.13
 
+## 📋 향후 개발 지침
+**앞으로 모든 에이전트와 툴 작성 시 표준 패턴 적용:**
+- **PromptTemplate**: 입력 변수 명확히 정의
+- **LCEL 파이프라인**: `PromptTemplate | ChatOpenAI | OutputParser` 구조 
+- **OutputParser**: JSON 출력은 `JsonOutputParser` + Pydantic 스키마, 텍스트는 `StrOutputParser`
+
 ## 📅 2025년 8월 13일 - 퀴즈 생성 시스템 LangChain LCEL 파이프라인 전환
 
 ### 🎯 주요 작업
-
-- **퀴즈 생성 에이전트 간소화**: `quiz_generator_agent.py`에서 불필요한 기능 제거, 핵심 로직만 유지
+- **퀴즈 생성 에이전트 간소화**: 불필요한 기능 제거, 핵심 로직만 유지
 - **LangChain LCEL 파이프라인 도입**: `quiz_tools_chatgpt.py`와 `theory_tools_chatgpt.py`를 LCEL 패턴으로 전환
 - **JSON 출력 구조 최적화**: 기존 데이터 템플릿 구조 그대로 활용하여 프론트엔드 호환성 보장
 
 ### 🛠️ 주요 수정 파일
+- **quiz_generator_agent.py**: 불필요한 기능 제거, 특정 섹션 로드 로직 구현
+- **theory_educator_agent.py**: 불필요한 기능 제거, 특정 섹션 로드 로직 구현
+- **quiz_tools_chatgpt.py**: `PromptTemplate | ChatOpenAI | JsonOutputParser` LCEL 파이프라인 전환, Pydantic 스키마 도입
+- **theory_tools_chatgpt.py**: `PromptTemplate | ChatOpenAI | StrOutputParser` LCEL 파이프라인 전환
 
-**quiz_generator_agent.py 간소화:**
+### 🗑️ 삭제된 파일
+- **ai_client_manager.py**: LangChain 직접 사용으로 인한 중간 관리자 레이어 불필요
+- **gemini_client.py**: LangChain ChatGoogleGenerativeAI로 대체
+- **chatgpt_client.py**: LangChain ChatOpenAI로 대체  
+- **langsmith_client.py**: LangChain 자동 추적으로 수동 추적 불필요
 
-- 불필요한 기능 제거: `update_quiz_type_from_section()`, UI 모드 전환, 복잡한 퀴즈 상태 업데이트, 힌트 생성
-- 핵심 기능 유지: 섹션 데이터 로드 → 퀴즈 툴 호출 → 대본 저장 → 진행 상태 업데이트
-- 특정 섹션만 로드하는 `_load_section_data()` 구현
+### 🔄 기술적 개선사항
+- **LangChain 네이티브 활용**: ChatOpenAI 모델 직접 사용, 자동 LangSmith 추적
+- **출력 파서 최적화**: 퀴즈는 JsonOutputParser + Pydantic, 이론은 StrOutputParser + 자연어
+- **프롬프트 템플릿 체계화**: 사용자 유형별 분기 처리, 재학습 모드 지원
 
-**quiz_tools_chatgpt.py LCEL 전환:**
-
-- **이전**: ChatGPTClient 직접 호출 → 수동 프롬프트 생성
-- **개선**: `PromptTemplate | ChatOpenAI | JsonOutputParser` LCEL 파이프라인
-- **JSON 스키마**: 기존 템플릿 구조 그대로 활용 (`quiz.type`, `quiz.question`, `quiz.options` 등)
-- **사용자 유형별 템플릿**: beginner(친근한 톤) vs advanced(실무 중심)
-- **Pydantic 스키마**: `QuizSchema`로 JSON 응답 구조 보장
-
-**theory_tools_chatgpt.py LCEL 전환:**
-
-- **이전**: ChatGPTClient 직접 호출 → 수동 프롬프트 생성
-- **개선**: `PromptTemplate | ChatOpenAI | StrOutputParser` LCEL 파이프라인
-- **출력**: 자연스러운 텍스트 응답 (JSON 파싱 없음)
-- **입력 변수**: `section_title`, `section_content` 2개로 단순화
-
-## 📅 2025년 8월 13일 - AI 클라이언트 분리 및 ChatGPT 지원 추가
-
-### 🎯 주요 작업
-- **Gemini 클라이언트 최적화**: `convert_system_message_to_human` 경고 제거, Google Gemini API 호환성 개선
-- **OpenAI 클라이언트 분리**: `openai_client.py` → `chatgpt_client.py` + `vector_db.py`로 기능별 분리
-- **ChatGPT 이론 도구 추가**: `theory_tools_chatgpt.py` 생성, Gemini와 동일한 인터페이스 제공
-
-### 🛠️ 주요 수정 파일
-- **gemini_client.py**: 경고 제거, 간소화된 인터페이스로 리팩토링
-- **chatgpt_client.py**: 채팅 전용 클라이언트 생성 (시스템 메시지 네이티브 지원)
-- **vector_db.py**: 임베딩 생성 전용 클라이언트 분리
-- **theory_tools_chatgpt.py**: ChatGPT 기반 이론 생성 도구 구현
-- **ai_client_manager.py**: OpenAIClient → ChatGPTClient + VectorDBClient 연동 수정
-- **__init__.py**: ChatGPT 버전 theory_generation_tool export 추가
-
-### ✅ 테스트 완료
-- ChatGPT 클라이언트 연결 성공
-- 초보자/고급 사용자별 맞춤형 이론 생성 확인
-- 재학습 모드 적용 확인
+### ✅ 달성 효과
+- **코드 간소화**: 복잡한 AI Client Manager 의존성 제거
+- **유지보수성 향상**: LCEL 파이프라인으로 가독성 개선
+- **프론트엔드 호환성**: 기존 JSON 구조 유지
 
 ## 📅 2025년 8월 12일 - LangChain 모델 전환 및 LangSmith 자동 추적 통합
 

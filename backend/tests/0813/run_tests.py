@@ -69,7 +69,7 @@ def check_environment():
     from dotenv import load_dotenv
     load_dotenv()
     
-    env_vars = ['OPENAI_API_KEY', 'LANGSMITH_API_KEY']
+    env_vars = ['OPENAI_API_KEY']
     
     for var in env_vars:
         value = os.getenv(var)
