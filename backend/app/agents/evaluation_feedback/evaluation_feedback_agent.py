@@ -69,12 +69,9 @@ class EvaluationFeedbackAgent:
             # 4. 다음 단계 결정
             next_step = determine_next_step(score, quiz_type, state["current_session_count"])
             
-            # 5. 최종 피드백 생성 (ChatGPT 피드백 + 다음 단계 멘트)
-            final_feedback = self._create_final_feedback(feedback_text, next_step)
-            
-            # 6. State 업데이트
+            # 5. State 업데이트 (순수 피드백만 저장, 안내 멘트는 ResponseGenerator에서 처리)
             updated_state = self._update_state_with_results(
-                state, score, final_feedback, next_step
+                state, score, feedback_text, next_step
             )
             
             self.logger.info(f"[{self.agent_name}] 평가 완료 - 점수: {score}, 다음단계: {next_step}")
@@ -174,25 +171,6 @@ class EvaluationFeedbackAgent:
             )
             return 50, fallback_feedback
     
-    def _create_final_feedback(self, chatgpt_feedback: str, next_step: str) -> str:
-        """ChatGPT 피드백과 다음 단계 멘트를 결합"""
-        try:
-            # 다음 단계 멘트 정의
-            proceed_message = "훌륭합니다! 이 파트를 성공적으로 완료했어요. 다음 파트로 진행할까요?"
-            retry_message = "한 번 더 복습을 하고 넘어갈까요?"
-            
-            next_step_text = proceed_message if next_step == "proceed" else retry_message
-            
-            # ChatGPT 피드백이 있으면 결합, 없으면 기본 메시지만
-            if chatgpt_feedback and chatgpt_feedback.strip():
-                return f"{chatgpt_feedback.strip()}\n\n{next_step_text}"
-            else:
-                return f"평가가 완료되었습니다.\n\n{next_step_text}"
-                
-        except Exception as e:
-            self.logger.error(f"최종 피드백 생성 중 오류: {str(e)}")
-            return "평가가 완료되었습니다. 다음 단계로 진행하겠습니다."
-    
     def _update_state_with_results(
         self, 
         state: TutorState, 
@@ -212,7 +190,7 @@ class EvaluationFeedbackAgent:
         # 2. 세션 결정 결과 설정
         updated_state["session_decision_result"] = next_step
         
-        # 3. 피드백 대본 저장 (LearningSupervisor용)
+        # 3. 피드백 대본 저장 (LearningSupervisor용) - 순수 피드백만
         updated_state = state_manager.update_agent_draft(
             updated_state,
             self.agent_name,
@@ -250,7 +228,7 @@ class EvaluationFeedbackAgent:
         """오류 발생 시 기본 State 생성"""
         self.logger.error(f"오류 상태 생성: {error_message}")
         
-        error_feedback = f"평가 중 문제가 발생했습니다: {error_message}\n\n괜찮습니다! 훌륭합니다! 이 파트를 성공적으로 완료했어요. 다음 파트로 진행할까요?"
+        error_feedback = f"평가 중 문제가 발생했습니다: {error_message}"
         
         # 기본 평가 결과로 업데이트
         updated_state = state_manager.update_quiz_info(

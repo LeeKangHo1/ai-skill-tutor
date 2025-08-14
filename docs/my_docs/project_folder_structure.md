@@ -15,9 +15,9 @@ backend/
 │   │   │   └── evaluation_feedback_agent.py # ✅ 구현됨: EvaluationFeedbackAgent
 │   │   ├── learning_supervisor/      # 학습 감독 에이전트
 │   │   │   ├── __init__.py           # 
-│   │   │   ├── learning_supervisor_agent.py # LearningSupervisor 에이전트
-│   │   │   ├── response_generator.py # 응답 생성기
-│   │   │   └── supervisor_router.py  # 라우팅 로직
+│   │   │   ├── learning_supervisor_agent.py # ✅ 구현됨: LearningSupervisor 에이전트
+│   │   │   ├── response_generator.py # ✅ 구현됨: 응답 생성기
+│   │   │   └── supervisor_router.py  # ✅ 구현됨: LangGraph conditional_edges용 라우터 함수
 │   │   ├── qna_resolver/             # 질문 답변 에이전트
 │   │   │   ├── __init__.py           # 
 │   │   │   ├── answer_generator.py   # 답변 생성기
@@ -146,7 +146,7 @@ backend/
 │   │   │   ├── context_tools.py      # 맥락 통합 도구
 │   │   │   ├── evaluation_tools.py   # ✅ 구현됨: 로컬 채점
 │   │   │   ├── feedback_tools_chatgpt.py   ✅ 구현됨: ChatGPT 기반 피드백 생성 도구
-│   │   │   └── intent_analysis_tools.py # 의도 분석 도구
+│   │   │   └── intent_analysis_tools.py # ✅ 구현됨: 의도 분석 도구
 │   │   ├── content/                  # 컨텐츠 생성 도구
 │   │   │   ├── __init__.py
 │   │   │   ├── feedback_tools.py     # 피드백 생성 도구
@@ -169,6 +169,7 @@ backend/
 │       │   └── password_handler.py   # ✅ 구현됨: bcrypt 비밀번호 해시화/검증
 │       ├── common/                   # 공통 유틸리티
 │       │   ├── __init__.py
+│       │   ├── chat_logger.py        # ✅ 구현됨: 사용자별 JSON 대화 로그 저장 시스템
 │       │   ├── constants.py          # 상수 정의
 │       │   ├── exceptions.py         # 일부 구현: 계층적 커스텀 예외 클래스
 │       │   └── helpers.py            # 헬퍼 함수들
