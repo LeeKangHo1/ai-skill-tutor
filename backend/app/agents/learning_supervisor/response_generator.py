@@ -41,6 +41,8 @@ class ResponseGenerator:
                 return self._process_feedback_response(state)
             elif "qna_resolver" in current_agent:
                 return self._process_qna_response(state)
+            elif "session_manager" in current_agent:
+                return self._process_session_response(state)
             else:
                 # 기본 처리: 모든 대본 확인해서 가장 최근 내용 처리
                 return self._process_default_response(state)
@@ -151,6 +153,20 @@ class ResponseGenerator:
         
         return updated_state
     
+    def _process_session_response(self, state: TutorState) -> TutorState:
+        """
+        세션 완료 응답 정제
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            처리된 TutorState
+        """
+        # SessionManager는 이미 완료 메시지를 생성하므로 그대로 사용
+        # 필요시 추가 정제 가능
+        return state
+    
     def _process_default_response(self, state: TutorState) -> TutorState:
         """
         기본 응답 처리 (에이전트가 명확하지 않은 경우)
@@ -246,7 +262,10 @@ class ResponseGenerator:
         if user_type == "beginner":
             intro += "천천히 생각해보세요. 틀려도 괜찮으니 편하게 답변해주시면 됩니다! 💪\n\n"
         
-        return intro + refined_content
+        # 답변 입력 안내 추가
+        outro = "\n\n✏️ 답변을 입력해주세요!"
+        
+        return intro + refined_content + outro
     
     def _refine_feedback_content(self, feedback_draft: str, state: TutorState) -> str:
         """
@@ -342,39 +361,6 @@ class ResponseGenerator:
         updated_state = state_manager.update_agent_draft(state, "theory_educator", error_message)
         
         return updated_state
-    
-    def validate_response_quality(self, response: str, user_type: str) -> Dict[str, Any]:
-        """
-        응답 품질 검증 (선택적 기능)
-        
-        Args:
-            response: 생성된 응답
-            user_type: 사용자 유형
-            
-        Returns:
-            품질 검증 결과
-        """
-        validation_result = {
-            "is_valid": True,
-            "issues": [],
-            "suggestions": []
-        }
-        
-        # 기본 검증 사항들
-        if len(response.strip()) < 10:
-            validation_result["is_valid"] = False
-            validation_result["issues"].append("응답이 너무 짧습니다")
-        
-        if len(response) > 2000:
-            validation_result["issues"].append("응답이 너무 깁니다")
-            validation_result["suggestions"].append("더 간결하게 요약해보세요")
-        
-        # 사용자 유형별 검증
-        if user_type == "beginner":
-            if not any(emoji in response for emoji in ["😊", "💪", "🎉", "📚", "💡"]):
-                validation_result["suggestions"].append("친근한 이모지 추가를 고려해보세요")
-        
-        return validation_result
 
 
 # 전역 ResponseGenerator 인스턴스

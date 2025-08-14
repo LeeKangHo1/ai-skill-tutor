@@ -12,7 +12,8 @@ class TheoryEducator:
     """
     이론 설명 에이전트
     - 특정 섹션 데이터만 로드하여 효율적 처리
-    - 사용자와 직접 소통하지 않고 대본만 생성
+    - 순수 이론 설명 대본만 생성 (사용자 대면 메시지 없음)
+    - LearningSupervisor가 대본을 사용자 친화적으로 변환
     """
     
     def __init__(self):
@@ -46,7 +47,7 @@ class TheoryEducator:
             # 3. 벡터 DB에서 관련 자료 검색 (추후 활용)
             vector_materials = []  # 현재는 빈 리스트
             
-            # 4. 이론 설명 대본 생성
+            # 4. 순수 이론 설명 대본 생성 (사용자 대면 메시지 없음)
             theory_content = theory_generation_tool(
                 section_data=section_data,
                 user_type=state["user_type"],
@@ -54,7 +55,7 @@ class TheoryEducator:
                 is_retry_session=is_retry_session
             )
             
-            # 5. State 업데이트 - 대본 저장
+            # 5. State 업데이트 - 순수 대본만 저장
             updated_state = state_manager.update_agent_draft(
                 state, 
                 self.agent_name, 
@@ -67,7 +68,13 @@ class TheoryEducator:
                 self.agent_name
             )
             
-            # 7. 대화 기록 추가
+            # 7. 현재 에이전트 설정
+            updated_state = state_manager.update_agent_transition(
+                updated_state,
+                self.agent_name
+            )
+            
+            # 8. 대화 기록 추가 (시스템 로그용)
             updated_state = state_manager.add_conversation(
                 updated_state,
                 agent_name=self.agent_name,
@@ -85,6 +92,11 @@ class TheoryEducator:
                 state, 
                 self.agent_name, 
                 self._create_error_response(str(e))
+            )
+            # 현재 에이전트 설정
+            error_state = state_manager.update_agent_transition(
+                error_state,
+                self.agent_name
             )
             return error_state
     
@@ -128,16 +140,104 @@ class TheoryEducator:
     
     def _create_error_response(self, error_message: str) -> str:
         """
-        오류 발생 시 기본 응답 생성
+        오류 발생 시 기본 대본 생성 (순수 대본)
         
         Args:
             error_message: 오류 메시지
             
         Returns:
-            오류 응답 텍스트
+            오류 대본 텍스트
         """
-        return f"""죄송합니다. 이론 설명을 생성하는 중 문제가 발생했습니다.
-
-궁금한 점이 있으시면 언제든 질문해주세요!
-
-오류: {error_message}"""
+        return f"이론 설명을 생성하는 중 문제가 발생했습니다.\n\n오류: {error_message}"
+    
+    def get_section_info(self, state: TutorState) -> Dict[str, Any]:
+        """
+        현재 섹션 정보 반환 (외부에서 호출 가능)
+        
+        Args:
+            state: 현재 TutorState
+            
+        Returns:
+            섹션 정보 딕셔너리
+        """
+        section_data = self._load_section_data(state["current_chapter"], state["current_section"])
+        
+        if section_data:
+            return {
+                "chapter": state["current_chapter"],
+                "section": state["current_section"],
+                "title": section_data.get("title", ""),
+                "description": section_data.get("description", ""),
+                "learning_objectives": section_data.get("learning_objectives", []),
+                "estimated_duration": section_data.get("estimated_duration_minutes", 0)
+            }
+        else:
+            return {
+                "chapter": state["current_chapter"],
+                "section": state["current_section"],
+                "error": "섹션 데이터를 찾을 수 없습니다."
+            }
+    
+    def validate_section_data(self, chapter_number: int, section_number: int) -> bool:
+        """
+        섹션 데이터 유효성 검증
+        
+        Args:
+            chapter_number: 챕터 번호
+            section_number: 섹션 번호
+            
+        Returns:
+            유효성 여부
+        """
+        section_data = self._load_section_data(chapter_number, section_number)
+        
+        if not section_data:
+            return False
+        
+        # 필수 필드 검증
+        required_fields = ["title", "content", "learning_objectives"]
+        for field in required_fields:
+            if field not in section_data or not section_data[field]:
+                print(f"[{self.agent_name}] 필수 필드 누락: {field}")
+                return False
+        
+        return True
+    
+    def get_available_sections(self, chapter_number: int) -> List[Dict[str, Any]]:
+        """
+        특정 챕터의 모든 섹션 목록 반환
+        
+        Args:
+            chapter_number: 챕터 번호
+            
+        Returns:
+            섹션 목록
+        """
+        try:
+            chapter_file = os.path.join(
+                self.chapter_data_path, 
+                f"chapter_{chapter_number:02d}.json"
+            )
+            
+            if not os.path.exists(chapter_file):
+                return []
+            
+            with open(chapter_file, 'r', encoding='utf-8') as f:
+                chapter_data = json.load(f)
+            
+            sections = chapter_data.get('sections', [])
+            section_list = []
+            
+            for section in sections:
+                section_list.append({
+                    "section_number": section.get("section_number"),
+                    "title": section.get("title", ""),
+                    "description": section.get("description", ""),
+                    "estimated_duration": section.get("estimated_duration_minutes", 0)
+                })
+            
+            return section_list
+            
+        except Exception as e:
+            print(f"[{self.agent_name}] 섹션 목록 조회 실패: {str(e)}")
+            return []

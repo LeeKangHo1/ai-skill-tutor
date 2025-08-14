@@ -10,59 +10,53 @@ def supervisor_router(state: TutorState) -> str:
     새로운 워크플로우:
     1. session_start → 바로 theory_educator (의도 분석 없음)
     2. theory_completed → 질문 받기 OR 퀴즈 진행
-    3. quiz_and_feedback_completed → 질문 받기 OR 새 세션 시작
+    3. quiz_answer → evaluation_feedback (의도 분석 없음)
+    4. quiz_and_feedback_completed → 질문 받기 OR 새 세션 시작
     
     Args:
-        state: 현재 TutorState
+        state: 현재 TutorState (user_intent가 설정된 상태)
         
     Returns:
-        다음 노드 이름 ("theory_educator", "quiz_generator", "evaluation_feedback_agent", 
+        다음 노드 이름 ("theory_educator", "quiz_generator", "evaluation_feedback", 
                    "qna_resolver", "session_manager", "END")
     """
     try:
-        # State에서 필요한 정보 추출
         user_intent = state.get("user_intent", "next_step")
         session_stage = state.get("session_progress_stage", "session_start")
-        current_agent = state.get("current_agent", "")
+        session_decision = state.get("session_decision_result", "")
         
-        # 1. 세션 시작 → 바로 이론 설명 (의도 분석 무관)
-        if session_stage == "session_start":
-            return "theory_educator"
+        print(f"[Router] 라우팅 결정 - intent: {user_intent}, stage: {session_stage}, decision: {session_decision}")
         
-        # 2. 퀴즈 답변인 경우 → EvaluationFeedbackAgent
+        # 1. 퀴즈 답변 처리 (의도 분석 없이 바로 평가로)
         if user_intent == "quiz_answer":
-            return "evaluation_feedback_agent"
+            print("[Router] → evaluation_feedback (퀴즈 답변 제출)")
+            return "evaluation_feedback"
         
-        # 3. 이론 완료 후 → 질문 OR 퀴즈 진행
-        if session_stage == "theory_completed":
-            if user_intent == "question":
-                return "qna_resolver"
-            else:  # next_step
+        # 2. 질문 답변 요청  
+        if user_intent == "question":
+            print("[Router] → qna_resolver (질문 답변)")
+            return "qna_resolver"
+        
+        # 3. 세션 완료 처리 (평가 완료 후)
+        if session_stage == "quiz_and_feedback_completed" and user_intent == "next_step":
+            print("[Router] → session_manager (세션 완료)")
+            return "session_manager"
+        
+        # 4. 다음 단계 진행
+        if user_intent == "next_step":
+            if session_stage == "session_start":
+                print("[Router] → theory_educator (세션 시작)")
+                return "theory_educator"
+            elif session_stage == "theory_completed":
+                print("[Router] → quiz_generator (이론 완료 후)")
                 return "quiz_generator"
         
-        # 4. 퀴즈와 피드백 완료 후 → 질문 OR 새 세션 시작
-        if session_stage == "quiz_and_feedback_completed":
-            if user_intent == "question":
-                return "qna_resolver"
-            else:  # next_step
-                return "session_manager"  # 새 세션 시작
-        
-        # 5. 현재 에이전트가 learning_supervisor이고 응답이 준비된 경우
-        if current_agent == "learning_supervisor":
-            # 에이전트 대본이 있으면 최종 응답 생성으로
-            if (_has_response_ready(state)):
-                return "response_generator"
-            
-            # 사용자 메시지 입력 요청인 경우 → 워크플로우 종료
-            if _is_input_request(state):
-                return "END"
-        
-        # 6. 예외 상황 → 기본적으로 워크플로우 종료
-        print(f"supervisor_router: 예상치 못한 상황 - intent: {user_intent}, stage: {session_stage}, agent: {current_agent}")
+        # 5. 기본값 - 직접 응답 생성
+        print(f"[Router] → END (직접 응답, intent: {user_intent})")
         return "END"
         
     except Exception as e:
-        print(f"supervisor_router 오류: {e}")
+        print(f"[Router] 라우팅 오류: {e} - 기본값으로 END 반환")
         return "END"
 
 
@@ -140,6 +134,7 @@ class SupervisorRouter:
             가능한 라우트 목록
         """
         session_stage = state.get("session_progress_stage", "session_start")
+        user_intent = state.get("user_intent", "next_step")
         available_routes = []
         
         # 항상 가능한 라우트
@@ -158,12 +153,12 @@ class SupervisorRouter:
             available_routes.append("session_manager")  # 새 세션 시작 가능
         
         # 퀴즈 답변 시 가능한 라우트
-        if state.get("user_intent") == "quiz_answer":
-            available_routes.append("evaluation_feedback_agent")
+        if user_intent == "quiz_answer":
+            available_routes.append("evaluation_feedback")
         
         # 응답 준비 시 가능한 라우트
         if _has_response_ready(state):
-            available_routes.append("response_generator")
+            available_routes.append("END")  # 응답 준비되면 종료 가능
         
         return available_routes
     
@@ -194,11 +189,10 @@ class SupervisorRouter:
         descriptions = {
             "theory_educator": "개념 설명 생성 (세션 시작 시 자동 진행)",
             "quiz_generator": "퀴즈 문제 생성 (이론 완료 후)",
-            "evaluation_feedback_agent": "답변 평가 및 피드백",
+            "evaluation_feedback": "답변 평가 및 피드백 (퀴즈 답변 제출 시)",
             "qna_resolver": "질문 답변 처리 (이론 완료 후 또는 피드백 완료 후)",
             "session_manager": "새 세션 시작 처리 (피드백 완료 후)",
-            "response_generator": "최종 응답 생성",
-            "END": "워크플로우 종료"
+            "END": "워크플로우 종료 (응답 생성)"
         }
         
         return descriptions.get(route_name, "알 수 없는 라우트")
@@ -216,12 +210,54 @@ class SupervisorRouter:
         return {
             "user_intent": state.get("user_intent", ""),
             "session_stage": state.get("session_progress_stage", ""),
-            "current_agent": state.get("current_agent", ""),
+            "session_decision": state.get("session_decision_result", ""),
+            "ui_mode": state.get("ui_mode", ""),
             "has_response_ready": _has_response_ready(state),
             "is_input_request": _is_input_request(state),
             "available_routes": self.get_available_routes(state),
             "selected_route": supervisor_router(state)
         }
+    
+    def get_intent_priority(self, user_intent: str) -> int:
+        """
+        사용자 의도 우선순위 반환 (낮을수록 높은 우선순위)
+        
+        Args:
+            user_intent: 사용자 의도
+            
+        Returns:
+            우선순위 숫자
+        """
+        priority_map = {
+            "quiz_answer": 1,     # 최우선 - 퀴즈 답변
+            "question": 2,        # 높음 - 질문
+            "next_step": 3,       # 보통 - 다음 단계
+            "hint": 4,           # 낮음 - 힌트
+        }
+        
+        return priority_map.get(user_intent, 5)  # 기타는 가장 낮은 우선순위
+    
+    def should_bypass_intent_analysis(self, state: TutorState) -> bool:
+        """
+        의도 분석을 우회해야 하는지 판단
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            의도 분석 우회 여부
+        """
+        session_stage = state.get("session_progress_stage", "session_start")
+        ui_mode = state.get("ui_mode", "chat")
+        
+        # 세션 시작이거나 퀴즈 모드인 경우 의도 분석 우회
+        if session_stage == "session_start":
+            return True
+        
+        if ui_mode == "quiz":
+            return True
+        
+        return False
 
 
 # 전역 라우터 인스턴스 (추가 기능 사용 시)

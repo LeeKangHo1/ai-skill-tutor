@@ -21,3 +21,13 @@ __all__ = [
     'EvaluationFeedbackAgent',
     'QnAResolverAgent'
 ]
+
+agent_nodes = {
+    "learning_supervisor_input": LearningSupervisor().process_user_input,
+    "learning_supervisor_output": LearningSupervisor().generate_final_response,
+    "theory_educator": TheoryEducator().process,
+    "quiz_generator": QuizGenerator().process,
+    "evaluation_feedback": EvaluationFeedbackAgent().process,
+    "qna_resolver": QnAResolverAgent().process,
+    "session_manager": SessionManager().process,
+}
