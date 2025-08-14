@@ -17,9 +17,10 @@ class TutorGraphBuilder:
     워크플로우 구조:
     learning_supervisor_input → supervisor_router → [agents] → learning_supervisor_output → END
     
-    퀴즈 워크플로우 분리:
-    - quiz_generator 후 워크플로우 중단
-    - 별도 API로 evaluation_feedback 호출
+    통합된 워크플로우:
+    - 모든 에이전트가 learning_supervisor_output으로 연결
+    - 퀴즈 답변 제출 시 evaluation_feedback으로 자동 라우팅
+    - 일관된 응답 생성 프로세스
     """
     
     def __init__(self):
@@ -52,13 +53,13 @@ class TutorGraphBuilder:
                 "evaluation_feedback": "evaluation_feedback", 
                 "qna_resolver": "qna_resolver",
                 "session_manager": "session_manager",
-                "END": "learning_supervisor_output"
+                "learning_supervisor_output": "learning_supervisor_output"
             }
         )
         
         # === 단순 간선 (에이전트 → 최종 응답) ===
         workflow.add_edge("theory_educator", "learning_supervisor_output")
-        workflow.add_edge("quiz_generator", "learning_supervisor_output")  # 퀴즈 생성 후 중단
+        workflow.add_edge("quiz_generator", "learning_supervisor_output")
         workflow.add_edge("evaluation_feedback", "learning_supervisor_output")
         workflow.add_edge("qna_resolver", "learning_supervisor_output")
         workflow.add_edge("session_manager", "learning_supervisor_output")

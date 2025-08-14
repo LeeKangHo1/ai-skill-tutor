@@ -6,7 +6,7 @@ backend/
 │   ├── __init__.py                   # Flask 앱 팩토리 함수 (Blueprint 등록 방식 개선)
 │   ├── agents/                       # LangGraph 에이전트 시스템 (부분 구현)
 │   │   ├── __init__.py               # 
-│   │   ├── base/                     # 기본 에이전트 구성 요소 (미구현)
+│   │   ├── base/                     # 기본 에이전트 구성 요소 (미구현, 현재 사용 예정 없음)
 │   │   │   ├── __init__.py           # BaseAgent, AgentConfig 등 export
 │   │   │   ├── agent_config.py       # 에이전트 설정
 │   │   │   └── base_agent.py         # 기본 에이전트 클래스
@@ -18,25 +18,25 @@ backend/
 │   │   │   ├── learning_supervisor_agent.py # ✅ 구현됨: LearningSupervisor 에이전트
 │   │   │   ├── response_generator.py # ✅ 구현됨: 응답 생성기
 │   │   │   └── supervisor_router.py  # ✅ 구현됨: LangGraph conditional_edges용 라우터 함수
-│   │   ├── qna_resolver/             # 질문 답변 에이전트
+│   │   ├── qna_resolver/             # 미구현: 질문 답변 에이전트
 │   │   │   ├── __init__.py           # 
 │   │   │   ├── answer_generator.py   # 답변 생성기
-│   │   │   ├── qna_resolver_agent.py # QnAResolver 에이전트
+│   │   │   ├── qna_resolver_agent.py # "QnAResolver가 호출되었습니다" 메시지만 반환
 │   │   │   └── query_processor.py    # 질문 처리기
 │   │   ├── quiz_generator/           # 퀴즈 생성 에이전트
 │   │   │   ├── __init__.py           # 
 │   │   │   └── quiz_generator_agent.py # ✅ 구현됨: QuizGenerator 에이전트
 │   │   ├── session_manager/          # 세션 관리 에이전트
 │   │   │   ├── __init__.py           # 
-│   │   │   ├── session_handlers.py   # 세션 처리 핸들러
-│   │   │   └── session_manager_agent.py # SessionManager 에이전트
+│   │   │   ├── session_handlers.py   # ✅ 구현됨:세션 처리 핸들러
+│   │   │   └── session_manager_agent.py # ✅ 구현됨:SessionManager 에이전트
 │   │   └── theory_educator/          # 이론 교육 에이전트
 │   │       ├── __init__.py           # 
 │   │       └── theory_educator_agent.py # ✅ 구현됨: TheoryEducator 에이전트
 │   ├── config/                       # 설정 파일들
 │   │   ├── __init__.py
-│   │   ├── base.py                   # 기본 설정
-│   │   ├── db_config.py              # 데이터베이스 설정 전용
+│   │   ├── base.py                   # ✅ 구현됨:기본 설정
+│   │   ├── db_config.py              # ✅ 구현됨:데이터베이스 설정 전용
 │   │   ├── development.py            # 개발 환경 설정
 │   │   ├── production.py             # 운영 환경 설정
 │   │   └── testing.py                # 테스트 환경 설정
@@ -46,14 +46,14 @@ backend/
 │   │   │   ├── __init__.py
 │   │   │   ├── migration_runner.py   # ✅ 구현됨: 마이그레이션 실행기
 │   │   │   └── mysql_client.py       # ✅ 구현됨: MySQL 클라이언트
-│   │   ├── external/                 # 외부 서비스 연동 (일부 구현)
+│   │   ├── external/                 # 외부 서비스 연동 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   └── vector_db.py          # ChromaDB 연동
-│   │   └── langraph/                 # ✅ LangGraph 관련 (구현됨)
+│   │   └── langraph/                 # ✅ 구현됨: LangGraph 관련
 │   │       ├── __init__.py
-│   │       ├── graph_builder.py      # 그래프 빌더
+│   │       ├── graph_builder.py      # ✅ 구현됨그래프 빌더
 │   │       ├── state_manager.py      # ✅ 구현됨: State 관리 시스템
-│   │       └── workflow.py           # 워크플로우 정의
+│   │       └── workflow.py           # ✅ 구현됨워크플로우 정의
 │   ├── middleware/                   # ✅ 미들웨어 (부분 구현)
 │   │   ├── __init__.py               # ✅ 구현됨: 미들웨어 초기화 함수
 │   │   ├── auth/                     # ✅ 인증 미들웨어 (완성됨)
@@ -149,7 +149,7 @@ backend/
 │   │   │   └── intent_analysis_tools.py # ✅ 구현됨: 의도 분석 도구
 │   │   ├── content/                  # 컨텐츠 생성 도구
 │   │   │   ├── __init__.py
-│   │   │   ├── feedback_tools.py     # 피드백 생성 도구
+│   │   │   ├── feedback_tools.py     # 피드백 생성 도구 (사용 예정 없음)
 │   │   │   ├── quiz_tools_chatgpt.py   # ✅ 구현됨: ChatGPT 기반 퀴즈 생성 도구
 │   │   │   └── theory_tools_chatgpt.py # ✅ 구현됨: ChatGPT 기반 이론 설명 생성
 │   │   ├── external/                 # 외부 연동 도구

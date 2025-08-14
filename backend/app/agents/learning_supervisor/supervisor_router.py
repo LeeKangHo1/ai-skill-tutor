@@ -18,7 +18,7 @@ def supervisor_router(state: TutorState) -> str:
         
     Returns:
         다음 노드 이름 ("theory_educator", "quiz_generator", "evaluation_feedback", 
-                   "qna_resolver", "session_manager", "END")
+                   "qna_resolver", "session_manager", "learning_supervisor_output")
     """
     try:
         user_intent = state.get("user_intent", "next_step")
@@ -52,12 +52,12 @@ def supervisor_router(state: TutorState) -> str:
                 return "quiz_generator"
         
         # 5. 기본값 - 직접 응답 생성
-        print(f"[Router] → END (직접 응답, intent: {user_intent})")
-        return "END"
+        print(f"[Router] → learning_supervisor_output (직접 응답, intent: {user_intent})")
+        return "learning_supervisor_output"
         
     except Exception as e:
-        print(f"[Router] 라우팅 오류: {e} - 기본값으로 END 반환")
-        return "END"
+        print(f"[Router] 라우팅 오류: {e} - 기본값으로 learning_supervisor_output 반환")
+        return "learning_supervisor_output"
 
 
 def _has_response_ready(state: TutorState) -> bool:
@@ -138,7 +138,7 @@ class SupervisorRouter:
         available_routes = []
         
         # 항상 가능한 라우트
-        available_routes.append("END")  # 종료는 언제든 가능
+        available_routes.append("learning_supervisor_output")  # 직접 응답은 언제든 가능
         
         # 단계별 가능한 라우트
         if session_stage == "session_start":
@@ -155,10 +155,6 @@ class SupervisorRouter:
         # 퀴즈 답변 시 가능한 라우트
         if user_intent == "quiz_answer":
             available_routes.append("evaluation_feedback")
-        
-        # 응답 준비 시 가능한 라우트
-        if _has_response_ready(state):
-            available_routes.append("END")  # 응답 준비되면 종료 가능
         
         return available_routes
     
@@ -192,7 +188,7 @@ class SupervisorRouter:
             "evaluation_feedback": "답변 평가 및 피드백 (퀴즈 답변 제출 시)",
             "qna_resolver": "질문 답변 처리 (이론 완료 후 또는 피드백 완료 후)",
             "session_manager": "새 세션 시작 처리 (피드백 완료 후)",
-            "END": "워크플로우 종료 (응답 생성)"
+            "learning_supervisor_output": "직접 응답 생성 (기본 경로)"
         }
         
         return descriptions.get(route_name, "알 수 없는 라우트")
@@ -232,10 +228,9 @@ class SupervisorRouter:
             "quiz_answer": 1,     # 최우선 - 퀴즈 답변
             "question": 2,        # 높음 - 질문
             "next_step": 3,       # 보통 - 다음 단계
-            "hint": 4,           # 낮음 - 힌트
         }
         
-        return priority_map.get(user_intent, 5)  # 기타는 가장 낮은 우선순위
+        return priority_map.get(user_intent, 4)  # 기타는 가장 낮은 우선순위
     
     def should_bypass_intent_analysis(self, state: TutorState) -> bool:
         """
