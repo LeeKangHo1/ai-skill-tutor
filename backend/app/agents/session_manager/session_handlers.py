@@ -7,6 +7,7 @@ from datetime import datetime
 from app.utils.database.query_builder import insert_record, update_record, count_records
 from app.utils.database.connection import fetch_one, fetch_all
 from app.utils.database.transaction import execute_transaction
+from app.config.db_config import DatabaseQueryError, DatabaseIntegrityError
 
 
 class SessionHandlers:
@@ -37,20 +38,23 @@ class SessionHandlers:
             # 세션 정보 저장
             result = insert_record('learning_sessions', session_data, return_id=False)
             
-            if result is not None:
-                self.logger.info(f"세션 정보 저장 완료: {session_data['session_id']}")
+            # insert_record는 return_id=False일 때 None을 반환하므로 예외가 없으면 성공
+            self.logger.info(f"세션 정보 저장 완료: {session_data['session_id']}")
+            
+            # user_progress 및 user_statistics 업데이트
+            self._update_user_progress(session_data)
+            self._update_user_statistics(session_data)
+            
+            return True
                 
-                # user_progress 및 user_statistics 업데이트
-                self._update_user_progress(session_data)
-                self._update_user_statistics(session_data)
-                
-                return True
-            else:
-                self.logger.error("세션 정보 저장 실패")
-                return False
-                
+        except DatabaseIntegrityError as e:
+            self.logger.error(f"세션 정보 저장 무결성 오류: {str(e)}")
+            return False
+        except DatabaseQueryError as e:
+            self.logger.error(f"세션 정보 저장 쿼리 오류: {str(e)}")
+            return False
         except Exception as e:
-            self.logger.error(f"세션 정보 저장 중 오류: {str(e)}")
+            self.logger.error(f"세션 정보 저장 중 예상치 못한 오류: {str(e)}")
             return False
     
     def save_session_conversations(self, session_id: str, conversations: List[Dict[str, Any]]) -> bool:
@@ -101,8 +105,14 @@ class SessionHandlers:
                 self.logger.error("대화 기록 저장 실패")
                 return False
                 
+        except DatabaseIntegrityError as e:
+            self.logger.error(f"대화 기록 저장 무결성 오류: {str(e)}")
+            return False
+        except DatabaseQueryError as e:
+            self.logger.error(f"대화 기록 저장 쿼리 오류: {str(e)}")
+            return False
         except Exception as e:
-            self.logger.error(f"대화 기록 저장 중 오류: {str(e)}")
+            self.logger.error(f"대화 기록 저장 중 예상치 못한 오류: {str(e)}")
             return False
     
     def save_session_quiz(self, quiz_data: Dict[str, Any]) -> bool:
@@ -122,15 +132,18 @@ class SessionHandlers:
             
             result = insert_record('session_quizzes', quiz_data, return_id=False)
             
-            if result is not None:
-                self.logger.info(f"퀴즈 정보 저장 완료: {quiz_data['session_id']}")
-                return True
-            else:
-                self.logger.error("퀴즈 정보 저장 실패")
-                return False
+            # insert_record는 return_id=False일 때 None을 반환하므로 예외가 없으면 성공
+            self.logger.info(f"퀴즈 정보 저장 완료: {quiz_data['session_id']}")
+            return True
                 
+        except DatabaseIntegrityError as e:
+            self.logger.error(f"퀴즈 정보 저장 무결성 오류: {str(e)}")
+            return False
+        except DatabaseQueryError as e:
+            self.logger.error(f"퀴즈 정보 저장 쿼리 오류: {str(e)}")
+            return False
         except Exception as e:
-            self.logger.error(f"퀴즈 정보 저장 중 오류: {str(e)}")
+            self.logger.error(f"퀴즈 정보 저장 중 예상치 못한 오류: {str(e)}")
             return False
     
     def _update_user_progress(self, session_data: Dict[str, Any]) -> bool:

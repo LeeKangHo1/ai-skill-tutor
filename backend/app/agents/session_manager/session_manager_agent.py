@@ -105,16 +105,16 @@ class SessionManager:
     
     def _generate_session_id(self, state: TutorState) -> str:
         """
-        세션 ID 생성 (PRD 명세에 따른 형식)
+        세션 ID 생성 (간단한 형식)
         
-        형식: user{user_id}_ch{chapter}_session{count:03d}_{timestamp}
+        형식: user{user_id}_ch{chapter}_s{section}_{timestamp}
         """
         user_id = state["user_id"]
         chapter = state["current_chapter"]
-        session_count = state.get("current_session_count", 0) + 1  # 다음 세션 번호
+        section = state["current_section"]
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        return f"user{user_id}_ch{chapter}_session{session_count:03d}_{timestamp}"
+        return f"user{user_id}_ch{chapter}_s{section}_{timestamp}"
     
     def _prepare_session_data(self, state: TutorState, session_id: str) -> Dict[str, Any]:
         """learning_sessions 테이블용 데이터 준비"""
@@ -131,7 +131,7 @@ class SessionManager:
             "session_id": session_id,
             "user_id": state["user_id"],
             "chapter_number": state["current_chapter"],
-            "session_sequence": state.get("current_session_count", 0) + 1,
+            "session_sequence": state["current_section"],  # 섹션 번호 저장
             "session_start_time": session_start,
             "session_end_time": session_end,
             "study_duration_minutes": int(duration),

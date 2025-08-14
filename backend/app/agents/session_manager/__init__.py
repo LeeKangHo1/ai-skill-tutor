@@ -4,7 +4,7 @@
 학습 세션의 전체적인 관리를 담당하는 에이전트입니다.
 """
 
-from .session_manager_agent import SessionManagerAgent
+from .session_manager_agent import SessionManager
 from .session_handlers import SessionHandlers
 
-__all__ = ['SessionManagerAgent', 'SessionHandlers']
+__all__ = ['SessionManager', 'SessionHandlers']
