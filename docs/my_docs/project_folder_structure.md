@@ -4,7 +4,7 @@
 backend/
 ├── app/                              # Flask 애플리케이션 메인 디렉토리
 │   ├── __init__.py                   # Flask 앱 팩토리 함수 (Blueprint 등록 방식 개선)
-│   ├── agents/                       # LangGraph 에이전트 시스템 (부분 구현)
+│   ├── agents/                       # LangGraph 에이전트 시스템
 │   │   ├── __init__.py               # 
 │   │   ├── base/                     # 기본 에이전트 구성 요소 (미구현, 현재 사용 예정 없음)
 │   │   │   ├── __init__.py           # BaseAgent, AgentConfig 등 export
@@ -16,7 +16,7 @@ backend/
 │   │   ├── learning_supervisor/      # 학습 감독 에이전트
 │   │   │   ├── __init__.py           # 
 │   │   │   ├── learning_supervisor_agent.py # ✅ 구현됨: LearningSupervisor 에이전트
-│   │   │   ├── response_generator.py # ✅ 구현됨: 응답 생성기
+│   │   │   ├── response_generator.py # ✅ 구현됨: 최종 응답 생성기
 │   │   │   └── supervisor_router.py  # ✅ 구현됨: LangGraph conditional_edges용 라우터 함수
 │   │   ├── qna_resolver/             # 미구현: 질문 답변 에이전트
 │   │   │   ├── __init__.py           # 
@@ -172,6 +172,7 @@ backend/
 │       │   ├── chat_logger.py        # ✅ 구현됨: 사용자별 JSON 대화 로그 저장 시스템
 │       │   ├── constants.py          # 상수 정의
 │       │   ├── exceptions.py         # 일부 구현: 계층적 커스텀 예외 클래스
+│       │   ├── graph_visualizer.py   # ✅ 구현됨: 랭그래프 실행 시 그래프 그림 저장
 │       │   └── helpers.py            # 헬퍼 함수들
 │       ├── database/                 # ✅ 데이터베이스 유틸리티 (완성됨)
 │       │   ├── __init__.py
