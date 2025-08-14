@@ -217,11 +217,6 @@ class EvaluationFeedbackAgent:
             message_type="system"
         )
         
-        # 7. 세션 카운트 업데이트 (retry인 경우에만)
-        if next_step == "retry":
-            updated_state["current_session_count"] += 1
-            self.logger.info(f"세션 카운트 증가: {updated_state['current_session_count']}")
-        
         return updated_state
     
     def _create_error_state(self, state: TutorState, error_message: str) -> TutorState:
