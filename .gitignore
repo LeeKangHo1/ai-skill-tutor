@@ -165,6 +165,11 @@ chroma_db/
 .pytest_cache/
 .coverage
 htmlcov/
+backend/tests/
+frontend/src/__tests__/
+
+# 채팅 로그 데이터
+backend/data/chat_log/
 
 # Jupyter Notebook
 .ipynb_checkpoints

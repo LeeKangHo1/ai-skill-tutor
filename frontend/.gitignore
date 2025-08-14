@@ -35,3 +35,6 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Test directories
+src/__tests__/

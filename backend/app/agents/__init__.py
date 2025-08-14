@@ -5,7 +5,7 @@ from .base.base_agent import BaseAgent
 from .base.agent_config import AgentConfig
 
 from .session_manager.session_manager_agent import SessionManagerAgent
-from .learning_supervisor.learning_supervisor_agent import LearningSupervisorAgent
+from .learning_supervisor.learning_supervisor_agent import LearningSupervisor
 from .theory_educator.theory_educator_agent import TheoryEducator
 from .quiz_generator.quiz_generator_agent import QuizGenerator
 from .evaluation_feedback.evaluation_feedback_agent import EvaluationFeedbackAgent
@@ -15,7 +15,7 @@ __all__ = [
     'BaseAgent',
     'AgentConfig',
     'SessionManagerAgent',
-    'LearningSupervisorAgent',
+    'LearningSupervisor',
     'TheoryEducator',
     'QuizGenerator',
     'EvaluationFeedbackAgent',
