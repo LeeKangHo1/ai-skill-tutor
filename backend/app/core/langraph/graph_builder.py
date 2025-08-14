@@ -2,7 +2,7 @@
 
 import os
 from typing import Any
-from langgraph import StateGraph, END
+from langgraph.graph import StateGraph, END
 
 from app.core.langraph.state_manager import TutorState
 from app.agents.learning_supervisor.supervisor_router import supervisor_router
