@@ -25,7 +25,7 @@ class LearningSupervisor:
     """
     
     def __init__(self):
-        pass
+        self.agent_name = "learning_supervisor"
     
     def process_user_input(self, state: TutorState) -> TutorState:
         """
@@ -114,14 +114,14 @@ class LearningSupervisor:
         세션 시작 처리 - 의도 분석 없이 바로 이론 설명으로 진행
         """
         # 현재 에이전트 정보 업데이트
-        updated_state = state_manager.update_agent_transition(state, "learning_supervisor")
+        updated_state = state_manager.update_agent_transition(state, self.agent_name)
         
         # 세션 시작 메시지를 대화 기록에 추가 (사용자 메시지가 있다면)
         user_message = self._extract_user_message(state)
         if user_message:
             updated_state = state_manager.add_conversation(
                 updated_state,
-                agent_name="user",
+                agent_name=self.agent_name,
                 message=user_message,
                 message_type="user"
             )
@@ -150,7 +150,7 @@ class LearningSupervisor:
         # 답변을 대화 기록에 추가
         updated_state = state_manager.add_conversation(
             updated_state,
-            agent_name="user",
+            agent_name=self.agent_name,
             message=f"답변: {user_answer}",
             message_type="user"
         )
@@ -159,7 +159,7 @@ class LearningSupervisor:
         updated_state["user_intent"] = "quiz_answer"
         
         # 현재 에이전트 정보 업데이트
-        updated_state = state_manager.update_agent_transition(updated_state, "learning_supervisor")
+        updated_state = state_manager.update_agent_transition(updated_state, self.agent_name)
         
         # 퀴즈 답변 로그 저장
         chat_logger.save_session_log(updated_state, session_complete=False)
@@ -185,12 +185,12 @@ class LearningSupervisor:
         updated_state["user_intent"] = user_intent
         
         # 현재 에이전트 정보 업데이트
-        updated_state = state_manager.update_agent_transition(updated_state, "learning_supervisor")
+        updated_state = state_manager.update_agent_transition(updated_state, self.agent_name)
         
         # 사용자 메시지를 대화 기록에 추가
         updated_state = state_manager.add_conversation(
             updated_state,
-            agent_name="user",
+            agent_name=self.agent_name,
             message=user_message,
             message_type="user"
         )
@@ -203,7 +203,7 @@ class LearningSupervisor:
     def _handle_default_input(self, state: TutorState) -> TutorState:
         """기본 입력 처리 (예상치 못한 상황)"""
         # 현재 에이전트 정보 업데이트
-        updated_state = state_manager.update_agent_transition(state, "learning_supervisor")
+        updated_state = state_manager.update_agent_transition(state, self.agent_name)
         
         # 기본적으로 next_step으로 처리
         updated_state["user_intent"] = "next_step"
@@ -243,6 +243,7 @@ class LearningSupervisor:
             )
             
             # 의도 분석 결과를 대화 기록에 시스템 메시지로 추가 (로깅용)
+            # 여기는 intent_analyzer가 맞으므로 유지
             state_manager.add_conversation(
                 state,
                 agent_name="intent_analyzer",
@@ -269,12 +270,12 @@ class LearningSupervisor:
             guide_message = "메시지를 입력해주세요."
         
         # 현재 에이전트 정보 업데이트
-        updated_state = state_manager.update_agent_transition(state, "learning_supervisor")
+        updated_state = state_manager.update_agent_transition(state, self.agent_name)
         
         # 안내 메시지를 대화 기록에 추가
         updated_state = state_manager.add_conversation(
             updated_state,
-            agent_name="learning_supervisor",
+            agent_name=self.agent_name,
             message=guide_message,
             message_type="system"
         )
@@ -291,7 +292,7 @@ class LearningSupervisor:
         
         updated_state = state_manager.add_conversation(
             state,
-            agent_name="learning_supervisor",
+            agent_name=self.agent_name,
             message=request_message,
             message_type="system"
         )
