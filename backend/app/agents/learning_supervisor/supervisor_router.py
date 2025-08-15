@@ -25,7 +25,10 @@ def supervisor_router(state: TutorState) -> str:
         session_stage = state.get("session_progress_stage", "session_start")
         session_decision = state.get("session_decision_result", "")
         
-        print(f"[Router] 라우팅 결정 - intent: {user_intent}, stage: {session_stage}, decision: {session_decision}")
+        print(f"[Router] 라우팅 결정 시작")
+        print(f"[Router] - user_intent: '{user_intent}'")
+        print(f"[Router] - session_stage: '{session_stage}'")
+        print(f"[Router] - session_decision: '{session_decision}'")
         
         # 1. 퀴즈 답변 처리 (의도 분석 없이 바로 평가로)
         if user_intent == "quiz_answer":

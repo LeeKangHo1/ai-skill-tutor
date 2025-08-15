@@ -1,6 +1,7 @@
 # backend/app/agents/qna_resolver/qna_resolver_agent.py
 
 from app.core.langraph.state_manager import TutorState, state_manager
+from app.utils.common.chat_logger import chat_logger
 
 
 class QnAResolverAgent:
@@ -52,6 +53,17 @@ class QnAResolverAgent:
             # 현재 에이전트를 qna_resolver로 설정
             updated_state = state_manager.update_agent_transition(updated_state, self.agent_name)
             
+            # 에이전트 처리 완료 메시지를 대화 기록에 추가
+            updated_state = state_manager.add_conversation(
+                updated_state,
+                agent_name=self.agent_name,
+                message="질문 답변 처리 완료",
+                message_type="system"
+            )
+            
+            # 대화 로그 저장
+            chat_logger.save_session_log(updated_state, session_complete=False)
+            
             print(f"[{self.agent_name}] 임시 응답: {qna_response}")
             
             return updated_state
@@ -63,6 +75,17 @@ class QnAResolverAgent:
             error_response = "QnAResolver에서 일시적인 오류가 발생했습니다. 다시 시도해주세요."
             updated_state = state_manager.update_agent_draft(state, self.agent_name, error_response)
             updated_state = state_manager.update_agent_transition(updated_state, self.agent_name)
+            
+            # 오류 메시지도 대화 기록에 추가
+            updated_state = state_manager.add_conversation(
+                updated_state,
+                agent_name=self.agent_name,
+                message="질문 답변 처리 중 오류 발생",
+                message_type="system"
+            )
+            
+            # 대화 로그 저장
+            chat_logger.save_session_log(updated_state, session_complete=False)
             
             return updated_state
     

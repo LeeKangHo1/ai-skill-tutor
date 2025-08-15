@@ -1,5 +1,37 @@
 # 구현 로그 (Implementation Log)
 
+## �  2025년 8월 16일 - LangGraph 라우팅 버그 해결 및 시스템 안정화
+
+### 🐛 해결한 핵심 버그
+- **라우팅 문제**: "질문" 입력 시 의도 분석은 `question`으로 정확하지만 라우터에서 `next_step`으로 읽혀 quiz_generator로 잘못 라우팅되던 문제 해결
+- **근본 원인**: `TutorState`에 `user_intent` 필드가 정의되지 않아 Python의 동적 특성으로 런타임 오류 없이 필드가 생성되었지만 LangGraph 내부 처리에서 예상치 못한 동작 발생
+
+### 🔧 주요 수정사항
+- **TutorState 필드 추가**: `user_intent: str` 필드 및 기본값 `"next_step"` 설정
+- **에이전트 인스턴스 통일**: `agents/__init__.py`에서 단일 인스턴스 사용으로 State 일관성 보장
+- **QnAResolver 개선**: 대화 기록 저장 기능 추가로 다른 에이전트와 동일한 로깅 구조 확립
+- **의도 분석 키워드 확장**: "질문", "설명해주세요", "차이점", "help" 등 25개 키워드 추가
+- **테스트 UI 개선**: 최신 에이전트 응답만 표시하여 혼란 방지
+
+### 💡 기술적 학습
+- **TypedDict vs Pydantic**: LangGraph 2025 공식 권장사항은 여전히 TypedDict (성능, 안정성, 호환성 우수)
+- **Python 동적 특성**: 정의되지 않은 필드도 런타임에 추가 가능하지만 예상치 못한 버그 원인
+- **디버깅 방법론**: State 객체 ID 추적을 통한 전달 과정 분석의 중요성
+
+### ✅ 검증 완료
+- "질문" 입력 → `qna_resolver` 정확 라우팅
+- "다음" 입력 → `quiz_generator` 정확 라우팅  
+- 퀴즈 답변 입력 → `evaluation_feedback` 정확 라우팅
+
+### 📁 수정된 파일
+- `state_manager.py`: TutorState 필드 정의 및 기본값 설정
+- `learning_supervisor_agent.py`: 디버깅 코드 정리
+- `supervisor_router.py`: 라우팅 로직 최적화
+- `qna_resolver_agent.py`: 대화 기록 저장 기능 추가
+- `intent_analysis_tools.py`: 질문 키워드 25개 확장
+- `test_langgraph_interactive.py`: UI 표시 개선
+- `agents/__init__.py`: 단일 인스턴스 패턴 적용
+
 ## 📦 사용 패키지 버전 (2025-08-13 기준)
 - langchain==0.3.27
 - langchain-core==0.3.72

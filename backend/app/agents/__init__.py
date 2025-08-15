@@ -22,12 +22,20 @@ __all__ = [
     'QnAResolverAgent'
 ]
 
+# 에이전트 인스턴스 생성 (단일 인스턴스 사용)
+learning_supervisor = LearningSupervisor()
+theory_educator = TheoryEducator()
+quiz_generator = QuizGenerator()
+evaluation_feedback_agent = EvaluationFeedbackAgent()
+qna_resolver = QnAResolverAgent()
+session_manager = SessionManager()
+
 agent_nodes = {
-    "learning_supervisor_input": LearningSupervisor().process_user_input,
-    "learning_supervisor_output": LearningSupervisor().generate_final_response,
-    "theory_educator": TheoryEducator().process,
-    "quiz_generator": QuizGenerator().process,
-    "evaluation_feedback": EvaluationFeedbackAgent().process,
-    "qna_resolver": QnAResolverAgent().process,
-    "session_manager": SessionManager().process,
+    "learning_supervisor_input": learning_supervisor.process_user_input,
+    "learning_supervisor_output": learning_supervisor.generate_final_response,
+    "theory_educator": theory_educator.process,
+    "quiz_generator": quiz_generator.process,
+    "evaluation_feedback": evaluation_feedback_agent.process,
+    "qna_resolver": qna_resolver.process,
+    "session_manager": session_manager.process,
 }

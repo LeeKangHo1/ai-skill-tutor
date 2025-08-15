@@ -86,9 +86,12 @@ def _analyze_with_exact_keywords(user_message: str) -> Dict[str, Any]:
     
     # 완전 일치하는 question 키워드들
     exact_question_keywords = [
-        "뭐예요", "뭔가요", "왜", "언제", "어디",
-        "궁금해요", "모르겠어요", "이해 안 돼요",
-        "what", "why", "when", "where"
+        "질문", "뭐예요", "뭔가요", "왜", "언제", "어디", "어떻게", "누가", "무엇",
+        "궁금해요", "모르겠어요", "이해 안 돼요", "잘 모르겠어요", "헷갈려요",
+        "설명해주세요", "알려주세요", "가르쳐주세요", "도와주세요",
+        "차이가 뭐예요", "차이점", "구별", "비교",
+        "what", "why", "when", "where", "how", "who", "which",
+        "explain", "tell me", "help", "difference", "compare"
     ]
     
     # 1. 완전 일치하는 next_step 확인

@@ -39,6 +39,7 @@ class TutorState(TypedDict):
     qna_draft: str                    # QnAResolver 생성 대본
     
     # === 라우팅 & 디버깅 ===
+    user_intent: str  # 사용자 의도 ("next_step", "question", "quiz_answer")
     previous_agent: str  # 이전 에이전트 이름 (디버깅 및 복귀 추적용)
     
     # === 학습 세션 제어 (SessionManager 활용) ===
@@ -95,6 +96,7 @@ class StateManager:
             qna_draft="",
             
             # 라우팅 & 디버깅
+            user_intent="next_step",  # 기본값: 다음 단계 진행
             previous_agent="",
             
             # 학습 세션 제어
@@ -338,7 +340,9 @@ class StateManager:
         # 공통 초기화
         updated_state.update({
             "session_progress_stage": "session_start",
+            "ui_mode": "chat",  # UI 모드를 chat으로 초기화
             "current_session_conversations": [],
+            "current_question_content": "",  # 퀴즈 문제 내용 초기화
             "current_question_answer": "",
             "evaluation_feedback": "",
             "hint_usage_count": 0,

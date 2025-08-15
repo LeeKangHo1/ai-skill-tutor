@@ -37,19 +37,22 @@ class QuizGenerator:
         try:
             print(f"[{self.agent_name}] 퀴즈 생성 시작 - 챕터 {state['current_chapter']} 섹션 {state['current_section']}")
             
-            # 1. 특정 섹션 데이터만 로드
-            section_data = self._load_section_data(state["current_chapter"], state["current_section"])
+            # 1. UI 모드를 quiz로 변경 (퀴즈 생성 시작 시점)
+            updated_state = state_manager.update_ui_mode(state, "quiz")
+            
+            # 2. 특정 섹션 데이터만 로드
+            section_data = self._load_section_data(updated_state["current_chapter"], updated_state["current_section"])
             if not section_data:
-                raise ValueError(f"챕터 {state['current_chapter']} 섹션 {state['current_section']} 데이터를 찾을 수 없습니다.")
+                raise ValueError(f"챕터 {updated_state['current_chapter']} 섹션 {updated_state['current_section']} 데이터를 찾을 수 없습니다.")
             
-            # 2. 재학습 여부 확인
-            is_retry_session = state["current_session_count"] > 0
+            # 3. 재학습 여부 확인
+            is_retry_session = updated_state["current_session_count"] > 0
             
-            # 3. 퀴즈 타입 확인 및 State 동기화
+            # 4. 퀴즈 타입 확인 및 State 동기화
             quiz_type = self._get_quiz_type_from_section(section_data)
-            updated_state = state_manager.update_quiz_info(state, question_type=quiz_type)
+            updated_state = state_manager.update_quiz_info(updated_state, question_type=quiz_type)
             
-            # 4. 순수 퀴즈 대본 생성 (힌트 포함, 사용자 대면 메시지 없음)
+            # 5. 순수 퀴즈 대본 생성 (힌트 포함, 사용자 대면 메시지 없음)
             quiz_content = quiz_generation_tool(
                 section_data=section_data,
                 user_type=updated_state["user_type"],
@@ -57,25 +60,25 @@ class QuizGenerator:
                 theory_content=updated_state.get("theory_draft", "")
             )
             
-            # 5. 퀴즈 정보 파싱 및 State 업데이트
+            # 6. 퀴즈 정보 파싱 및 State 업데이트
             quiz_info = self._parse_quiz_content(quiz_content)
             if quiz_info:
                 updated_state = self._update_state_with_quiz_info(updated_state, quiz_info)
             
-            # 6. State 업데이트 - 순수 대본만 저장
+            # 7. State 업데이트 - 순수 대본만 저장
             updated_state = state_manager.update_agent_draft(
                 updated_state, 
                 self.agent_name, 
                 quiz_content
             )
             
-            # 7. 현재 에이전트 설정
+            # 8. 현재 에이전트 설정
             updated_state = state_manager.update_agent_transition(
                 updated_state,
                 self.agent_name
             )
             
-            # 8. 대화 기록 추가 (시스템 로그용)
+            # 9. 대화 기록 추가 (시스템 로그용)
             updated_state = state_manager.add_conversation(
                 updated_state,
                 agent_name=self.agent_name,
