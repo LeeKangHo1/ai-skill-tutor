@@ -1,25 +1,48 @@
 # Implementation Plan
 
-- [ ] 1. 데이터베이스 연결 시스템 v2.0 업그레이드
+- [x] 1. 데이터베이스 연결 시스템 v2.0 업그레이드
+
+
+
+
+
   - db_config.py를 v2.0 요구사항에 맞게 업데이트 (최적화된 연결 풀 설정)
   - connection.py에 자동 재연결 및 헬스체크 기능 추가
   - 개발/테스트/운영 환경별 설정 분리 구현
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 2. v2.0 데이터베이스 스키마 생성
+- [x] 2. v2.0 데이터베이스 스키마 생성
+
+
+
+
+
   - schema.sql을 v2.0 구조로 완전 재작성 (AUTO_INCREMENT, JSON 컬럼, 분리된 통계)
   - 퀴즈 타입별 제약조건 및 JSON 스키마 검증 추가
   - 복합 인덱스 및 성능 최적화 인덱스 설정
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 3. v2.0 데이터베이스 모델 클래스 업데이트
-- [ ] 3.1 사용자 관련 모델 v2.0 업데이트
+- [x] 3. v2.0 데이터베이스 모델 클래스 업데이트
+
+
+
+
+- [x] 3.1 사용자 관련 모델 v2.0 업데이트
+
+
   - UserProgress 모델에 current_section 필드 추가
   - UserStatistics 모델을 객관식/주관식 분리 구조로 업데이트
   - 분리된 통계 계산 메서드 구현 (calculate_multiple_choice_accuracy, calculate_subjective_average)
   - _Requirements: 4.1, 2.3, 2.4_
 
-- [ ] 3.2 학습 세션 관련 모델 v2.0 재구현
+
+
+- [x] 3.2 학습 세션 관련 모델 v2.0 재구현
+
+
+
+
+
   - LearningSession 모델을 AUTO_INCREMENT 기반으로 변경
   - SessionQuiz 모델을 객관식/주관식 분리 구조로 완전 재설계
   - JSON 필드 처리 메서드 구현 (quiz_options, quiz_evaluation_criteria)

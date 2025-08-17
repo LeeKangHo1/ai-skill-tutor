@@ -9,7 +9,7 @@
 
 2. 도메인별 import:
    from app.models.user import User, UserAuthToken, UserProgress, UserStatistics
-   from app.models.learning import LearningSession, SessionConversation, SessionQuiz, generate_session_id
+   from app.models.learning import LearningSession, SessionConversation, SessionQuiz
 
 3. 특정 모델만 import:
    from app.models.user import User
@@ -25,7 +25,7 @@
 from .user import User, UserAuthToken, UserProgress, UserStatistics
 
 # 학습 관련 모델들
-from .learning import LearningSession, SessionConversation, SessionQuiz, generate_session_id
+from .learning import LearningSession, SessionConversation, SessionQuiz
 
 # 챕터 관련 모델들 (향후 추가 예정)
 # from .chapter import Chapter, ChapterContent
@@ -34,5 +34,5 @@ __all__ = [
     # 사용자 관련 모델
     'User', 'UserAuthToken', 'UserProgress', 'UserStatistics',
     # 학습 관련 모델
-    'LearningSession', 'SessionConversation', 'SessionQuiz', 'generate_session_id'
+    'LearningSession', 'SessionConversation', 'SessionQuiz'
 ]
