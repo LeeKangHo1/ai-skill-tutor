@@ -25,8 +25,8 @@
 ## AI 모델 및 임베딩 시스템
 
 ### 모델 선택 기준
-- **일반 학습**: Gemini 2.5 Flash → 필요시 GPT-4o-mini
-- **복잡한 추론**: Gemini 2.5 Pro → 필요시 o4-mini
+- **일반 학습**: GPT-4o-mini
+- **복잡한 추론**: o4-mini
 
 ### 임베딩 시스템
 - **text-embedding-3-large 고정 사용**: ChromaDB 벡터 저장
@@ -51,12 +51,6 @@ SessionManager (세션 관리 전담)
 
 ## 개발 방식
 
-### Spec 분할 전략
-1. **인프라/기반 계층**: project-foundation, database-system, authentication-core 등
-2. **핵심 비즈니스 로직**: user-diagnosis, session-management, 각 에이전트별 spec
-3. **통합 및 고급 기능**: learning-interface, external-services, ui-components
-4. **최적화 및 완성**: performance-optimization, testing-deployment
-
 ### 개발 원칙
 - **MVP 우선**: 복잡한 배포 설정보다 핵심 기능 완성
 - **최신 패키지**: 버전 고정 없이 최신 버전 사용, 문제 시 개별 조정
@@ -78,23 +72,13 @@ SessionManager (세션 관리 전담)
 - **테스트 간소화**: 복잡한 테스트 전략보다는 기본 동작 확인 수준
 - **문서화 적정선**: 과도한 문서화보다는 코드 자체의 명확성 중시
 
-### 태스크 작성 규칙
-1. **기존 파일 경로 사용**: `docs/my_docs/project_folder_structure.md`에 정의된 파일 경로만 사용
-2. **구현 순서 고려**: 의존성이 있는 파일들의 구현 순서를 고려하여 태스크 순서 결정
-3. **파일별 세분화**: 하나의 태스크는 하나의 파일 구현에 집중
-4. **기존 구현 확인**: `docs/my_docs/implementation_log.md`에서 이미 구현된 파일들 확인 후 태스크 작성
-
-### 권장 사항
-- 기존 구현된 파일들과의 연동성 고려
-- Blueprint 구조, 서비스 레이어 패턴 등 기존 아키텍처 패턴 준수
-- 환경변수, 설정 파일 등 기존 설정 방식 활용
 
 ## 주요 문서 위치
-- **전체 PRD**: `docs/my_docs/ai_skill_tutor_prd_v1_3.md`
-- **State 설계**: `docs/my_docs/langgraph_state_design_v1_3.md`
-- **DB 설계**: `docs/my_docs/db_design_v1_3.md`
-- **UI 설계**: `docs/my_docs/ui_design_v1_3.md`
-- **API 설계**: `docs/my_docs/api_docs_v1_3.md`
+- **전체 PRD**: `docs/my_docs/ai_skill_tutor_prd_v2_0.md`
+- **State 설계**: `docs/my_docs/langgraph_state_design_v2_0.md`
+- **DB 설계**: `docs/my_docs/db_design_v2_0.md`
+- **UI 설계**: `docs/my_docs/ui_design_v2_0.md`
+- **API 설계**: `docs/my_docs/api_docs_v2_0.md`
 - **폴더 구조**: `docs/my_docs/project_folder_structure.md`
 - **구현 로그**: `docs/my_docs/implementation_log.md` (최신 개발 상황 및 변경사항)
 
