@@ -662,6 +662,22 @@ class StateManager:
         
         return True
     
+    def update_user_answer(self, state: TutorState, user_answer: str) -> TutorState:
+        """
+        사용자 답변만 업데이트 (v2.0 신규 메서드)
+        퀴즈 내용은 QuizGenerator가, 평가 결과는 EvaluationFeedbackAgent가 담당
+        
+        Args:
+            state: 현재 State
+            user_answer: 사용자 답변
+        
+        Returns:
+            사용자 답변이 업데이트된 State
+        """
+        updated_state = copy.deepcopy(state)
+        updated_state["user_answer"] = user_answer
+        return updated_state
+    
     def update_session_decision(self, state: TutorState, decision: str) -> TutorState:
         """
         세션 완료 후 사용자 결정 업데이트 (v2.0 신규 메서드)

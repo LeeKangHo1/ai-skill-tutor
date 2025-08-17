@@ -1,4 +1,5 @@
 # backend/app/agents/learning_supervisor/response_generator.py
+# v2.0 업데이트: workflow_response 구조, 하이브리드 UX 지원, 컨텐츠 타입 표준화
 
 from typing import Dict, Any
 from app.core.langraph.state_manager import TutorState, state_manager
@@ -6,13 +7,16 @@ from app.core.langraph.state_manager import TutorState, state_manager
 
 class ResponseGenerator:
     """
-    에이전트 대본을 사용자 친화적인 최종 응답으로 정제하는 클래스
+    에이전트 대본을 사용자 친화적인 최종 응답으로 정제하는 클래스 (v2.0)
     
     주요 역할:
     1. 각 에이전트가 생성한 대본(draft) 추출
     2. 사용자 유형(beginner/advanced)에 맞는 톤 체크
     3. 응답 형식 정제 및 표준화
     4. UI 모드에 맞는 응답 구조화
+    5. v2.0: workflow_response 구조 생성
+    6. v2.0: 하이브리드 UX 지원 (chat/quiz 모드)
+    7. v2.0: 컨텐츠 타입 표준화 (theory, quiz, feedback, qna)
     """
     
     def __init__(self):
@@ -20,36 +24,36 @@ class ResponseGenerator:
     
     def generate_final_response(self, state: TutorState) -> TutorState:
         """
-        최종 응답 생성 메인 함수
+        최종 응답 생성 메인 함수 (v2.0 workflow_response 구조)
         
         Args:
             state: 에이전트 대본이 포함된 TutorState
             
         Returns:
-            정제된 최종 응답이 포함된 TutorState
+            workflow_response가 포함된 TutorState
         """
         try:
             # 현재 활성 에이전트 확인
             current_agent = state.get("current_agent", "")
             
-            # 에이전트별 대본 추출 및 정제
+            # 에이전트별 workflow_response 생성
             if "theory_educator" in current_agent:
-                return self._process_theory_response(state)
+                return self._create_theory_workflow_response(state)
             elif "quiz_generator" in current_agent:
-                return self._process_quiz_response(state)
+                return self._create_quiz_workflow_response(state)
             elif "evaluation_feedback" in current_agent:
-                return self._process_feedback_response(state)
+                return self._create_feedback_workflow_response(state)
             elif "qna_resolver" in current_agent:
-                return self._process_qna_response(state)
+                return self._create_qna_workflow_response(state)
             elif "session_manager" in current_agent:
-                return self._process_session_response(state)
+                return self._create_session_workflow_response(state)
             else:
                 # 기본 처리: 모든 대본 확인해서 가장 최근 내용 처리
-                return self._process_default_response(state)
+                return self._create_default_workflow_response(state)
                 
         except Exception as e:
             print(f"ResponseGenerator 처리 중 오류: {e}")
-            return self._generate_error_response(state)
+            return self._create_error_workflow_response(state)
     
     def _process_theory_response(self, state: TutorState) -> TutorState:
         """
@@ -247,7 +251,7 @@ class ResponseGenerator:
             정제된 퀴즈 내용
         """
         user_type = state.get("user_type", "beginner")
-        quiz_type = state.get("current_question_type", "multiple_choice")
+        quiz_type = state.get("quiz_type", "multiple_choice")  # v2.0 필드명
         
         # 기본 정제
         refined_content = quiz_draft.strip()
@@ -279,20 +283,26 @@ class ResponseGenerator:
             정제된 피드백 내용
         """
         user_type = state.get("user_type", "beginner")
-        is_correct = state.get("is_answer_correct", 0)
-        session_decision = state.get("session_decision_result", "proceed")
+        quiz_type = state.get("quiz_type", "multiple_choice")
+        
+        # v2.0 평가 결과 필드 사용
+        if quiz_type == "multiple_choice":
+            is_correct = state.get("multiple_answer_correct", False)
+            score = 100 if is_correct else 0
+        else:  # subjective
+            score = state.get("subjective_answer_score", 0)
+            is_correct = score >= 60
+        
+        session_decision = state.get("retry_decision_result", "proceed")  # v2.0 필드명
         
         # 기본 정제
         refined_content = feedback_draft.strip()
         
-        # 결과에 따른 이모지 및 격려 메시지 추가
-        if isinstance(is_correct, int):
-            if is_correct == 1 or is_correct >= 60:  # 정답 또는 60점 이상
-                intro = "🎉 "
-            else:
-                intro = "💪 "
+        # 결과에 따른 이모지 및 격려 메시지 추가 (v2.0 수정)
+        if is_correct:
+            intro = "🎉 "
         else:
-            intro = "📚 "
+            intro = "💪 "
         
         # 세션 결정 결과에 따른 안내 추가
         if session_decision == "proceed":
@@ -327,6 +337,323 @@ class ResponseGenerator:
         outro = "\n\n📚 더 궁금한 점이 있으시면 언제든 질문해주세요!"
         
         return intro + refined_content + outro
+    
+    def _create_theory_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        이론 설명 workflow_response 생성 (v2.0 신규)
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            workflow_response가 포함된 TutorState
+        """
+        theory_draft = state.get("theory_draft", "")
+        
+        # 이론 내용 정제
+        if not theory_draft:
+            refined_content = self._generate_theory_fallback(state)
+        else:
+            refined_content = self._refine_theory_content(theory_draft, state)
+        
+        # workflow_response 구조 생성
+        workflow_response = {
+            "current_agent": "theory_educator",
+            "session_progress_stage": "theory_completed",
+            "ui_mode": "chat",
+            "content": {
+                "type": "theory",
+                "title": f"{state.get('current_chapter', 1)}챕터 {state.get('current_section', 1)}섹션",
+                "content": refined_content,
+                "key_points": self._extract_key_points(refined_content),
+                "examples": self._extract_examples(refined_content)
+            }
+        }
+        
+        # State 업데이트
+        updated_state = state.copy()
+        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_session_progress(updated_state, "theory_educator")
+        updated_state = state_manager.update_ui_mode(updated_state, "chat")
+        
+        return updated_state
+    
+    def _create_quiz_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        퀴즈 workflow_response 생성 (v2.0 신규)
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            workflow_response가 포함된 TutorState
+        """
+        quiz_type = state.get("quiz_type", "multiple_choice")  # v2.0 필드명
+        quiz_content = state.get("quiz_content", "")
+        quiz_options = state.get("quiz_options", [])
+        quiz_hint = state.get("quiz_hint", "")
+        
+        # 퀴즈 내용 구성
+        content = {
+            "type": "quiz",
+            "quiz_type": quiz_type,
+            "question": quiz_content
+        }
+        
+        # 객관식 전용 필드
+        if quiz_type == "multiple_choice":
+            content["options"] = quiz_options
+        
+        # 공통 필드
+        if quiz_hint:
+            content["hint"] = quiz_hint
+        
+        # workflow_response 구조 생성
+        workflow_response = {
+            "current_agent": "quiz_generator",
+            "session_progress_stage": "theory_completed",
+            "ui_mode": "quiz",
+            "content": content
+        }
+        
+        # State 업데이트
+        updated_state = state.copy()
+        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_ui_mode(updated_state, "quiz")
+        
+        return updated_state
+    
+    def _create_feedback_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        평가 피드백 workflow_response 생성 (v2.0 신규)
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            workflow_response가 포함된 TutorState
+        """
+        feedback_draft = state.get("feedback_draft", "")
+        quiz_type = state.get("quiz_type", "multiple_choice")
+        
+        # 평가 결과 추출 (v2.0 필드)
+        if quiz_type == "multiple_choice":
+            is_correct = state.get("multiple_answer_correct", False)
+            score = 100 if is_correct else 0
+        else:  # subjective
+            score = state.get("subjective_answer_score", 0)
+            is_correct = score >= 60  # 60점 이상이면 통과
+        
+        # 피드백 내용 정제
+        if not feedback_draft:
+            refined_feedback = self._generate_feedback_fallback(state)
+        else:
+            refined_feedback = self._refine_feedback_content(feedback_draft, state)
+        
+        # workflow_response 구조 생성
+        workflow_response = {
+            "current_agent": "evaluation_feedback_agent",
+            "session_progress_stage": "quiz_and_feedback_completed",
+            "ui_mode": "chat",
+            "evaluation_result": {
+                "quiz_type": quiz_type,
+                "is_answer_correct": is_correct,
+                "score": score,
+                "feedback": {
+                    "title": "🎉 정답입니다!" if is_correct else "💪 아쉽네요!",
+                    "content": refined_feedback,
+                    "explanation": state.get("quiz_explanation", ""),
+                    "next_step_decision": state.get("retry_decision_result", "proceed")  # v2.0 필드명
+                }
+            }
+        }
+        
+        # State 업데이트
+        updated_state = state.copy()
+        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_session_progress(updated_state, "evaluation_feedback_agent")
+        updated_state = state_manager.update_ui_mode(updated_state, "chat")
+        
+        return updated_state
+    
+    def _create_qna_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        질문 답변 workflow_response 생성 (v2.0 신규)
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            workflow_response가 포함된 TutorState
+        """
+        qna_draft = state.get("qna_draft", "")
+        
+        # QnA 내용 정제
+        if not qna_draft:
+            refined_content = self._generate_qna_fallback(state)
+        else:
+            refined_content = self._refine_qna_content(qna_draft, state)
+        
+        # workflow_response 구조 생성
+        workflow_response = {
+            "current_agent": "qna_resolver",
+            "session_progress_stage": state.get("session_progress_stage", "theory_completed"),
+            "ui_mode": "chat",
+            "content": {
+                "type": "qna",
+                "question": self._extract_user_message(state),
+                "answer": refined_content,
+                "related_topics": self._extract_related_topics(refined_content)
+            }
+        }
+        
+        # State 업데이트
+        updated_state = state.copy()
+        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_ui_mode(updated_state, "chat")
+        
+        return updated_state
+    
+    def _create_session_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        세션 완료 workflow_response 생성 (v2.0 신규)
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            workflow_response가 포함된 TutorState
+        """
+        # workflow_response 구조 생성
+        workflow_response = {
+            "current_agent": "session_manager",
+            "session_progress_stage": "session_start",
+            "ui_mode": "chat",
+            "session_completion": {
+                "completed_chapter": state.get("current_chapter", 1),
+                "completed_section": state.get("current_section", 1),
+                "next_chapter": state.get("current_chapter", 1),
+                "next_section": state.get("current_section", 1) + 1,
+                "session_summary": f"{state.get('current_chapter', 1)}챕터 {state.get('current_section', 1)}섹션을 성공적으로 완료했습니다.",
+                "study_time_minutes": 15  # 예상 학습 시간
+            }
+        }
+        
+        # State 업데이트
+        updated_state = state.copy()
+        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_ui_mode(updated_state, "chat")
+        
+        return updated_state
+    
+    def _create_default_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        기본 workflow_response 생성 (v2.0 신규)
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            workflow_response가 포함된 TutorState
+        """
+        # 가장 최근 대본 찾기
+        drafts = [
+            ("theory_educator", state.get("theory_draft", "")),
+            ("quiz_generator", state.get("quiz_draft", "")),
+            ("evaluation_feedback_agent", state.get("feedback_draft", "")),
+            ("qna_resolver", state.get("qna_draft", ""))
+        ]
+        
+        for agent_name, draft_content in drafts:
+            if draft_content and draft_content.strip():
+                # 내용이 있는 첫 번째 대본으로 응답 생성
+                if "theory" in agent_name:
+                    return self._create_theory_workflow_response(state)
+                elif "quiz" in agent_name:
+                    return self._create_quiz_workflow_response(state)
+                elif "feedback" in agent_name:
+                    return self._create_feedback_workflow_response(state)
+                elif "qna" in agent_name:
+                    return self._create_qna_workflow_response(state)
+        
+        # 모든 대본이 비어있으면 오류 응답
+        return self._create_error_workflow_response(state)
+    
+    def _create_error_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        오류 workflow_response 생성 (v2.0 신규)
+        
+        Args:
+            state: TutorState
+            
+        Returns:
+            오류 workflow_response가 포함된 TutorState
+        """
+        error_message = "죄송합니다. 일시적인 오류가 발생했습니다. 다시 시도해주세요."
+        
+        # workflow_response 구조 생성
+        workflow_response = {
+            "current_agent": "learning_supervisor",
+            "session_progress_stage": state.get("session_progress_stage", "session_start"),
+            "ui_mode": "chat",
+            "content": {
+                "type": "error",
+                "message": error_message
+            }
+        }
+        
+        # State 업데이트
+        updated_state = state.copy()
+        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_ui_mode(updated_state, "chat")
+        
+        return updated_state
+    
+    def _extract_user_message(self, state: TutorState) -> str:
+        """State에서 사용자 메시지 추출"""
+        conversations = state.get("current_session_conversations", [])
+        
+        # 마지막 대화에서 사용자 메시지 찾기
+        for conv in reversed(conversations):
+            if conv.get("message_type") == "user":
+                return conv.get("message", "")
+        
+        return ""
+    
+    def _extract_key_points(self, content: str) -> list:
+        """이론 내용에서 핵심 포인트 추출"""
+        # 간단한 키워드 추출 (실제로는 더 정교한 로직 필요)
+        key_points = []
+        lines = content.split('\n')
+        for line in lines:
+            if '핵심' in line or '중요' in line or '포인트' in line:
+                key_points.append(line.strip())
+        
+        return key_points[:3]  # 최대 3개
+    
+    def _extract_examples(self, content: str) -> list:
+        """이론 내용에서 예시 추출"""
+        # 간단한 예시 추출 (실제로는 더 정교한 로직 필요)
+        examples = []
+        lines = content.split('\n')
+        for line in lines:
+            if '예시' in line or '예를 들어' in line or '예:' in line:
+                examples.append(line.strip())
+        
+        return examples[:2]  # 최대 2개
+    
+    def _extract_related_topics(self, content: str) -> list:
+        """QnA 내용에서 관련 주제 추출"""
+        # 간단한 관련 주제 추출 (실제로는 더 정교한 로직 필요)
+        related_topics = []
+        if 'AI' in content:
+            related_topics.append('인공지능 기초')
+        if 'ChatGPT' in content or 'GPT' in content:
+            related_topics.append('ChatGPT 활용')
+        if '프롬프트' in content:
+            related_topics.append('프롬프트 엔지니어링')
+        
+        return related_topics[:3]  # 최대 3개
     
     def _generate_theory_fallback(self, state: TutorState) -> str:
         """이론 설명 대본이 없을 때 기본 응답"""

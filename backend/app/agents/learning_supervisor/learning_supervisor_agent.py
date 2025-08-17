@@ -1,4 +1,5 @@
 # backend/app/agents/learning_supervisor/learning_supervisor_agent.py
+# v2.0 업데이트: 통합 응답 생성 구조, workflow_response 지원, 하이브리드 UX
 
 from typing import Dict, Any
 from app.core.langraph.state_manager import TutorState, state_manager
@@ -95,9 +96,9 @@ class LearningSupervisor:
         Returns:
             퀴즈 답변 제출 여부
         """
-        # UI 모드가 quiz이고 사용자 답변이 있는 경우
+        # UI 모드가 quiz이고 사용자 답변이 있는 경우 (v2.0 필드명)
         ui_mode = state.get("ui_mode", "chat")
-        user_answer = state.get("current_question_answer", "")
+        user_answer = state.get("user_answer", "")  # current_question_answer → user_answer
         
         # 최근 대화에서 사용자 메시지 확인
         conversations = state.get("current_session_conversations", [])
@@ -109,7 +110,7 @@ class LearningSupervisor:
                 has_recent_user_message = True
         
         # 퀴즈 모드이면서 실제 퀴즈 문제가 있고, 사용자 입력이 있는 경우만 퀴즈 답변으로 판단
-        has_quiz_question = bool(state.get("current_question_content", "").strip())
+        has_quiz_question = bool(state.get("quiz_content", "").strip())  # current_question_content → quiz_content
         
         return ui_mode == "quiz" and has_quiz_question and (user_answer or has_recent_user_message)
     
@@ -148,8 +149,8 @@ class LearningSupervisor:
         if not user_answer:
             return self._handle_no_answer(state)
         
-        # State에 답변 저장
-        updated_state = state_manager.update_quiz_info(state, user_answer=user_answer)
+        # State에 사용자 답변만 저장 (퀴즈 내용은 QuizGenerator가 이미 저장함)
+        updated_state = state_manager.update_user_answer(state, user_answer)
         
         # 답변을 대화 기록에 추가
         updated_state = state_manager.add_conversation(
@@ -234,9 +235,9 @@ class LearningSupervisor:
         return ""
     
     def _extract_user_answer(self, state: TutorState) -> str:
-        """State에서 사용자 퀴즈 답변 추출"""
+        """State에서 사용자 퀴즈 답변 추출 (v2.0 필드명)"""
         # 이미 State에 저장된 답변이 있으면 그것을 사용
-        current_answer = state.get("current_question_answer", "")
+        current_answer = state.get("user_answer", "")  # current_question_answer → user_answer
         if current_answer:
             return current_answer
         
