@@ -1,4 +1,5 @@
 # backend/app/core/langraph/workflow.py
+# v2.0 업데이트: 통합 워크플로우 지원, 하이브리드 UX 처리
 
 import asyncio
 import logging
@@ -234,7 +235,7 @@ class WorkflowExecutor:
     
     def _handle_execution_error(self, state: TutorState, error_message: str) -> TutorState:
         """
-        실행 오류 처리
+        실행 오류 처리 (v2.0 업데이트)
         
         Args:
             state: 원본 State
@@ -260,6 +261,9 @@ class WorkflowExecutor:
                 error_state, 
                 "learning_supervisor"
             )
+            
+            # UI 모드를 chat으로 설정 (오류 시 안전한 모드)
+            error_state = state_manager.update_ui_mode(error_state, "chat")
             
             # 오류 로그를 대화 기록에 추가
             error_state = state_manager.add_conversation(

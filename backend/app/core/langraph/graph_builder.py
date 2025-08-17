@@ -1,4 +1,5 @@
 # backend/app/core/langraph/graph_builder.py
+# v2.0 업데이트: evaluation_feedback_agent 라우팅 수정, 통합 워크플로우 구조
 
 import os
 from typing import Any
@@ -12,14 +13,15 @@ from app.utils.common.graph_visualizer import save_tutor_workflow_graph
 
 class TutorGraphBuilder:
     """
-    AI 학습 튜터 LangGraph 워크플로우 빌더
+    AI 학습 튜터 LangGraph 워크플로우 빌더 (v2.0)
     
     워크플로우 구조:
     learning_supervisor_input → supervisor_router → [agents] → learning_supervisor_output → END
     
-    통합된 워크플로우:
+    통합된 워크플로우 (v2.0):
     - 모든 에이전트가 learning_supervisor_output으로 연결
-    - 퀴즈 답변 제출 시 evaluation_feedback으로 자동 라우팅
+    - 퀴즈 답변 제출 시 evaluation_feedback_agent로 자동 라우팅
+    - 하이브리드 UX 지원 (chat/quiz 모드 자동 전환)
     - 일관된 응답 생성 프로세스
     """
     
@@ -43,14 +45,14 @@ class TutorGraphBuilder:
         # === 엔트리 포인트 (START 노드 자동 생성) ===
         workflow.set_entry_point("learning_supervisor_input")
         
-        # === 조건부 라우팅 간선 (기존 supervisor_router 사용) ===
+        # === 조건부 라우팅 간선 (v2.0 업데이트) ===
         workflow.add_conditional_edges(
             "learning_supervisor_input",
             supervisor_router,
             {
                 "theory_educator": "theory_educator",
                 "quiz_generator": "quiz_generator",
-                "evaluation_feedback": "evaluation_feedback", 
+                "evaluation_feedback_agent": "evaluation_feedback_agent",  # evaluation_feedback → evaluation_feedback_agent
                 "qna_resolver": "qna_resolver",
                 "session_manager": "session_manager",
                 "learning_supervisor_output": "learning_supervisor_output"
@@ -60,7 +62,7 @@ class TutorGraphBuilder:
         # === 단순 간선 (에이전트 → 최종 응답) ===
         workflow.add_edge("theory_educator", "learning_supervisor_output")
         workflow.add_edge("quiz_generator", "learning_supervisor_output")
-        workflow.add_edge("evaluation_feedback", "learning_supervisor_output")
+        workflow.add_edge("evaluation_feedback_agent", "learning_supervisor_output")  # evaluation_feedback → evaluation_feedback_agent
         workflow.add_edge("qna_resolver", "learning_supervisor_output")
         workflow.add_edge("session_manager", "learning_supervisor_output")
         

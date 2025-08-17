@@ -1,4 +1,5 @@
 # backend/app/agents/evaluation_feedback/evaluation_feedback_agent.py
+# v2.0 업데이트: State quiz 정보 직접 사용, update_evaluation_result 활용
 
 import json
 import logging
@@ -19,10 +20,11 @@ from app.tools.analysis.feedback_tools_chatgpt import (
 
 class EvaluationFeedbackAgent:
     """
-    평가 및 피드백 에이전트 (간소화)
+    평가 및 피드백 에이전트 (v2.0)
     - QuizGenerator 완료 후 자동 호출
     - 객관식/주관식 답변 채점 및 피드백 생성
     - 다음 단계 진행 여부 결정
+    - v2.0: State quiz 정보 직접 사용, update_evaluation_result 활용
     """
     
     def __init__(self):
@@ -46,14 +48,14 @@ class EvaluationFeedbackAgent:
             if not self._validate_state(state):
                 return self._create_error_state(state, "State 검증 실패")
             
-            # 2. 퀴즈 데이터 파싱
-            quiz_data = self._parse_quiz_data(state["quiz_draft"])
+            # 2. State에서 퀴즈 데이터 직접 가져오기 (v2.0)
+            quiz_data = self._get_quiz_data_from_state(state)
             if not quiz_data:
-                return self._create_error_state(state, "퀴즈 데이터 파싱 실패")
+                return self._create_error_state(state, "State에서 퀴즈 데이터 추출 실패")
             
-            # 3. 퀴즈 타입별 평가 및 피드백 생성
-            quiz_type = state["current_question_type"]
-            user_answer = state["current_question_answer"]
+            # 3. 퀴즈 타입별 평가 및 피드백 생성 (v2.0 필드명)
+            quiz_type = state["quiz_type"]  # current_question_type → quiz_type
+            user_answer = state["user_answer"]  # current_question_answer → user_answer
             
             if quiz_type == "multiple_choice":
                 score, feedback_text = self._process_multiple_choice(
@@ -82,50 +84,68 @@ class EvaluationFeedbackAgent:
             return self._create_error_state(state, str(e))
     
     def _validate_state(self, state: TutorState) -> bool:
-        """State 유효성 검증"""
+        """State 유효성 검증 (v2.0 필드명 변경)"""
         required_fields = [
-            "quiz_draft", "current_question_answer", "current_question_type",
+            "quiz_type", "quiz_content", "user_answer",  # v2.0 필드명
             "user_type", "current_session_count"
         ]
         
         for field in required_fields:
-            if field not in state or not state[field]:
-                self.logger.error(f"필수 필드 누락 또는 비어있음: {field}")
+            if field not in state:
+                self.logger.error(f"필수 필드 누락: {field}")
                 return False
         
         # 사용자 답변이 실제로 있는지 확인
-        user_answer = state["current_question_answer"].strip()
+        user_answer = state["user_answer"].strip()
         if not user_answer:
             self.logger.error("사용자 답변이 비어있습니다.")
             return False
         
+        # 퀴즈 내용이 있는지 확인
+        quiz_content = state["quiz_content"].strip()
+        if not quiz_content:
+            self.logger.error("퀴즈 내용이 비어있습니다.")
+            return False
+        
         return True
     
-    def _parse_quiz_data(self, quiz_draft: str) -> Dict[str, Any]:
-        """퀴즈 대본에서 JSON 데이터 파싱"""
+    def _get_quiz_data_from_state(self, state: TutorState) -> Dict[str, Any]:
+        """State에서 퀴즈 데이터 직접 추출 (v2.0 신규)"""
         try:
-            # JSON 파싱
-            draft_data = json.loads(quiz_draft)
-            quiz_data = draft_data.get("quiz", {})
+            quiz_type = state["quiz_type"]
             
-            if not quiz_data:
-                self.logger.error("퀴즈 데이터가 비어있습니다.")
-                return None
+            # State에서 퀴즈 정보 구성
+            quiz_data = {
+                "type": quiz_type,
+                "question": state["quiz_content"],
+                "hint": state.get("quiz_hint", "")
+            }
+            
+            # 객관식 전용 필드
+            if quiz_type == "multiple_choice":
+                quiz_data.update({
+                    "options": state.get("quiz_options", []),
+                    "correct_answer": state.get("quiz_correct_answer", 1),
+                    "explanation": state.get("quiz_explanation", "")
+                })
+            
+            # 주관식 전용 필드
+            elif quiz_type == "subjective":
+                quiz_data.update({
+                    "sample_answer": state.get("quiz_sample_answer", ""),
+                    "evaluation_criteria": state.get("quiz_evaluation_criteria", [])
+                })
             
             # 퀴즈 데이터 유효성 검증
-            quiz_type = quiz_data.get("type", "")
             if not validate_quiz_data(quiz_data, quiz_type):
-                self.logger.error("퀴즈 데이터 유효성 검증 실패")
+                self.logger.error("State 퀴즈 데이터 유효성 검증 실패")
                 return None
             
-            self.logger.info("퀴즈 데이터 파싱 및 검증 완료")
+            self.logger.info("State에서 퀴즈 데이터 추출 및 검증 완료")
             return quiz_data
             
-        except json.JSONDecodeError as e:
-            self.logger.error(f"JSON 파싱 오류: {str(e)}")
-            return None
         except Exception as e:
-            self.logger.error(f"퀴즈 데이터 파싱 중 오류: {str(e)}")
+            self.logger.error(f"State 퀴즈 데이터 추출 중 오류: {str(e)}")
             return None
     
     def _process_multiple_choice(self, quiz_data: Dict[str, Any], user_answer: str, user_type: str) -> tuple:
@@ -178,17 +198,28 @@ class EvaluationFeedbackAgent:
         feedback_text: str,
         next_step: str
     ) -> TutorState:
-        """평가 결과로 State 업데이트"""
+        """평가 결과로 State 업데이트 (v2.0 update_evaluation_result 사용)"""
         
-        # 1. 평가 결과 업데이트
-        updated_state = state_manager.update_quiz_info(
-            state,
-            is_correct=score,
-            feedback=feedback_text
-        )
+        # 1. 평가 결과 업데이트 (v2.0 전용 메서드 사용)
+        quiz_type = state["quiz_type"]
+        if quiz_type == "multiple_choice":
+            # 객관식: 정답 여부로 평가
+            is_correct = score >= 100  # 100점이면 정답
+            updated_state = state_manager.update_evaluation_result(
+                state,
+                is_correct=is_correct,
+                feedback=feedback_text
+            )
+        else:  # subjective
+            # 주관식: 점수로 평가
+            updated_state = state_manager.update_evaluation_result(
+                state,
+                score=score,
+                feedback=feedback_text
+            )
         
-        # 2. 세션 결정 결과 설정
-        updated_state["session_decision_result"] = next_step
+        # 2. 세션 결정 결과 설정 (v2.0 필드명 변경)
+        updated_state["retry_decision_result"] = next_step  # session_decision_result → retry_decision_result
         
         # 3. 피드백 대본 저장 (LearningSupervisor용) - 순수 피드백만
         updated_state = state_manager.update_agent_draft(
@@ -220,20 +251,28 @@ class EvaluationFeedbackAgent:
         return updated_state
     
     def _create_error_state(self, state: TutorState, error_message: str) -> TutorState:
-        """오류 발생 시 기본 State 생성"""
+        """오류 발생 시 기본 State 생성 (v2.0 update_evaluation_result 사용)"""
         self.logger.error(f"오류 상태 생성: {error_message}")
         
         error_feedback = f"평가 중 문제가 발생했습니다: {error_message}"
         
-        # 기본 평가 결과로 업데이트
-        updated_state = state_manager.update_quiz_info(
-            state,
-            is_correct=50,  # 중간 점수
-            feedback=error_feedback
-        )
+        # 기본 평가 결과로 업데이트 (v2.0 메서드 사용)
+        quiz_type = state.get("quiz_type", "multiple_choice")
+        if quiz_type == "multiple_choice":
+            updated_state = state_manager.update_evaluation_result(
+                state,
+                is_correct=False,  # 오류 시 오답 처리
+                feedback=error_feedback
+            )
+        else:  # subjective
+            updated_state = state_manager.update_evaluation_result(
+                state,
+                score=50,  # 중간 점수
+                feedback=error_feedback
+            )
         
-        # 오류 시에는 강제로 proceed
-        updated_state["session_decision_result"] = "proceed"
+        # 오류 시에는 강제로 proceed (v2.0 필드명)
+        updated_state["retry_decision_result"] = "proceed"  # session_decision_result → retry_decision_result
         
         # 오류 피드백 대본 저장
         updated_state = state_manager.update_agent_draft(
@@ -266,7 +305,7 @@ class EvaluationFeedbackAgent:
     
     def get_evaluation_summary(self, state: TutorState) -> Dict[str, Any]:
         """
-        현재 평가 결과 요약 반환 (외부에서 호출 가능)
+        현재 평가 결과 요약 반환 (v2.0 필드명 변경)
         
         Args:
             state: 현재 TutorState
@@ -274,10 +313,20 @@ class EvaluationFeedbackAgent:
         Returns:
             평가 요약 딕셔너리
         """
+        quiz_type = state.get("quiz_type", "unknown")
+        
+        # 퀴즈 타입별 점수 계산
+        if quiz_type == "multiple_choice":
+            score = 100 if state.get("multiple_answer_correct", False) else 0
+        else:  # subjective
+            score = state.get("subjective_answer_score", 0)
+        
         return {
-            "score": state.get("is_answer_correct", 0),
-            "quiz_type": state.get("current_question_type", "unknown"),
-            "next_step": state.get("session_decision_result", "proceed"),
+            "score": score,
+            "quiz_type": quiz_type,  # current_question_type → quiz_type
+            "next_step": state.get("retry_decision_result", "proceed"),  # session_decision_result → retry_decision_result
             "feedback": state.get("evaluation_feedback", ""),
-            "session_count": state.get("current_session_count", 0)
+            "session_count": state.get("current_session_count", 0),
+            "multiple_answer_correct": state.get("multiple_answer_correct", False),  # v2.0 신규
+            "subjective_answer_score": state.get("subjective_answer_score", 0)  # v2.0 신규
         }

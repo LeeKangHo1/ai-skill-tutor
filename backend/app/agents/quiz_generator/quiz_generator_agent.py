@@ -1,4 +1,5 @@
 # backend/app/agents/quiz_generator/quiz_generator_agent.py
+# v2.0 업데이트: State 필드명 변경 대응, parse_quiz_from_json 활용
 
 from typing import Dict, Any
 import json
@@ -10,11 +11,13 @@ from app.tools.content.quiz_tools_chatgpt import quiz_generation_tool
 
 class QuizGenerator:
     """
-    퀴즈 생성 에이전트
+    퀴즈 생성 에이전트 (v2.0)
     - 특정 섹션 데이터만 로드하여 효율적 처리
     - 순수 퀴즈 대본만 생성 (사용자 대면 메시지 없음)
     - 힌트도 함께 생성하여 한 번에 처리
     - LearningSupervisor가 대본을 사용자 친화적으로 변환
+    - v2.0: 객관식/주관식 분리된 State 필드 지원
+    - v2.0: state_manager.parse_quiz_from_json() 활용
     """
     
     def __init__(self):
@@ -48,11 +51,8 @@ class QuizGenerator:
             # 3. 재학습 여부 확인
             is_retry_session = updated_state["current_session_count"] > 0
             
-            # 4. 퀴즈 타입 확인 및 State 동기화
-            quiz_type = self._get_quiz_type_from_section(section_data)
-            updated_state = state_manager.update_quiz_info(updated_state, question_type=quiz_type)
-            
-            # 5. 순수 퀴즈 대본 생성 (힌트 포함, 사용자 대면 메시지 없음)
+            # 4. 순수 퀴즈 대본 생성 (힌트 포함, 사용자 대면 메시지 없음)
+            # 퀴즈 타입은 ChatGPT가 섹션 데이터를 보고 자동으로 결정
             quiz_content = quiz_generation_tool(
                 section_data=section_data,
                 user_type=updated_state["user_type"],
@@ -60,25 +60,25 @@ class QuizGenerator:
                 theory_content=updated_state.get("theory_draft", "")
             )
             
-            # 6. 퀴즈 정보 파싱 및 State 업데이트
+            # 5. 퀴즈 정보 파싱 및 State 업데이트 (v2.0 새로운 메서드 사용)
             quiz_info = self._parse_quiz_content(quiz_content)
             if quiz_info:
-                updated_state = self._update_state_with_quiz_info(updated_state, quiz_info)
+                updated_state = state_manager.parse_quiz_from_json(updated_state, quiz_info)
             
-            # 7. State 업데이트 - 순수 대본만 저장
+            # 6. State 업데이트 - 순수 대본만 저장
             updated_state = state_manager.update_agent_draft(
                 updated_state, 
                 self.agent_name, 
                 quiz_content
             )
             
-            # 8. 현재 에이전트 설정
+            # 7. 현재 에이전트 설정
             updated_state = state_manager.update_agent_transition(
                 updated_state,
                 self.agent_name
             )
             
-            # 9. 대화 기록 추가 (시스템 로그용)
+            # 8. 대화 기록 추가 (시스템 로그용)
             updated_state = state_manager.add_conversation(
                 updated_state,
                 agent_name=self.agent_name,
@@ -144,7 +144,8 @@ class QuizGenerator:
     
     def _get_quiz_type_from_section(self, section_data: Dict[str, Any]) -> str:
         """
-        섹션 데이터에서 퀴즈 타입 추출
+        섹션 데이터에서 퀴즈 타입 추출 (v2.0에서는 사용하지 않음 - 호환성 유지)
+        ChatGPT가 섹션 데이터를 보고 자동으로 퀴즈 타입을 결정하므로 불필요
         
         Args:
             section_data: 섹션 데이터
@@ -164,7 +165,7 @@ class QuizGenerator:
     
     def _parse_quiz_content(self, quiz_content: str) -> Dict[str, Any]:
         """
-        퀴즈 대본에서 JSON 데이터 파싱
+        퀴즈 대본에서 JSON 데이터 파싱 (v2.0 검증 강화)
         
         Args:
             quiz_content: 퀴즈 대본 (JSON 형태)
@@ -183,7 +184,12 @@ class QuizGenerator:
                 print(f"[{self.agent_name}] 퀴즈 정보가 비어있습니다.")
                 return None
             
-            print(f"[{self.agent_name}] 퀴즈 정보 파싱 완료")
+            # v2.0: JSON 구조 유효성 검증
+            if not self.validate_quiz_json_structure(quiz_info):
+                print(f"[{self.agent_name}] 퀴즈 JSON 구조가 유효하지 않습니다.")
+                return None
+            
+            print(f"[{self.agent_name}] 퀴즈 정보 파싱 및 검증 완료")
             return quiz_info
             
         except json.JSONDecodeError as e:
@@ -195,7 +201,8 @@ class QuizGenerator:
     
     def _update_state_with_quiz_info(self, state: TutorState, quiz_info: Dict[str, Any]) -> TutorState:
         """
-        파싱된 퀴즈 정보로 State 업데이트
+        파싱된 퀴즈 정보로 State 업데이트 (v2.0에서는 parse_quiz_from_json 사용)
+        이 메서드는 호환성을 위해 유지하지만 실제로는 state_manager.parse_quiz_from_json을 사용
         
         Args:
             state: 현재 TutorState
@@ -204,19 +211,8 @@ class QuizGenerator:
         Returns:
             업데이트된 TutorState
         """
-        # 퀴즈 기본 정보 업데이트
-        question_content = quiz_info.get("question", "")
-        question_number = quiz_info.get("question_number", 1)
-        question_type = quiz_info.get("type", "multiple_choice")
-        
-        updated_state = state_manager.update_quiz_info(
-            state,
-            question_type=question_type,
-            question_number=question_number,
-            question_content=question_content
-        )
-        
-        return updated_state
+        # v2.0에서는 state_manager.parse_quiz_from_json을 직접 사용
+        return state_manager.parse_quiz_from_json(state, quiz_info)
     
     def _create_error_response(self, error_message: str) -> str:
         """
@@ -232,7 +228,7 @@ class QuizGenerator:
     
     def get_quiz_status(self, state: TutorState) -> Dict[str, Any]:
         """
-        현재 퀴즈 상태 정보 반환 (외부에서 호출 가능)
+        현재 퀴즈 상태 정보 반환 (v2.0 필드명 업데이트)
         
         Args:
             state: 현재 TutorState
@@ -243,11 +239,14 @@ class QuizGenerator:
         return {
             "chapter": state["current_chapter"],
             "section": state["current_section"],
-            "question_type": state.get("current_question_type", ""),
-            "question_number": state.get("current_question_number", 0),
-            "question_content": state.get("current_question_content", ""),
-            "user_answer": state.get("current_question_answer", ""),
-            "hint_usage_count": state.get("hint_usage_count", 0),
+            "quiz_type": state.get("quiz_type", ""),  # current_question_type → quiz_type
+            "quiz_content": state.get("quiz_content", ""),  # current_question_content → quiz_content
+            "quiz_options": state.get("quiz_options", []),  # 새로운 필드
+            "quiz_correct_answer": state.get("quiz_correct_answer"),  # 새로운 필드
+            "quiz_hint": state.get("quiz_hint", ""),  # 새로운 필드
+            "user_answer": state.get("user_answer", ""),  # current_question_answer → user_answer
+            "multiple_answer_correct": state.get("multiple_answer_correct", False),  # 새로운 필드
+            "subjective_answer_score": state.get("subjective_answer_score", 0),  # 새로운 필드
             "quiz_draft_ready": bool(state.get("quiz_draft", "").strip())
         }
     
@@ -314,3 +313,81 @@ class QuizGenerator:
         except Exception as e:
             print(f"[{self.agent_name}] 힌트 추출 중 오류: {str(e)}")
             return "힌트를 불러올 수 없습니다."
+    
+    def validate_quiz_json_structure(self, quiz_info: Dict[str, Any]) -> bool:
+        """
+        ChatGPT에서 생성된 퀴즈 JSON 구조 유효성 검증 (v2.0 신규)
+        
+        Args:
+            quiz_info: 파싱된 퀴즈 정보
+            
+        Returns:
+            유효성 여부
+        """
+        try:
+            # 기본 필드 검증
+            required_fields = ["type", "question"]
+            for field in required_fields:
+                if field not in quiz_info:
+                    print(f"[{self.agent_name}] 필수 필드 누락: {field}")
+                    return False
+            
+            quiz_type = quiz_info.get("type")
+            
+            # 객관식 필드 검증
+            if quiz_type == "multiple_choice":
+                mc_fields = ["options", "correct_answer", "explanation"]
+                for field in mc_fields:
+                    if field not in quiz_info:
+                        print(f"[{self.agent_name}] 객관식 필수 필드 누락: {field}")
+                        return False
+                
+                # 선택지 개수 검증
+                options = quiz_info.get("options", [])
+                if not isinstance(options, list) or len(options) < 2:
+                    print(f"[{self.agent_name}] 객관식 선택지 부족: {len(options)}개")
+                    return False
+                
+                # 정답 번호 검증
+                correct_answer = quiz_info.get("correct_answer")
+                if not isinstance(correct_answer, int) or correct_answer < 1 or correct_answer > len(options):
+                    print(f"[{self.agent_name}] 객관식 정답 번호 오류: {correct_answer}")
+                    return False
+            
+            # 주관식 필드 검증
+            elif quiz_type == "subjective":
+                subj_fields = ["sample_answer", "evaluation_criteria"]
+                for field in subj_fields:
+                    if field not in quiz_info:
+                        print(f"[{self.agent_name}] 주관식 권장 필드 누락: {field}")
+                        # 주관식은 경고만 출력하고 계속 진행
+            
+            else:
+                print(f"[{self.agent_name}] 알 수 없는 퀴즈 타입: {quiz_type}")
+                return False
+            
+            print(f"[{self.agent_name}] 퀴즈 JSON 구조 검증 통과: {quiz_type}")
+            return True
+            
+        except Exception as e:
+            print(f"[{self.agent_name}] 퀴즈 JSON 구조 검증 중 오류: {str(e)}")
+            return False
+    
+    def get_quiz_field_mapping(self) -> Dict[str, str]:
+        """
+        ChatGPT JSON 필드와 State 필드 매핑 정보 반환 (v2.0 신규)
+        
+        Returns:
+            필드 매핑 딕셔너리
+        """
+        return {
+            # ChatGPT JSON → State 필드
+            "type": "quiz_type",
+            "question": "quiz_content", 
+            "options": "quiz_options",
+            "correct_answer": "quiz_correct_answer",
+            "explanation": "quiz_explanation",
+            "sample_answer": "quiz_sample_answer",
+            "evaluation_criteria": "quiz_evaluation_criteria",
+            "hint": "quiz_hint"
+        }
