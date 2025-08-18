@@ -123,14 +123,9 @@ backend/
 │   │   │   ├── content_service.py    # 컨텐츠 처리 서비스
 │   │   │   ├── quiz_service.py       # 퀴즈 처리 서비스
 │   │   │   └── session_service.py    # 세션 관리 서비스
-│   │   ├── statistics/               # 통계 처리 서비스 (미구현)
+│   │   ├── dashboard/               # 대쉬보드
 │   │   │   ├── __init__.py
-│   │   │   ├── dashboard_service.py  # 대시보드 통계
-│   │   │   └── report_service.py     # 리포트 생성
-│   │   └── user/                     # 사용자 관리 서비스 (미구현)
-│   │       ├── __init__.py
-│   │       ├── profile_service.py    # 프로필 관리
-│   │       └── progress_service.py   # 진행 상태 관리
+│   │   │   └── dashboard_service.py  # 대시보드 통계 서비스
 │   ├── tools/                        # LangGraph 도구 함수들 (부분 구현)
 │   │   ├── __init__.py
 │   │   ├── analysis/                 # 분석/평가 도구
