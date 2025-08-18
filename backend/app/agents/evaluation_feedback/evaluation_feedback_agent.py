@@ -153,7 +153,7 @@ class EvaluationFeedbackAgent:
         try:
             self.logger.info("객관식 평가 시작")
             
-            # 1. 로컬 채점
+            # 1. 로컬 채점 (score: 0 또는 1, is_correct: bool, explanation: str)
             score, is_correct, explanation = evaluate_multiple_choice(quiz_data, user_answer)
             
             # 2. ChatGPT 피드백 생성
@@ -161,7 +161,10 @@ class EvaluationFeedbackAgent:
                 quiz_data, user_answer, is_correct, user_type
             )
             
-            return score, feedback_text
+            # 3. 점수를 100점 만점으로 변환 (1점이면 100점, 0점이면 0점)
+            final_score = 100 if score >= 1 else 0
+            
+            return final_score, feedback_text
             
         except Exception as e:
             self.logger.error(f"객관식 처리 중 오류: {str(e)}")
@@ -203,7 +206,7 @@ class EvaluationFeedbackAgent:
         # 1. 평가 결과 업데이트 (v2.0 전용 메서드 사용)
         quiz_type = state["quiz_type"]
         if quiz_type == "multiple_choice":
-            # 객관식: 정답 여부로 평가
+            # 객관식: 100점이면 정답 (이미 _process_multiple_choice에서 100점 만점으로 변환됨)
             is_correct = score >= 100  # 100점이면 정답
             updated_state = state_manager.update_evaluation_result(
                 state,
@@ -211,7 +214,7 @@ class EvaluationFeedbackAgent:
                 feedback=feedback_text
             )
         else:  # subjective
-            # 주관식: 점수로 평가
+            # 주관식: 점수로 평가 (0-100 범위)
             updated_state = state_manager.update_evaluation_result(
                 state,
                 score=score,
