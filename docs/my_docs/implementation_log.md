@@ -1,5 +1,59 @@
 # 구현 로그 (Implementation Log)
 
+## SessionManager v2.0 업데이트 완료 (2025-08-18)
+
+### 📋 SessionManager 및 SessionHandlers v2.0 변경사항
+
+#### 1. AUTO_INCREMENT 세션 ID 지원
+- **기존**: 문자열 세션 ID 생성 (`user{id}_ch{chapter}_s{section}_{timestamp}`)
+- **변경**: MySQL AUTO_INCREMENT 사용, 정수형 세션 ID 자동 생성
+- **영향**: `save_session_info()` 메서드가 생성된 세션 ID 반환
+
+#### 2. 객관식/주관식 분리된 퀴즈 데이터 구조
+```python
+# v2.0 퀴즈 데이터 준비 로직
+if quiz_type == "multiple_choice":
+    quiz_data.update({
+        "quiz_options": state.get("quiz_options", []),
+        "quiz_correct_answer": state.get("quiz_correct_answer"),
+        "quiz_explanation": state.get("quiz_explanation", ""),
+        "multiple_answer_correct": state.get("multiple_answer_correct", False)
+    })
+else:  # subjective
+    quiz_data.update({
+        "quiz_sample_answer": state.get("quiz_sample_answer", ""),
+        "quiz_evaluation_criteria": state.get("quiz_evaluation_criteria", []),
+        "subjective_answer_score": state.get("subjective_answer_score", 0)
+    })
+```
+
+#### 3. 분리된 통계 시스템
+- **객관식 통계**: `multiple_choice_accuracy` (정답률 %)
+- **주관식 통계**: `subjective_average_score` (평균 점수)
+- **통계 재계산**: `_recalculate_average_accuracy()` 메서드 완전 재작성
+
+#### 4. 필드명 변경
+- `session_decision_result` → `retry_decision_result`
+- `session_sequence` → `section_number`
+- 모든 관련 메서드 및 쿼리 업데이트
+
+#### 5. 섹션별 진행 관리
+- `user_progress` 테이블에 `current_section` 필드 추가
+- 섹션별 세션 횟수 조회 가능 (`get_user_session_count`)
+
+#### 6. 공개 메서드 추가
+- `prepare_next_session()`: 외부에서 호출 가능한 다음 세션 준비 메서드
+
+### 🔧 주요 파일 변경사항
+- `backend/app/agents/session_manager/session_manager_agent.py`: 완전 재작성
+- `backend/app/agents/session_manager/session_handlers.py`: v2.0 데이터 구조 지원
+
+### 🎯 다음 단계
+- LangGraph 워크플로우에서 SessionManager v2.0 연동 테스트
+- 프론트엔드 API 응답 구조 업데이트 필요
+
+---
+
 ## v2.0 통합 업데이트 완료 (2025-08-17)
 
 ### 📋 주요 변경사항 개요

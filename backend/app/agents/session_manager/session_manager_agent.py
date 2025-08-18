@@ -1,5 +1,16 @@
 # backend/app/agents/session_manager/session_manager_agent.py
 
+"""
+SessionManager v2.0 - 세션 관리 에이전트
+
+주요 v2.0 변경사항:
+- AUTO_INCREMENT 세션 ID 사용 (기존 문자열 → 정수)
+- 객관식/주관식 분리된 퀴즈 데이터 구조
+- retry_decision_result 필드명 변경 (기존 session_decision_result)
+- section_number 필드 추가로 섹션별 진행 관리
+- 통합 워크플로우 지원
+"""
+
 import json
 import os
 import logging
@@ -32,7 +43,7 @@ class SessionManager:
         세션 완료 처리 메인 프로세스
         
         Args:
-            state: 현재 TutorState (session_decision_result가 설정된 상태)
+            state: 현재 TutorState (retry_decision_result가 설정된 상태)
             
         Returns:
             다음 세션을 위해 정리된 TutorState
@@ -41,10 +52,10 @@ class SessionManager:
             self.logger.info(f"[{self.agent_name}] 세션 완료 처리 시작")
             
             # 1. 현재 세션 결정 결과 확인
-            decision_result = state.get("session_decision_result", "proceed")
+            decision_result = state.get("retry_decision_result", "proceed")
             self.logger.info(f"세션 결정 결과: {decision_result}")
             
-            # 2. 현재 세션 데이터를 DB에 저장
+            # 2. 현재 세션 데이터를 DB에 저장 (AUTO_INCREMENT 세션 ID 사용)
             session_id = self._save_current_session_to_db(state)
             
             # 3. 대화 요약 생성 및 recent_sessions_summary 업데이트
@@ -67,30 +78,30 @@ class SessionManager:
             # 오류 시에도 기본적인 State 정리는 수행
             return self._handle_error_and_cleanup(state, str(e))
     
-    def _save_current_session_to_db(self, state: TutorState) -> str:
+    def _save_current_session_to_db(self, state: TutorState) -> int:
         """
-        현재 세션 데이터를 DB에 저장
+        현재 세션 데이터를 DB에 저장 (v2.0: AUTO_INCREMENT 세션 ID 사용)
         
         Args:
             state: 현재 TutorState
             
         Returns:
-            저장된 세션 ID
+            저장된 세션 ID (AUTO_INCREMENT로 생성된 정수)
         """
         try:
-            # 세션 ID 생성
-            session_id = self._generate_session_id(state)
+            # 1. learning_sessions 테이블에 세션 기본 정보 저장 (AUTO_INCREMENT 사용)
+            session_data = self._prepare_session_data(state)
+            session_id = self.session_handlers.save_session_info(session_data)
             
-            # 1. learning_sessions 테이블에 세션 기본 정보 저장
-            session_data = self._prepare_session_data(state, session_id)
-            self.session_handlers.save_session_info(session_data)
+            if not session_id:
+                raise Exception("세션 ID 생성 실패")
             
             # 2. session_conversations 테이블에 대화 기록 저장
             conversations = state.get("current_session_conversations", [])
             if conversations:
                 self.session_handlers.save_session_conversations(session_id, conversations)
             
-            # 3. session_quizzes 테이블에 퀴즈 정보 저장
+            # 3. session_quizzes 테이블에 퀴즈 정보 저장 (v2.0: 객관식/주관식 분리)
             quiz_data = self._prepare_quiz_data(state, session_id)
             if quiz_data:
                 self.session_handlers.save_session_quiz(quiz_data)
@@ -100,24 +111,13 @@ class SessionManager:
             
         except Exception as e:
             self.logger.error(f"DB 저장 중 오류: {str(e)}")
-            # 오류가 있어도 임시 세션 ID 반환
-            return f"error_session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            # 오류가 있어도 임시 세션 ID 반환 (음수로 구분)
+            return -1
     
-    def _generate_session_id(self, state: TutorState) -> str:
-        """
-        세션 ID 생성 (간단한 형식)
-        
-        형식: user{user_id}_ch{chapter}_s{section}_{timestamp}
-        """
-        user_id = state["user_id"]
-        chapter = state["current_chapter"]
-        section = state["current_section"]
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        return f"user{user_id}_ch{chapter}_s{section}_{timestamp}"
+    # v2.0: AUTO_INCREMENT 사용으로 세션 ID 생성 함수 제거
     
-    def _prepare_session_data(self, state: TutorState, session_id: str) -> Dict[str, Any]:
-        """learning_sessions 테이블용 데이터 준비"""
+    def _prepare_session_data(self, state: TutorState) -> Dict[str, Any]:
+        """learning_sessions 테이블용 데이터 준비 (v2.0: AUTO_INCREMENT 세션 ID 사용)"""
         session_start = state.get("session_start_time", datetime.now())
         session_end = datetime.now()
         
@@ -128,32 +128,60 @@ class SessionManager:
             duration = 0
         
         return {
-            "session_id": session_id,
+            # session_id는 AUTO_INCREMENT로 자동 생성되므로 제외
             "user_id": state["user_id"],
             "chapter_number": state["current_chapter"],
-            "session_sequence": state["current_section"],  # 섹션 번호 저장
+            "section_number": state["current_section"],  # v2.0: session_sequence → section_number
             "session_start_time": session_start,
             "session_end_time": session_end,
             "study_duration_minutes": int(duration),
-            "session_decision_result": state.get("session_decision_result", "proceed")
+            "retry_decision_result": state.get("retry_decision_result", "proceed")  # v2.0: 필드명 변경
         }
     
-    def _prepare_quiz_data(self, state: TutorState, session_id: str) -> Dict[str, Any]:
-        """session_quizzes 테이블용 데이터 준비"""
+    def _prepare_quiz_data(self, state: TutorState, session_id: int) -> Dict[str, Any]:
+        """session_quizzes 테이블용 데이터 준비 (v2.0: 객관식/주관식 분리)"""
         # 퀴즈 정보가 있는 경우에만 데이터 준비
-        if not state.get("current_question_content"):
+        if not state.get("quiz_content"):
             return None
         
-        return {
+        quiz_type = state.get("quiz_type", "multiple_choice")
+        
+        # v2.0: 객관식/주관식 분리된 데이터 구조
+        quiz_data = {
             "session_id": session_id,
-            "question_number": state.get("current_question_number", 1),
-            "question_type": state.get("current_question_type", "multiple_choice"),
-            "question_content": state.get("current_question_content", ""),
-            "user_answer": state.get("current_question_answer", ""),
-            "is_answer_correct": state.get("is_answer_correct", 0),
-            "evaluation_feedback": state.get("evaluation_feedback", ""),
-            "hint_usage_count": state.get("hint_usage_count", 0)
+            "quiz_type": quiz_type,
+            "quiz_content": state.get("quiz_content", ""),
+            "quiz_hint": state.get("quiz_hint", ""),
+            "user_answer": state.get("user_answer", "")
         }
+        
+        # 객관식 전용 필드
+        if quiz_type == "multiple_choice":
+            quiz_data.update({
+                "quiz_options": state.get("quiz_options", []),  # JSON 배열
+                "quiz_correct_answer": state.get("quiz_correct_answer"),  # 정답 번호 (1-4)
+                "quiz_explanation": state.get("quiz_explanation", ""),
+                "multiple_answer_correct": state.get("multiple_answer_correct", False),
+                # 주관식 필드는 NULL
+                "quiz_sample_answer": None,
+                "quiz_evaluation_criteria": None,
+                "subjective_answer_score": None
+            })
+        
+        # 주관식 전용 필드
+        else:  # subjective
+            quiz_data.update({
+                "quiz_sample_answer": state.get("quiz_sample_answer", ""),
+                "quiz_evaluation_criteria": state.get("quiz_evaluation_criteria", []),  # JSON 배열
+                "subjective_answer_score": state.get("subjective_answer_score", 0),
+                # 객관식 필드는 NULL
+                "quiz_options": None,
+                "quiz_correct_answer": None,
+                "quiz_explanation": None,
+                "multiple_answer_correct": None
+            })
+        
+        return quiz_data
     
     def _update_session_summary(self, state: TutorState, decision_result: str) -> TutorState:
         """
@@ -195,14 +223,14 @@ class SessionManager:
         """현재 세션 요약 생성"""
         chapter = state["current_chapter"]
         section = state["current_section"]
-        quiz_type = state.get("current_question_type", "unknown")
-        score = state.get("is_answer_correct", 0)
+        quiz_type = state.get("quiz_type", "unknown")
         
-        # 점수를 백분율로 변환 (객관식: 0/1 → 0%/100%, 주관식: 0~100)
+        # v2.0: 객관식/주관식 분리된 점수 처리
         if quiz_type == "multiple_choice":
-            percentage = score * 100
-        else:
-            percentage = score
+            is_correct = state.get("multiple_answer_correct", False)
+            percentage = 100 if is_correct else 0
+        else:  # subjective
+            percentage = state.get("subjective_answer_score", 0)
         
         summary = {
             "chapter_section": f"{chapter}챕터 {section}섹션",
@@ -349,6 +377,18 @@ class SessionManager:
         self.logger.info(f"다음 세션 준비 완료: {next_section_info}")
         return updated_state
     
+    def prepare_next_session(self, state: TutorState) -> TutorState:
+        """
+        다음 세션 준비 (외부에서 호출 가능한 공개 메서드)
+        
+        Args:
+            state: 현재 TutorState
+            
+        Returns:
+            다음 세션 준비가 완료된 TutorState
+        """
+        return self._prepare_next_session(state)
+    
     def _handle_error_and_cleanup(self, state: TutorState, error_message: str) -> TutorState:
         """
         오류 발생 시 기본적인 정리 작업 수행
@@ -396,7 +436,7 @@ class SessionManager:
             "current_section": state["current_section"],
             "session_count": state.get("current_session_count", 0),
             "session_stage": state.get("session_progress_stage", "session_start"),
-            "decision_result": state.get("session_decision_result", ""),
+            "decision_result": state.get("retry_decision_result", ""),
             "conversations_count": len(state.get("current_session_conversations", [])),
             "recent_summaries_count": len(state.get("recent_sessions_summary", []))
         }

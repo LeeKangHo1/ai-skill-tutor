@@ -1,5 +1,16 @@
 # backend/app/agents/session_manager/session_handlers.py
 
+"""
+SessionHandlers v2.0 - 세션 데이터 DB 저장 핸들러
+
+주요 v2.0 변경사항:
+- AUTO_INCREMENT 세션 ID 반환 (save_session_info 메서드)
+- 객관식/주관식 분리된 통계 계산 (_recalculate_average_accuracy)
+- retry_decision_result 필드명 변경
+- section_number 필드 추가로 섹션별 진행 관리
+- 분리된 퀴즈 통계 (multiple_choice_accuracy, subjective_average_score)
+"""
+
 import logging
 from typing import Dict, Any, List
 from datetime import datetime
@@ -24,40 +35,45 @@ class SessionHandlers:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
     
-    def save_session_info(self, session_data: Dict[str, Any]) -> bool:
+    def save_session_info(self, session_data: Dict[str, Any]) -> int:
         """
-        learning_sessions 테이블에 세션 기본 정보 저장
+        learning_sessions 테이블에 세션 기본 정보 저장 (v2.0: AUTO_INCREMENT 세션 ID 반환)
         
         Args:
-            session_data: 세션 정보 딕셔너리
+            session_data: 세션 정보 딕셔너리 (session_id 필드 제외)
             
         Returns:
-            저장 성공 여부
+            생성된 세션 ID (AUTO_INCREMENT), 실패 시 None
         """
         try:
-            # 세션 정보 저장
-            result = insert_record('learning_sessions', session_data, return_id=False)
+            # v2.0: AUTO_INCREMENT 세션 ID 사용
+            session_id = insert_record('learning_sessions', session_data, return_id=True)
             
-            # insert_record는 return_id=False일 때 None을 반환하므로 예외가 없으면 성공
-            self.logger.info(f"세션 정보 저장 완료: {session_data['session_id']}")
-            
-            # user_progress 및 user_statistics 업데이트
-            self._update_user_progress(session_data)
-            self._update_user_statistics(session_data)
-            
-            return True
+            if session_id:
+                self.logger.info(f"세션 정보 저장 완료: session_id={session_id}")
+                
+                # user_progress 및 user_statistics 업데이트
+                session_data_with_id = session_data.copy()
+                session_data_with_id['session_id'] = session_id
+                self._update_user_progress(session_data_with_id)
+                self._update_user_statistics(session_data_with_id)
+                
+                return session_id
+            else:
+                self.logger.error("세션 ID 생성 실패")
+                return None
                 
         except DatabaseIntegrityError as e:
             self.logger.error(f"세션 정보 저장 무결성 오류: {str(e)}")
-            return False
+            return None
         except DatabaseQueryError as e:
             self.logger.error(f"세션 정보 저장 쿼리 오류: {str(e)}")
-            return False
+            return None
         except Exception as e:
             self.logger.error(f"세션 정보 저장 중 예상치 못한 오류: {str(e)}")
-            return False
+            return None
     
-    def save_session_conversations(self, session_id: str, conversations: List[Dict[str, Any]]) -> bool:
+    def save_session_conversations(self, session_id: int, conversations: List[Dict[str, Any]]) -> bool:
         """
         session_conversations 테이블에 대화 기록 저장
         
@@ -157,10 +173,11 @@ class SessionHandlers:
             업데이트 성공 여부
         """
         try:
-            # proceed인 경우에만 진행 상태 업데이트
-            if session_data.get('session_decision_result') == 'proceed':
+            # proceed인 경우에만 진행 상태 업데이트 (v2.0: 필드명 변경)
+            if session_data.get('retry_decision_result') == 'proceed':
                 update_data = {
                     'current_chapter': session_data['chapter_number'],
+                    'current_section': session_data['section_number'],  # v2.0: 섹션 정보 추가
                     'last_study_date': datetime.now().date(),
                     'updated_at': datetime.now()
                 }
@@ -231,7 +248,7 @@ class SessionHandlers:
     
     def _recalculate_average_accuracy(self, user_id: int) -> bool:
         """
-        사용자의 평균 정확도 재계산
+        사용자의 평균 정확도 재계산 (v2.0: 객관식/주관식 분리 통계)
         
         Args:
             user_id: 사용자 ID
@@ -240,9 +257,9 @@ class SessionHandlers:
             재계산 성공 여부
         """
         try:
-            # 사용자의 모든 퀴즈 점수 조회
+            # v2.0: 객관식/주관식 분리된 퀴즈 점수 조회
             query = """
-            SELECT sq.question_type, sq.is_answer_correct
+            SELECT sq.quiz_type, sq.multiple_answer_correct, sq.subjective_answer_score
             FROM session_quizzes sq
             JOIN learning_sessions ls ON sq.session_id = ls.session_id
             WHERE ls.user_id = %s
@@ -253,30 +270,37 @@ class SessionHandlers:
             if not quiz_results:
                 return True  # 퀴즈 결과가 없으면 그대로 유지
             
-            # 정답 개수 계산
-            correct_answers = 0
-            total_answers = len(quiz_results)
+            # v2.0: 객관식/주관식 분리 통계 계산
+            multiple_choice_count = 0
+            multiple_choice_correct = 0
+            subjective_count = 0
+            subjective_total_score = 0
             
             for result in quiz_results:
-                question_type = result.get('question_type', 'multiple_choice')
-                score = result.get('is_answer_correct', 0)
+                quiz_type = result.get('quiz_type', 'multiple_choice')
                 
-                if question_type == 'multiple_choice':
-                    # 객관식: 1이면 정답
-                    if score == 1:
-                        correct_answers += 1
-                else:
-                    # 주관식: 60점 이상이면 정답으로 간주
-                    if score >= 60:
-                        correct_answers += 1
+                if quiz_type == 'multiple_choice':
+                    multiple_choice_count += 1
+                    if result.get('multiple_answer_correct', False):
+                        multiple_choice_correct += 1
+                else:  # subjective
+                    subjective_count += 1
+                    subjective_total_score += result.get('subjective_answer_score', 0)
             
-            # 평균 정확도 계산
-            accuracy = (correct_answers / total_answers) * 100 if total_answers > 0 else 0
+            # 객관식 정답률 계산
+            multiple_choice_accuracy = (multiple_choice_correct / multiple_choice_count * 100) if multiple_choice_count > 0 else 0
             
-            # 업데이트
+            # 주관식 평균 점수 계산
+            subjective_average_score = (subjective_total_score / subjective_count) if subjective_count > 0 else 0
+            
+            # v2.0: 분리된 통계 업데이트
             update_data = {
-                'total_correct_answers': correct_answers,
-                'average_accuracy': round(accuracy, 2),
+                'total_multiple_choice_count': multiple_choice_count,
+                'total_multiple_choice_correct': multiple_choice_correct,
+                'multiple_choice_accuracy': round(multiple_choice_accuracy, 2),
+                'total_subjective_count': subjective_count,
+                'total_subjective_score': subjective_total_score,
+                'subjective_average_score': round(subjective_average_score, 2),
                 'updated_at': datetime.now()
             }
             
@@ -291,14 +315,14 @@ class SessionHandlers:
             )
             
             if result > 0:
-                self.logger.info(f"평균 정확도 재계산 완료: user_id={user_id}, accuracy={accuracy:.2f}%")
+                self.logger.info(f"분리 통계 재계산 완료: user_id={user_id}, 객관식={multiple_choice_accuracy:.2f}%, 주관식={subjective_average_score:.2f}점")
                 return True
             else:
-                self.logger.error("평균 정확도 업데이트 실패")
+                self.logger.error("분리 통계 업데이트 실패")
                 return False
                 
         except Exception as e:
-            self.logger.error(f"평균 정확도 재계산 중 오류: {str(e)}")
+            self.logger.error(f"분리 통계 재계산 중 오류: {str(e)}")
             return False
     
     def _format_timestamp(self, timestamp) -> datetime:
@@ -323,7 +347,7 @@ class SessionHandlers:
     
     def get_session_history(self, user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        사용자의 세션 기록 조회 (선택적 기능)
+        사용자의 세션 기록 조회 (선택적 기능) - v2.0 필드명 업데이트
         
         Args:
             user_id: 사용자 ID
@@ -335,9 +359,9 @@ class SessionHandlers:
         try:
             query = """
             SELECT 
-                session_id, chapter_number, session_sequence,
+                session_id, chapter_number, section_number,
                 session_start_time, session_end_time, study_duration_minutes,
-                session_decision_result, created_at
+                retry_decision_result, created_at
             FROM learning_sessions
             WHERE user_id = %s
             ORDER BY session_start_time DESC
@@ -357,7 +381,7 @@ class SessionHandlers:
             self.logger.error(f"세션 기록 조회 중 오류: {str(e)}")
             return []
     
-    def get_session_conversations(self, session_id: str) -> List[Dict[str, Any]]:
+    def get_session_conversations(self, session_id: int) -> List[Dict[str, Any]]:
         """
         특정 세션의 대화 기록 조회 (선택적 기능)
         
@@ -403,14 +427,13 @@ class SessionHandlers:
             해당 섹션에서의 세션 횟수
         """
         try:
-            # 현재는 section_number가 DB에 저장되지 않으므로 챕터 기준으로만 조회
-            # 추후 DB 스키마 업데이트 시 섹션별 조회 가능
-            where_clause = "user_id = %s AND chapter_number = %s"
-            where_params = [user_id, chapter_number]
+            # v2.0: section_number 필드 추가로 섹션별 조회 가능
+            where_clause = "user_id = %s AND chapter_number = %s AND section_number = %s"
+            where_params = [user_id, chapter_number, section_number]
             
             count = count_records('learning_sessions', where_clause, where_params)
             
-            self.logger.info(f"세션 횟수 조회: user_id={user_id}, chapter={chapter_number}, count={count}")
+            self.logger.info(f"세션 횟수 조회: user_id={user_id}, chapter={chapter_number}, section={section_number}, count={count}")
             return count
             
         except Exception as e:
