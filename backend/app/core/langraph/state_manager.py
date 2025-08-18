@@ -56,6 +56,9 @@ class TutorState(TypedDict):
     # === 대화 관리 ===
     current_session_conversations: List[Dict[str, Any]]  # 현재 학습 세션의 대화 내용
     recent_sessions_summary: List[Dict[str, str]]        # 최근 5개 학습 세션 요약
+    
+    # === v2.0 워크플로우 응답 ===
+    workflow_response: Dict[str, Any]                    # 표준화된 워크플로우 응답 구조
 
 
 @dataclass
@@ -117,7 +120,10 @@ class StateManager:
             
             # 대화 관리
             current_session_conversations=[],
-            recent_sessions_summary=[]
+            recent_sessions_summary=[],
+            
+            # v2.0 워크플로우 응답
+            workflow_response={}
         )
     
     def initialize_state(self, user_id: int, user_type: str, current_chapter: int = 1, current_section: int = 1) -> TutorState:
@@ -398,7 +404,10 @@ class StateManager:
             "theory_draft": "",
             "quiz_draft": "",
             "feedback_draft": "",
-            "qna_draft": ""
+            "qna_draft": "",
+            
+            # v2.0 워크플로우 응답 초기화
+            "workflow_response": {}
         })
         
         if new_chapter:
@@ -720,6 +729,21 @@ class StateManager:
         # 에이전트를 session_manager로 설정
         updated_state = self.update_agent_transition(updated_state, "session_manager")
         
+        return updated_state
+    
+    def update_workflow_response(self, state: TutorState, workflow_response: Dict[str, Any]) -> TutorState:
+        """
+        workflow_response 업데이트 (v2.0 신규 메서드)
+        
+        Args:
+            state: 현재 State
+            workflow_response: 워크플로우 응답 데이터
+        
+        Returns:
+            workflow_response가 업데이트된 State
+        """
+        updated_state = copy.deepcopy(state)
+        updated_state["workflow_response"] = workflow_response
         return updated_state
 
 

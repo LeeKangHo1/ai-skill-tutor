@@ -35,7 +35,7 @@ agent_nodes = {
     "learning_supervisor_output": learning_supervisor.generate_final_response,
     "theory_educator": theory_educator.process,
     "quiz_generator": quiz_generator.process,
-    "evaluation_feedback": evaluation_feedback_agent.process,
+    "evaluation_feedback_agent": evaluation_feedback_agent.process,
     "qna_resolver": qna_resolver.process,
     "session_manager": session_manager.process,
 }

@@ -11,7 +11,7 @@ from app.tools.analysis.evaluation_tools import (
     determine_next_step,
     validate_quiz_data
 )
-from app.tools.analysis.feedback_tools_chatgpt import (
+from app.tools.content.feedback_tools_chatgpt import (
     evaluate_subjective_with_feedback,
     generate_multiple_choice_feedback,
     generate_simple_feedback
@@ -228,19 +228,27 @@ class EvaluationFeedbackAgent:
             feedback_text
         )
         
-        # 4. 세션 진행 단계 업데이트
-        updated_state = state_manager.update_session_progress(
+        # 4. 현재 에이전트 설정 (QuizGenerator와 동일)
+        updated_state = state_manager.update_agent_transition(
             updated_state,
             self.agent_name
         )
         
-        # 5. UI 모드를 chat으로 변경 (피드백 표시용)
+        # 5. 세션 진행 단계 업데이트
+        print(f"[DEBUG] EvaluationFeedbackAgent - 세션 진행 단계 업데이트 전: {updated_state.get('session_progress_stage')}")
+        updated_state = state_manager.update_session_progress(
+            updated_state,
+            self.agent_name
+        )
+        print(f"[DEBUG] EvaluationFeedbackAgent - 세션 진행 단계 업데이트 후: {updated_state.get('session_progress_stage')}")
+        
+        # 6. UI 모드를 chat으로 변경 (피드백 표시용)
         updated_state = state_manager.update_ui_mode(
             updated_state,
             "chat"
         )
         
-        # 6. 대화 기록 추가
+        # 7. 대화 기록 추가
         updated_state = state_manager.add_conversation(
             updated_state,
             agent_name=self.agent_name,
@@ -279,6 +287,12 @@ class EvaluationFeedbackAgent:
             updated_state,
             self.agent_name,
             error_feedback
+        )
+        
+        # 현재 에이전트 설정 (오류 시에도 동일)
+        updated_state = state_manager.update_agent_transition(
+            updated_state,
+            self.agent_name
         )
         
         # 세션 진행 단계 업데이트

@@ -32,8 +32,8 @@ def supervisor_router(state: TutorState) -> str:
         
         # 1. 퀴즈 답변 처리 (의도 분석 없이 바로 평가로)
         if user_intent == "quiz_answer":
-            print("[Router] → evaluation_feedback (퀴즈 답변 제출)")
-            return "evaluation_feedback"
+            print("[Router] → evaluation_feedback_agent (퀴즈 답변 제출)")
+            return "evaluation_feedback_agent"
         
         # 2. 질문 답변 요청  
         if user_intent == "question":
@@ -157,7 +157,7 @@ class SupervisorRouter:
         
         # 퀴즈 답변 시 가능한 라우트
         if user_intent == "quiz_answer":
-            available_routes.append("evaluation_feedback")
+            available_routes.append("evaluation_feedback_agent")
         
         return available_routes
     
@@ -188,7 +188,7 @@ class SupervisorRouter:
         descriptions = {
             "theory_educator": "개념 설명 생성 (세션 시작 시 자동 진행)",
             "quiz_generator": "퀴즈 문제 생성 (이론 완료 후)",
-            "evaluation_feedback": "답변 평가 및 피드백 (퀴즈 답변 제출 시)",
+            "evaluation_feedback_agent": "답변 평가 및 피드백 (퀴즈 답변 제출 시)",
             "qna_resolver": "질문 답변 처리 (이론 완료 후 또는 피드백 완료 후)",
             "session_manager": "새 세션 시작 처리 (피드백 완료 후)",
             "learning_supervisor_output": "직접 응답 생성 (기본 경로)"

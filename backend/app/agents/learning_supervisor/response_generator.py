@@ -33,8 +33,11 @@ class ResponseGenerator:
             workflow_response가 포함된 TutorState
         """
         try:
+            print(f"[DEBUG] ResponseGenerator.generate_final_response 호출됨")
+            
             # 현재 활성 에이전트 확인
             current_agent = state.get("current_agent", "")
+            print(f"[DEBUG] ResponseGenerator - current_agent: {current_agent}")
             
             # 에이전트별 workflow_response 생성
             if "theory_educator" in current_agent:
@@ -219,13 +222,24 @@ class ResponseGenerator:
         current_chapter = state.get("current_chapter", 1)
         current_section = state.get("current_section", 1)
         
-        # 기본 정제: 인사말 추가 및 형식 정리
+        # 원본 내용에서 불필요한 부분 제거
         refined_content = theory_draft.strip()
         
-        # 챕터/섹션 정보 추가
-        intro = f"📚 {current_chapter}챕터 {current_section}섹션을 시작하겠습니다!\n\n"
+        # Theory Educator 접두사 제거 (있는 경우)
+        if refined_content.startswith("🤖 Theory Educator:"):
+            refined_content = refined_content.replace("🤖 Theory Educator:", "").strip()
         
-        # 사용자 유형별 톤 체크
+        # 중복된 구분선 제거
+        refined_content = refined_content.replace("---------------------", "").strip()
+        
+        # 과도한 줄바꿈 정리
+        import re
+        refined_content = re.sub(r'\n{3,}', '\n\n', refined_content)
+        
+        # 챕터/섹션 정보 추가 (간단하게)
+        intro = f"📚 {current_chapter}챕터 {current_section}섹션\n\n"
+        
+        # 사용자 유형별 톤 체크 및 간단한 안내 추가
         if user_type == "beginner":
             # 초보자용: 친근하고 격려하는 톤
             if not any(word in refined_content for word in ["안녕", "환영", "함께"]):
@@ -234,8 +248,8 @@ class ResponseGenerator:
             # 고급자용: 효율적이고 전문적인 톤
             intro += "핵심 내용을 정리해서 설명드리겠습니다.\n\n"
         
-        # 마무리 안내 추가
-        outro = "\n\n💡 궁금한 점이 있으시면 언제든 질문해주세요. 이해하셨다면 '다음 단계'라고 말씀해주시면 퀴즈를 진행하겠습니다."
+        # 마무리 안내 추가 (간단하게)
+        outro = "\n\n💡 궁금한 점이 있으시면 언제든 질문해주세요. 이해하셨다면 '다음'이라고 말씀해주시면 퀴즈를 진행하겠습니다."
         
         return intro + refined_content + outro
     
@@ -244,17 +258,17 @@ class ResponseGenerator:
         퀴즈 내용 정제
         
         Args:
-            quiz_draft: 원본 퀴즈 대본
+            quiz_draft: 원본 퀴즈 대본 (JSON 형태)
             state: TutorState
             
         Returns:
-            정제된 퀴즈 내용
+            정제된 퀴즈 내용 (사용자 친화적 형태)
         """
         user_type = state.get("user_type", "beginner")
-        quiz_type = state.get("quiz_type", "multiple_choice")  # v2.0 필드명
-        
-        # 기본 정제
-        refined_content = quiz_draft.strip()
+        quiz_type = state.get("quiz_type", "multiple_choice")
+        quiz_content = state.get("quiz_content", "")
+        quiz_options = state.get("quiz_options", [])
+        quiz_hint = state.get("quiz_hint", "")
         
         # 퀴즈 시작 안내
         if quiz_type == "multiple_choice":
@@ -266,10 +280,24 @@ class ResponseGenerator:
         if user_type == "beginner":
             intro += "천천히 생각해보세요. 틀려도 괜찮으니 편하게 답변해주시면 됩니다! 💪\n\n"
         
-        # 답변 입력 안내 추가
-        outro = "\n\n✏️ 답변을 입력해주세요!"
+        # 퀴즈 문제 내용 구성
+        quiz_content_formatted = f"**문제**: {quiz_content}\n\n"
         
-        return intro + refined_content + outro
+        # 객관식인 경우 선택지 추가
+        if quiz_type == "multiple_choice" and quiz_options:
+            quiz_content_formatted += "**선택지**:\n"
+            for i, option in enumerate(quiz_options, 1):
+                quiz_content_formatted += f"{i}. {option}\n"
+            quiz_content_formatted += "\n"
+        
+        # 힌트가 있는 경우 추가
+        if quiz_hint:
+            quiz_content_formatted += f"💡 **힌트**: {quiz_hint}\n\n"
+        
+        # 답변 입력 안내 추가
+        outro = "✏️ 답변을 입력해주세요!"
+        
+        return intro + quiz_content_formatted + outro
     
     def _refine_feedback_content(self, feedback_draft: str, state: TutorState) -> str:
         """
@@ -304,15 +332,42 @@ class ResponseGenerator:
         else:
             intro = "💪 "
         
-        # 세션 결정 결과에 따른 안내 추가
-        if session_decision == "proceed":
-            outro = "\n\n🚀 다음 학습으로 넘어갈 준비가 되었습니다! 추가 질문이 있으시면 언제든 물어보세요. 계속 진행하려면 '다음'이라고 말씀해주세요."
-        elif session_decision == "retry":
-            outro = "\n\n🔄 이 부분을 다시 한번 학습해보겠습니다. 질문이 있으시면 언제든 말씀해주세요."
-        else:
-            outro = "\n\n💬 궁금한 점이 있으시면 언제든 질문해주세요!"
+        # 객관식 문제의 경우 정답과 사용자 답변 정보 추가
+        answer_info_text = ""
+        if quiz_type == "multiple_choice":
+            quiz_correct_answer = state.get("quiz_correct_answer", "")
+            user_answer = state.get("user_answer", "")
+            
+            if quiz_correct_answer and user_answer:
+                answer_info_text = f"""
+📋 **답변 정보**:
+• 정답: {quiz_correct_answer}
+• 선택한 답: {user_answer}
+"""
+
         
-        return intro + refined_content + outro
+        # 세션 결정 결과에 따른 상세 안내 추가
+        if session_decision == "proceed":
+            outro = f"""
+🎯 **다음 단계 안내**:
+• 이 섹션을 성공적으로 완료하셨습니다!
+• 추가로 궁금한 점이 있으시면 언제든 질문해주세요
+• 다음 학습으로 넘어가려면 '다음'이라고 말씀해주세요
+• 이 부분을 다시 학습하고 싶으시면 '재학습'이라고 말씀해주세요"""
+        elif session_decision == "retry":
+            outro = f"""
+🎯 **다음 단계 안내**:
+• 이번 학습은 아쉬운 부분이 있었습니다.
+• 추가로 궁금한 점이 있으시면 언제든 질문해주세요
+• 다음 학습으로 넘어가려면 '다음'이라고 말씀해주세요
+• 이 부분을 다시 학습하고 싶으시면 '재학습'이라고 말씀해주세요"""
+        else:
+            outro = f"""
+💬 **학습 완료**:
+• 궁금한 점이 있으시면 언제든 질문해주세요
+• 다음 단계로 진행하려면 '다음'이라고 말씀해주세요"""
+        
+        return answer_info_text + intro + refined_content + outro
     
     def _refine_qna_content(self, qna_draft: str, state: TutorState) -> str:
         """
@@ -370,10 +425,10 @@ class ResponseGenerator:
             }
         }
         
-        # State 업데이트
-        updated_state = state.copy()
-        updated_state["workflow_response"] = workflow_response
-        updated_state = state_manager.update_session_progress(updated_state, "theory_educator")
+        # State 업데이트 - 정제된 내용을 theory_draft에도 저장
+        updated_state = state_manager.update_workflow_response(state, workflow_response)
+        updated_state = state_manager.update_agent_draft(updated_state, "theory_educator", refined_content)
+        # update_session_progress는 TheoryEducator에서 이미 호출됨
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
         
         return updated_state
@@ -388,16 +443,24 @@ class ResponseGenerator:
         Returns:
             workflow_response가 포함된 TutorState
         """
+        quiz_draft = state.get("quiz_draft", "")
         quiz_type = state.get("quiz_type", "multiple_choice")  # v2.0 필드명
         quiz_content = state.get("quiz_content", "")
         quiz_options = state.get("quiz_options", [])
         quiz_hint = state.get("quiz_hint", "")
         
+        # 퀴즈 내용 정제
+        if not quiz_draft:
+            refined_quiz_content = self._generate_quiz_fallback(state)
+        else:
+            refined_quiz_content = self._refine_quiz_content(quiz_draft, state)
+        
         # 퀴즈 내용 구성
         content = {
             "type": "quiz",
             "quiz_type": quiz_type,
-            "question": quiz_content
+            "question": quiz_content,
+            "refined_content": refined_quiz_content  # 정제된 퀴즈 내용 추가
         }
         
         # 객관식 전용 필드
@@ -416,9 +479,9 @@ class ResponseGenerator:
             "content": content
         }
         
-        # State 업데이트
-        updated_state = state.copy()
-        updated_state["workflow_response"] = workflow_response
+        # State 업데이트 - 정제된 내용을 quiz_draft에도 저장
+        updated_state = state_manager.update_workflow_response(state, workflow_response)
+        updated_state = state_manager.update_agent_draft(updated_state, "quiz_generator", refined_quiz_content)
         updated_state = state_manager.update_ui_mode(updated_state, "quiz")
         
         return updated_state
@@ -468,10 +531,9 @@ class ResponseGenerator:
             }
         }
         
-        # State 업데이트
-        updated_state = state.copy()
-        updated_state["workflow_response"] = workflow_response
-        updated_state = state_manager.update_session_progress(updated_state, "evaluation_feedback_agent")
+        # State 업데이트 - 정제된 내용을 feedback_draft에도 저장
+        updated_state = state_manager.update_workflow_response(state, workflow_response)
+        updated_state = state_manager.update_agent_draft(updated_state, "evaluation_feedback_agent", refined_feedback)
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
         
         return updated_state
@@ -507,9 +569,9 @@ class ResponseGenerator:
             }
         }
         
-        # State 업데이트
-        updated_state = state.copy()
-        updated_state["workflow_response"] = workflow_response
+        # State 업데이트 - 정제된 내용을 qna_draft에도 저장
+        updated_state = state_manager.update_workflow_response(state, workflow_response)
+        updated_state = state_manager.update_agent_draft(updated_state, "qna_resolver", refined_content)
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
         
         return updated_state
@@ -540,8 +602,7 @@ class ResponseGenerator:
         }
         
         # State 업데이트
-        updated_state = state.copy()
-        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_workflow_response(state, workflow_response)
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
         
         return updated_state
@@ -603,8 +664,7 @@ class ResponseGenerator:
         }
         
         # State 업데이트
-        updated_state = state.copy()
-        updated_state["workflow_response"] = workflow_response
+        updated_state = state_manager.update_workflow_response(state, workflow_response)
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
         
         return updated_state
