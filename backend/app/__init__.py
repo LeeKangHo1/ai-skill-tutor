@@ -38,9 +38,10 @@ def create_app(config_name='default'):
     # Blueprint 등록
     register_blueprints(app)
 
-    # 미들웨어 등록 (Blueprint 등록 후)
-    from .middleware import init_middlewares
-    init_middlewares(app)
+    # 미들웨어 등록 (현재 사용 중인 미들웨어 없음)
+    # JWT 인증은 jwt_handler.py의 데코레이터 방식으로 처리
+    # CORS는 Flask-CORS로 처리
+    # 에러 핸들링은 Flask 기본 에러 핸들러로 처리
     
     # 기본 에러 핸들러 등록
     register_error_handlers(app)
