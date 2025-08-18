@@ -1,4 +1,4 @@
-# 백엔드 폴더 구조 (v1.3 - 2025.08.14 업데이트)
+# 백엔드 폴더 구조 (v2.0 - 2025.08.18 업데이트)
 
 ```
 backend/
@@ -6,10 +6,6 @@ backend/
 │   ├── __init__.py                   # Flask 앱 팩토리 함수 (Blueprint 등록 방식 개선)
 │   ├── agents/                       # LangGraph 에이전트 시스템
 │   │   ├── __init__.py               # 
-│   │   ├── base/                     # 기본 에이전트 구성 요소 (미구현, 현재 사용 예정 없음)
-│   │   │   ├── __init__.py           # BaseAgent, AgentConfig 등 export
-│   │   │   ├── agent_config.py       # 에이전트 설정
-│   │   │   └── base_agent.py         # 기본 에이전트 클래스
 │   │   ├── evaluation_feedback/      # 평가 피드백 에이전트
 │   │   │   ├── __init__.py           # 
 │   │   │   └── evaluation_feedback_agent.py # ✅ 구현됨: EvaluationFeedbackAgent
@@ -49,26 +45,22 @@ backend/
 │   │   ├── external/                 # 외부 서비스 연동 (미구현)
 │   │   │   ├── __init__.py
 │   │   │   └── vector_db.py          # ChromaDB 연동
-│   │   └── langraph/                 # ✅ 구현됨: LangGraph 관련
+│   │   └── langraph/                 # ✅ 구현됨: LangGraph 관련 (v2.0 대규모 리팩토링)
 │   │       ├── __init__.py
+│   │       ├── state/                # ✅ 신규: State 정의 및 기본 관리
+│   │       │   ├── __init__.py       # 모든 State 관련 export
+│   │       │   ├── state_definition.py # ✅ 구현됨: TutorState TypedDict 정의
+│   │       │   ├── state_factory.py  # ✅ 구현됨: State 생성 및 초기화
+│   │       │   └── state_validator.py # ✅ 구현됨: State 유효성 검증
+│   │       ├── managers/             # ✅ 신규: 도메인별 State 관리자
+│   │       │   ├── __init__.py       # 모든 관리자 export
+│   │       │   ├── agent_manager.py  # ✅ 구현됨: 에이전트 전환 관리
+│   │       │   ├── conversation_manager.py # ✅ 구현됨: 대화 관리
+│   │       │   ├── quiz_manager.py   # ✅ 구현됨: 퀴즈 관련 State 관리
+│   │       │   └── session_manager.py # ✅ 구현됨: 세션 진행 State 관리
 │   │       ├── graph_builder.py      # ✅ 구현됨그래프 빌더
-│   │       ├── state_manager.py      # ✅ 구현됨: State 관리 시스템
+│   │       ├── state_manager.py      # ✅ 구현됨: 통합 래퍼 클래스 (호환성)
 │   │       └── workflow.py           # ✅ 구현됨워크플로우 정의
-│   ├── middleware/                   # ✅ 미들웨어 (부분 구현)
-│   │   ├── __init__.py               # ✅ 구현됨: 미들웨어 초기화 함수
-│   │   ├── auth/                     # ✅ 인증 미들웨어 (완성됨)
-│   │   │   ├── __init__.py
-│   │   │   ├── jwt_middleware.py     # ✅ 구현됨: JWT 검증 및 g 객체 설정
-│   │   │   └── session_middleware.py # 세션 관리 미들웨어
-│   │   ├── error/                    # 에러 처리 미들웨어
-│   │   │   ├── __init__.py
-│   │   │   ├── error_handler.py      # 전역 에러 핸들러
-│   │   │   └── exception_mapper.py   # 예외 매핑
-│   │   └── request/                  # 요청 처리 미들웨어
-│   │       ├── __init__.py
-│   │       ├── cors_middleware.py    # CORS 처리
-│   │       ├── rate_limit_middleware.py # 속도 제한
-│   │       └── request_validator.py  # 요청 검증
 │   ├── models/                       # 데이터베이스 모델
 │   │   ├── __init__.py
 │   │   ├── chapter/                  # 챕터 관련 모델들
@@ -145,11 +137,10 @@ backend/
 │   │   │   ├── __init__.py
 │   │   │   ├── context_tools.py      # 맥락 통합 도구
 │   │   │   ├── evaluation_tools.py   # ✅ 구현됨: 로컬 채점
-│   │   │   ├── feedback_tools_chatgpt.py   ✅ 구현됨: ChatGPT 기반 피드백 생성 도구
 │   │   │   └── intent_analysis_tools.py # ✅ 구현됨: 의도 분석 도구
 │   │   ├── content/                  # 컨텐츠 생성 도구
 │   │   │   ├── __init__.py
-│   │   │   ├── feedback_tools.py     # 피드백 생성 도구 (사용 예정 없음)
+│   │   │   ├── feedback_tools_chatgpt.py   ✅ 구현됨: ChatGPT 기반 피드백 생성 도구
 │   │   │   ├── quiz_tools_chatgpt.py   # ✅ 구현됨: ChatGPT 기반 퀴즈 생성 도구
 │   │   │   └── theory_tools_chatgpt.py # ✅ 구현됨: ChatGPT 기반 이론 설명 생성
 │   │   ├── external/                 # 외부 연동 도구
@@ -190,22 +181,26 @@ backend/
 │           ├── business_validators.py # 비즈니스 룰 검증
 │           └── input_validators.py   # 입력 검증
 ├── data/                            # 정적 데이터
-│   ├── chapters/                     # ✅ 신규: 챕터별 데이터
+│   ├── chapters/                     # ✅ 신규: 챕터별 데이터 (chapter_01.json ~ chapter_08.json)
+│   ├── chat_log/                     # ✅ 신규: 사용자별 대화 로그 저장
+│   │   └── user999/                  # 사용자별 폴더 구조
 │   ├── contents_beginner.md          # ✅ 신규: 초급자용 컨텐츠
-│   └── diagnosis_questions.json      # ✅ 구현됨: 진단 퀴즈 문항 (option value 수정)
+│   ├── diagnosis_questions.json      # ✅ 구현됨: 진단 퀴즈 문항 (option value 수정)
+│   └── tutor_workflow_graph.png      # ✅ 신규: LangGraph 워크플로우 시각화
 ├── logs/                            # 로그 파일
 │   ├── access.log                   # 액세스 로그
 │   ├── app.log                      # 애플리케이션 로그
 │   └── error.log                    # 에러 로그
 ├── migrations/                       # 데이터베이스 마이그레이션
 │   ├── create_schema.py              # ✅ 신규: 스키마 생성 스크립트
-│   └── schema.sql                    # ✅ 신규: SQL 스키마 파일
+│   ├── schema.sql                    # ✅ 신규: SQL 스키마 파일
+│   └── verify_schema.py              # ✅ 신규: 스키마 검증 스크립트
 ├── scripts/                         # 스크립트
-│   └── .gitkeep                     # 현재: 빈 폴더 유지용 파일
-├── tests/                            # 테스트 코드
-│   ├── fixtures/                     # ✅ 신규: 테스트 픽스처
-│   │   └── __init__.py
-│   └── __init__.py
+│   ├── .gitkeep                     # 빈 폴더 유지용 파일
+│   ├── clear_all_data.py            # ✅ 신규: 모든 데이터 초기화 스크립트
+│   └── validate_schema.py           # ✅ 신규: 스키마 유효성 검증 스크립트
+├── tests/                            # 테스트 코드 (날짜별 폴더 구조)
+│   └── 0818/                         # ✅ 2025-08-18 테스트 (LangGraph 인터랙티브)
 ├── .env                            # 환경변수 파일 (gitignore)
 ├── .env.example                     # 환경변수 예시 파일
 ├── .gitignore                      # Git 무시 파일
