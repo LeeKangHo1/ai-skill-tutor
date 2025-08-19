@@ -45,8 +45,7 @@ class LoginService:
     @staticmethod
     def authenticate_user(login_id: str, password: str) -> Optional[Dict[str, Any]]:
         """
-        사용자 인증
-        
+        사용자 인증 및 유저 정보 반환 (current_section 포함)
         Args:
             login_id (str): 로그인 ID
             password (str): 비밀번호
@@ -60,21 +59,21 @@ class LoginService:
             SELECT 
                 u.user_id, u.login_id, u.username, u.email,
                 u.password_hash, u.user_type, u.diagnosis_completed,
-                up.current_chapter
+                up.current_chapter, up.current_section
             FROM users u
             LEFT JOIN user_progress up ON u.user_id = up.user_id
             WHERE u.login_id = %s
             """,
             (login_id,)
         )
-        
+
         if not user_data:
             return None
-        
+
         # 비밀번호 검증
         if not verify_password(password, user_data['password_hash']):
             return None
-        
+
         # 인증 성공 시 사용자 정보 반환 (비밀번호 해시 제외)
         return {
             'user_id': user_data['user_id'],
@@ -83,9 +82,10 @@ class LoginService:
             'email': user_data['email'],
             'user_type': user_data['user_type'],
             'diagnosis_completed': bool(user_data['diagnosis_completed']),
-            'current_chapter': user_data['current_chapter'] or 1
+            'current_chapter': user_data['current_chapter'] or 1,
+            'current_section': user_data['current_section'] or 1
         }
-    
+
     @staticmethod
     def invalidate_existing_tokens(user_id: int) -> None:
         """

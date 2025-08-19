@@ -60,7 +60,8 @@ def login():
                     "username": result['user_info']['username'],
                     "user_type": result['user_info']['user_type'],
                     "diagnosis_completed": result['user_info']['diagnosis_completed'],
-                    "current_chapter": result['user_info']['current_chapter']
+                    "current_chapter": result['user_info']['current_chapter'],
+                    "current_section": result['user_info']['current_section']
                 }
             },
             message=result['message']
