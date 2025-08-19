@@ -7,10 +7,8 @@ from .system import system_blueprints
 # 진단 관련 Blueprint 리스트 import  
 from .diagnosis import diagnosis_blueprints
 
-# 향후 추가될 Blueprint 리스트들
-# from .auth import auth_blueprints
-# from .user import user_blueprints
-# from .learning import learning_blueprints
+# 대시보드 관련 Blueprint 리스트 import
+from .dashboard import dashboard_blueprints
 
 # 외부에서 사용할 Blueprint 리스트들 노출
-__all__ = ['system_blueprints', 'diagnosis_blueprints']
+__all__ = ['system_blueprints', 'diagnosis_blueprints', 'dashboard_blueprints']

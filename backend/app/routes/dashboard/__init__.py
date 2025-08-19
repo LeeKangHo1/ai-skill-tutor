@@ -1,10 +1,9 @@
 # backend/app/routes/dashboard/__init__.py
-"""
-대시보드 관련 라우트들
-사용자 대시보드 기능을 제공합니다.
-"""
+# 대시보드 라우트 Blueprint 정의
 
-from .overview import overview_bp
-from .statistics import statistics_bp
+from .overview import dashboard_overview_bp
 
-__all__ = ['overview_bp', 'statistics_bp']
+# 대시보드 관련 Blueprint 목록
+dashboard_blueprints = [
+    (dashboard_overview_bp, '/api/v1/dashboard')
+]
