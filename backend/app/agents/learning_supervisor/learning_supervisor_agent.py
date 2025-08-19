@@ -15,9 +15,8 @@ class LearningSupervisor:
     새로운 워크플로우:
     1. session_start → 바로 theory_educator (의도 분석 없음)
     2. theory_completed → 질문 받기 OR 퀴즈 진행 (의도 분석 필요)
-    3. quiz_generated → 사용자 답변 대기 (UI 안내)
-    4. quiz_answer_submitted → 평가 피드백 (의도 분석 없음)
-    5. quiz_and_feedback_completed → 질문 받기 OR 새 세션 시작 (의도 분석 필요)
+    3. quiz_answer → 바로 evaluation_feedback (의도 분석 없음)
+    4. quiz_and_feedback_completed → 질문 받기 OR 새 세션 시작 (의도 분석 필요)
     
     주요 역할:
     1. 사용자 메시지 받아서 필요시 의도 분석
@@ -41,20 +40,24 @@ class LearningSupervisor:
         try:
             # 현재 세션 진행 단계 확인
             session_stage = state.get("session_progress_stage", "session_start")
+            user_intent = state.get("user_intent", "next_step")
+            
+            print(f"[DEBUG] LearningSupervisor.process_user_input 호출됨")
+            print(f"[DEBUG] - session_stage: {session_stage}")
+            print(f"[DEBUG] - 의도 분석 이전 남아있던 user_intent: {user_intent}")
+            
+            # 퀴즈 답변 처리 (theory_completed 상태에서 quiz_answer 의도인 경우)
+            if session_stage == "theory_completed" and user_intent == "quiz_answer":
+                print(f"[DEBUG] 퀴즈 답변 처리: stage={session_stage}, intent={user_intent}")
+                return self._handle_predefined_intent(state)
             
             # 세션 시작인 경우 의도 분석 없이 바로 진행
             if session_stage == "session_start":
                 return self._handle_session_start(state)
             
-            # 이론 완료 후 또는 피드백 완료 후에는 의도 분석 우선 처리
+            # 이론 완료 후 또는 피드백 완료 후에는 의도 분석 수행
             if session_stage in ["theory_completed", "quiz_and_feedback_completed"]:
-                # 퀴즈 답변 제출인지 먼저 확인 (UI 모드와 퀴즈 상태 기반)
-                if self._is_quiz_answer_submission(state):
-                    print(f"[DEBUG] 퀴즈 답변으로 판단하여 _handle_quiz_answer_submission 호출")
-                    return self._handle_quiz_answer_submission(state)
-                
-                # 그 외의 경우는 의도 분석 수행
-                print(f"[DEBUG] 퀴즈 답변이 아니므로 의도 분석 수행")
+                print(f"[DEBUG] 의도 분석이 필요한 단계: {session_stage}")
                 return self._handle_with_intent_analysis(state)
             
             # 기타 상황은 기본 처리
@@ -94,43 +97,45 @@ class LearningSupervisor:
             # 오류 시 기본 응답
             return self._generate_error_response(state)
     
-    def _is_quiz_answer_submission(self, state: TutorState) -> bool:
+    def _handle_predefined_intent(self, state: TutorState) -> TutorState:
         """
-        퀴즈 답변 제출인지 확인
+        이미 설정된 의도 처리 (quiz_answer 등)
         
         Args:
             state: TutorState
             
         Returns:
-            퀴즈 답변 제출 여부
+            현재 에이전트 정보가 업데이트된 TutorState
         """
-        # UI 모드가 quiz인지 확인
-        ui_mode = state.get("ui_mode", "chat")
-        if ui_mode != "quiz":
-            return False
+        user_intent = state.get("user_intent", "")
+        print(f"[DEBUG] _handle_predefined_intent - 의도: '{user_intent}'")
         
-        # 실제 퀴즈 문제가 있는지 확인
-        has_quiz_question = bool(state.get("quiz_content", "").strip())
-        if not has_quiz_question:
-            return False
+        # 현재 에이전트 정보 업데이트
+        updated_state = state_manager.update_agent_transition(state, self.agent_name)
         
-        # 최근 대화에서 사용자 메시지가 있는지 확인
-        conversations = state.get("current_session_conversations", [])
-        has_recent_user_message = False
-        user_message = ""
+        # 퀴즈 답변인 경우 사용자 답변을 대화 기록에 추가
+        if user_intent == "quiz_answer":
+            user_answer = state.get("user_answer", "")
+            if user_answer:
+                # 사용자 답변을 대화 기록에 추가 (중복 방지)
+                conversations = updated_state.get("current_session_conversations", [])
+                last_user_message = ""
+                if conversations and conversations[-1].get("message_type") == "user":
+                    last_user_message = conversations[-1].get("message", "")
+                
+                if last_user_message != user_answer:
+                    updated_state = state_manager.add_conversation(
+                        updated_state,
+                        agent_name="user",
+                        message=user_answer,
+                        message_type="user"
+                    )
+                    print(f"[DEBUG] 대화 기록에 사용자 답변 추가: '{user_answer}'")
         
-        if conversations:
-            last_conv = conversations[-1]
-            if last_conv.get("message_type") == "user":
-                has_recent_user_message = True
-                user_message = last_conv.get("message", "").strip()
+        # 대화 로그 저장
+        chat_logger.save_session_log(updated_state, session_complete=False)
         
-        # 퀴즈 모드이고 퀴즈 문제가 있으며 사용자 입력이 있는 경우
-        if has_recent_user_message and user_message:
-            print(f"[DEBUG] 퀴즈 답변 감지: UI모드={ui_mode}, 퀴즈문제={bool(has_quiz_question)}, 사용자입력='{user_message}'")
-            return True
-        
-        return False
+        return updated_state
     
     def _handle_session_start(self, state: TutorState) -> TutorState:
         """
@@ -155,52 +160,6 @@ class LearningSupervisor:
         # 대화 로그 저장
         chat_logger.save_session_log(updated_state, session_complete=False)
         
-        return updated_state
-    
-    def _handle_quiz_answer_submission(self, state: TutorState) -> TutorState:
-        """
-        퀴즈 답변 제출 처리 - 의도 분석 없이 바로 평가로 진행
-        """
-        print(f"[DEBUG] _handle_quiz_answer_submission 시작")
-        
-        # 사용자 답변 추출 및 State에 저장
-        user_answer = self._extract_user_answer(state)
-        print(f"[DEBUG] 추출된 사용자 답변: '{user_answer}'")
-        
-        if not user_answer:
-            print(f"[DEBUG] 사용자 답변이 없어서 _handle_no_answer 호출")
-            return self._handle_no_answer(state)
-        
-        # State에 사용자 답변만 저장 (퀴즈 내용은 QuizGenerator가 이미 저장함)
-        updated_state = state_manager.update_user_answer(state, user_answer)
-        print(f"[DEBUG] State에 사용자 답변 저장 완료")
-        
-        # 답변을 대화 기록에 추가 (이미 있는 경우 중복 방지)
-        conversations = updated_state.get("current_session_conversations", [])
-        last_user_message = ""
-        if conversations and conversations[-1].get("message_type") == "user":
-            last_user_message = conversations[-1].get("message", "")
-        
-        if last_user_message != user_answer:
-            updated_state = state_manager.add_conversation(
-                updated_state,
-                agent_name="user",
-                message=user_answer,
-                message_type="user"
-            )
-            print(f"[DEBUG] 대화 기록에 사용자 답변 추가")
-        
-        # quiz_answer 의도로 설정 (evaluation_feedback_agent로 라우팅용)
-        updated_state["user_intent"] = "quiz_answer"
-        print(f"[DEBUG] user_intent를 'quiz_answer'로 설정")
-        
-        # 현재 에이전트 정보 업데이트
-        updated_state = state_manager.update_agent_transition(updated_state, self.agent_name)
-        
-        # 퀴즈 답변 로그 저장
-        chat_logger.save_session_log(updated_state, session_complete=False)
-        
-        print(f"[DEBUG] _handle_quiz_answer_submission 완료")
         return updated_state
     
     def _handle_with_intent_analysis(self, state: TutorState) -> TutorState:
@@ -266,16 +225,6 @@ class LearningSupervisor:
         # 없으면 빈 문자열 반환
         return ""
     
-    def _extract_user_answer(self, state: TutorState) -> str:
-        """State에서 사용자 퀴즈 답변 추출 (v2.0 필드명)"""
-        # 이미 State에 저장된 답변이 있으면 그것을 사용
-        current_answer = state.get("user_answer", "")  # current_question_answer → user_answer
-        if current_answer:
-            return current_answer
-        
-        # 없으면 대화 기록에서 마지막 사용자 메시지를 답변으로 간주
-        return self._extract_user_message(state)
-    
     def _analyze_user_intent(self, state: TutorState, user_message: str) -> str:
         """사용자 의도 분석"""
         try:
@@ -290,7 +239,6 @@ class LearningSupervisor:
             print(f"[DEBUG] 의도 분석 결과: {intent_result}")
             
             # 의도 분석 결과를 대화 기록에 시스템 메시지로 추가 (로깅용)
-            # 여기는 intent_analyzer가 맞으므로 유지
             state_manager.add_conversation(
                 state,
                 agent_name="intent_analyzer",
@@ -332,20 +280,6 @@ class LearningSupervisor:
         
         # 로그 저장
         chat_logger.save_session_log(updated_state, session_complete=False)
-        
-        return updated_state
-    
-    def _handle_no_answer(self, state: TutorState) -> TutorState:
-        """퀴즈 답변이 없는 경우 처리"""
-        # 답변 요청 메시지 생성
-        request_message = "답변을 입력해주세요."
-        
-        updated_state = state_manager.add_conversation(
-            state,
-            agent_name=self.agent_name,
-            message=request_message,
-            message_type="system"
-        )
         
         return updated_state
     

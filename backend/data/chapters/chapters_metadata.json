@@ -1,0 +1,210 @@
+{
+  "chapters": [
+    {
+      "chapter_number": 1,
+      "chapter_title": "AI는 무엇인가?",
+      "total_sections": 4,
+      "estimated_duration_minutes": 60,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?"
+        },
+        {
+          "section_number": 2,
+          "section_title": "AI, 머신러닝, 딥러닝 - 관계 파헤치기"
+        },
+        {
+          "section_number": 3,
+          "section_title": "LLM, 챗봇, 생성형 AI, GPT, 파라미터 - 핵심 용어 5분 정리"
+        },
+        {
+          "section_number": 4,
+          "section_title": "챗봇과 무엇을 할 수 있을까?"
+        }
+      ]
+    },
+    {
+      "chapter_number": 2,
+      "chapter_title": "LLM이란 무엇인가",
+      "total_sections": 5,
+      "estimated_duration_minutes": 75,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)"
+        },
+        {
+          "section_number": 2,
+          "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다"
+        },
+        {
+          "section_number": 3,
+          "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다"
+        },
+        {
+          "section_number": 4,
+          "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막"
+        },
+        {
+          "section_number": 5,
+          "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대"
+        }
+      ]
+    },
+    {
+      "chapter_number": 3,
+      "chapter_title": "다양한 AI 챗봇들 소개",
+      "total_sections": 5,
+      "estimated_duration_minutes": 75,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "챗GPT (OpenAI): AI 시대의 문을 연 선두주자"
+        },
+        {
+          "section_number": 2,
+          "section_title": "제미나이 (Google): 검색의 왕, AI로 날개를 달다"
+        },
+        {
+          "section_number": 3,
+          "section_title": "클로드 (Anthropic): 안전하고 인간적인 AI를 향하여"
+        },
+        {
+          "section_number": 4,
+          "section_title": "또 다른 선택지들: 한국형 & 특화 챗봇"
+        },
+        {
+          "section_number": 5,
+          "section_title": "무료? 유료? 무엇을 선택해야 할까?"
+        }
+      ]
+    },
+    {
+      "chapter_number": 4,
+      "chapter_title": "프롬프트란 무엇인가",
+      "total_sections": 4,
+      "estimated_duration_minutes": 60,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "프롬프트, AI를 움직이는 주문"
+        },
+        {
+          "section_number": 2,
+          "section_title": "좋은 프롬프트의 3가지 기본 요소"
+        },
+        {
+          "section_number": 3,
+          "section_title": "이것만은 피하자! 나쁜 프롬프트 예시"
+        },
+        {
+          "section_number": 4,
+          "section_title": "실습: 나만의 첫 프롬프트 만들기"
+        }
+      ]
+    },
+    {
+      "chapter_number": 5,
+      "chapter_title": "좋은 프롬프트 작성법",
+      "total_sections": 4,
+      "estimated_duration_minutes": 60,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "전문가로 변신시키는 '역할 부여'의 마법"
+        },
+        {
+          "section_number": 2,
+          "section_title": "찰떡같이 알아듣게 만드는 '구체적 조건' 제시하기"
+        },
+        {
+          "section_number": 3,
+          "section_title": "원하는 결과물을 얻는 '형식 지정' 방법"
+        },
+        {
+          "section_number": 4,
+          "section_title": "글자로 그림을? 이미지 생성 프롬프트 맛보기"
+        }
+      ]
+    },
+    {
+      "chapter_number": 6,
+      "chapter_title": "ChatGPT로 할 수 있는 것들",
+      "total_sections": 4,
+      "estimated_duration_minutes": 60,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "10분 걸릴 문서 요약, 10초 만에 끝내기"
+        },
+        {
+          "section_number": 2,
+          "section_title": "어색한 번역은 이제 그만! 똑똑한 AI 번역기"
+        },
+        {
+          "section_number": 3,
+          "section_title": "막막할 때, 아이디어 발전시키기"
+        },
+        {
+          "section_number": 4,
+          "section_title": "나만의 여행 계획, AI와 함께 짜기"
+        }
+      ]
+    },
+    {
+      "chapter_number": 7,
+      "chapter_title": "AI와 함께하는 일상업무",
+      "total_sections": 4,
+      "estimated_duration_minutes": 60,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "매일 쓰는 이메일, 3초 만에 작성하기"
+        },
+        {
+          "section_number": 2,
+          "section_title": "복잡한 엑셀 함수, AI에게 물어보기"
+        },
+        {
+          "section_number": 3,
+          "section_title": "회의록 정리, 이제 AI에게 맡기세요"
+        },
+        {
+          "section_number": 4,
+          "section_title": "나만의 업무 비서 만들기 (종합 실습)"
+        }
+      ]
+    },
+    {
+      "chapter_number": 8,
+      "chapter_title": "AI 활용 고급 팁과 주의사항",
+      "total_sections": 4,
+      "estimated_duration_minutes": 60,
+      "sections": [
+        {
+          "section_number": 1,
+          "section_title": "AI의 가장 큰 함정: 환각 현상과 해결 방법"
+        },
+        {
+          "section_number": 2,
+          "section_title": "AI에게 똑똑하게 생각시키는 법: CoT (Chain-of-Thought)"
+        },
+        {
+          "section_number": 3,
+          "section_title": "AI를 24시간 개인 교사로 만드는 법: 챗봇과 함께 학습하기"
+        },
+        {
+          "section_number": 4,
+          "section_title": "우리가 던져야 할 질문들: AI 윤리 문제"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "total_chapters": 8,
+    "total_sections": 34,
+    "last_updated": "2025-08-19",
+    "version": "1.0"
+  }
+}
