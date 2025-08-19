@@ -1,115 +1,153 @@
 # backend/app/routes/learning/session/start.py
-# 학습 세션 시작 API 라우트
+# 학습 세션 시작 라우트
 
 from flask import Blueprint, request, jsonify
-from app.utils.auth.jwt_handler import token_required
-from app.utils.response.formatter import success_response, error_response
-from app.utils.response.error_formatter import handle_error
-from app.services.learning.session_service import SessionService
-import logging
-
-# 로깅 설정
-logger = logging.getLogger(__name__)
+from app.services.learning.session_service import session_service
+from app.utils.auth.jwt_handler import require_auth, get_current_user_from_request
+from app.utils.response.formatter import ResponseFormatter
+from app.utils.response.error_formatter import ErrorFormatter
 
 # Blueprint 생성
-learning_session_start_bp = Blueprint('learning_session_start', __name__)
+session_start_bp = Blueprint('session_start', __name__)
 
-# SessionService 인스턴스
-session_service = SessionService()
 
-@learning_session_start_bp.route('/start', methods=['POST'])
-@token_required
-def start_learning_session(current_user):
+@session_start_bp.route('/start', methods=['POST'])
+@require_auth
+def start_learning_session():
     """
-    학습 세션 시작 API
-    
-    LangGraph 워크플로우를 초기화하고 첫 번째 세션을 시작합니다.
-    SessionManager.session_initialization_tool을 호출하여 세션을 준비합니다.
+    학습 세션 시작
     
     Request Body:
-        chapter_number (int): 시작할 챕터 번호
-        section_number (int): 시작할 섹션 번호
-        user_message (str, optional): 사용자 시작 메시지
+    {
+        "chapter_number": 2,
+        "section_number": 1,
+        "user_message": "2챕터 시작할게요"
+    }
     
-    Returns:
-        JSON: 세션 시작 결과
-        - session_info: 세션 기본 정보
-        - workflow_response: LangGraph 워크플로우 응답
+    Response:
+    {
+        "success": true,
+        "data": {
+            "session_info": {
+                "chapter_number": 2,
+                "section_number": 1,
+                "chapter_title": "LLM이란 무엇인가",
+                "section_title": "2챕터 1섹션",
+                "estimated_duration": "15분"
+            },
+            "workflow_response": {
+                "current_agent": "theory_educator",
+                "session_progress_stage": "theory_completed",
+                "ui_mode": "chat",
+                "content": {
+                    "type": "theory",
+                    "title": "2챕터 1섹션",
+                    "content": "LLM은 대규모 언어 모델로...",
+                    "key_points": [...],
+                    "examples": [...]
+                }
+            }
+        },
+        "message": "학습 세션이 시작되었습니다."
+    }
     """
     try:
-        user_id = current_user['user_id']
-        data = request.get_json()
-        
-        if not data:
-            return error_response(
-                "VALIDATION_ERROR",
-                "요청 데이터가 필요합니다.",
-                status_code=400
+        # 요청 데이터 검증
+        request_data = request.get_json()
+        if not request_data:
+            return ResponseFormatter.error_response(
+                "VALIDATION_ERROR", 
+                "요청 데이터가 필요합니다."
             )
         
-        # 필수 파라미터 검증
-        chapter_number = data.get('chapter_number')
-        section_number = data.get('section_number')
-        user_message = data.get('user_message', '학습을 시작하겠습니다')
+        # 필수 필드 검증
+        chapter_number = request_data.get('chapter_number')
+        section_number = request_data.get('section_number')
+        user_message = request_data.get('user_message', '')
         
-        if not chapter_number or not section_number:
-            return error_response(
-                "VALIDATION_ERROR",
-                "chapter_number와 section_number는 필수입니다.",
-                status_code=400
-            )
+        # 입력값 검증
+        validation_errors = []
         
-        # 타입 검증
-        try:
-            chapter_number = int(chapter_number)
-            section_number = int(section_number)
-        except (ValueError, TypeError):
-            return error_response(
-                "VALIDATION_ERROR",
-                "chapter_number와 section_number는 정수여야 합니다.",
-                status_code=400
-            )
+        if not isinstance(chapter_number, int) or chapter_number < 1:
+            validation_errors.append("chapter_number는 1 이상의 정수여야 합니다.")
         
-        # 범위 검증
-        if chapter_number < 1 or section_number < 1:
-            return error_response(
-                "VALIDATION_ERROR",
-                "chapter_number와 section_number는 1 이상이어야 합니다.",
-                status_code=400
-            )
+        if not isinstance(section_number, int) or section_number < 1:
+            validation_errors.append("section_number는 1 이상의 정수여야 합니다.")
         
-        logger.info(f"학습 세션 시작 요청 - 사용자 ID: {user_id}, 챕터: {chapter_number}, 섹션: {section_number}")
+        if not user_message or not isinstance(user_message, str):
+            validation_errors.append("user_message는 빈 문자열이 아닌 문자열이어야 합니다.")
         
-        # 세션 시작 처리
-        session_result = session_service.start_session(
-            user_id=user_id,
+        if validation_errors:
+            return ResponseFormatter.validation_error_response(validation_errors)
+        
+        # 현재 사용자 정보 가져오기
+        current_user = get_current_user_from_request()
+        if not current_user:
+            return ErrorFormatter.format_authentication_error("token_invalid")
+        
+        # Authorization 헤더에서 토큰 추출
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return ErrorFormatter.format_authentication_error("token_invalid")
+        
+        token = auth_header.split(' ')[1]
+        
+        # 세션 서비스 호출
+        result = session_service.start_session(
+            token=token,
             chapter_number=chapter_number,
             section_number=section_number,
             user_message=user_message
         )
         
-        if not session_result:
-            logger.error(f"세션 시작 실패 - 사용자 ID: {user_id}")
-            return error_response(
-                "SESSION_START_FAILED",
-                "학습 세션 시작에 실패했습니다.",
-                status_code=500
-            )
-        
-        logger.info(f"학습 세션 시작 성공 - 사용자 ID: {user_id}, 챕터: {chapter_number}, 섹션: {section_number}")
-        return success_response(
-            data=session_result,
-            message="학습 세션이 성공적으로 시작되었습니다."
-        )
-        
-    except ValueError as e:
-        logger.error(f"학습 세션 시작 검증 오류 - 사용자 ID: {current_user.get('user_id')}: {e}")
-        return error_response(
-            "VALIDATION_ERROR",
-            str(e),
-            status_code=400
-        )
+        # 응답 반환
+        if result.get('success'):
+            return jsonify(result), 200
+        else:
+            # 에러 코드에 따른 HTTP 상태 코드 결정
+            error_code = result.get('error', {}).get('code', '')
+            
+            if error_code in ['AUTH_TOKEN_INVALID', 'AUTH_TOKEN_EXPIRED']:
+                return ErrorFormatter.format_authentication_error("token_invalid")
+            elif error_code == 'DIAGNOSIS_NOT_COMPLETED':
+                return ErrorFormatter.format_authorization_error("학습", "접근")
+            elif error_code in ['CHAPTER_ACCESS_DENIED', 'SECTION_ACCESS_DENIED']:
+                return ErrorFormatter.format_authorization_error("해당 챕터/섹션", "접근")
+            else:
+                return jsonify(result), 500
         
     except Exception as e:
-        logger.error(f"학습 세션 시작 오류 - 사용자 ID: {current_user.get('user_id')}: {e}")
-        return handle_error(e, "학습 세션 시작 중 오류가 발생했습니다.")
+        return ResponseFormatter.error_response(
+            "SESSION_START_ERROR", 
+            f"세션 시작 중 예상치 못한 오류가 발생했습니다: {str(e)}"
+        )
+
+
+@session_start_bp.errorhandler(400)
+def handle_bad_request(error):
+    """400 에러 핸들러"""
+    return ResponseFormatter.error_response(
+        "BAD_REQUEST", 
+        "잘못된 요청입니다."
+    )
+
+
+@session_start_bp.errorhandler(401)
+def handle_unauthorized(error):
+    """401 에러 핸들러"""
+    return ErrorFormatter.format_authentication_error("token_invalid")
+
+
+@session_start_bp.errorhandler(403)
+def handle_forbidden(error):
+    """403 에러 핸들러"""
+    return ErrorFormatter.format_authorization_error()
+
+
+@session_start_bp.errorhandler(500)
+def handle_internal_error(error):
+    """500 에러 핸들러"""
+    return ResponseFormatter.error_response(
+        "INTERNAL_SERVER_ERROR", 
+        "서버 내부 오류가 발생했습니다."
+    )

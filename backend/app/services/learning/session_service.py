@@ -610,3 +610,7 @@ class SessionService:
             self._clear_user_state(user_id)
         
         return len(expired_users)
+    
+
+# state 공유를 위한 세션 서비스 단일 인스턴스
+session_service = SessionService()

@@ -38,11 +38,6 @@ def create_app(config_name='default'):
     # Blueprint 등록
     register_blueprints(app)
 
-    # 미들웨어 등록 (현재 사용 중인 미들웨어 없음)
-    # JWT 인증은 jwt_handler.py의 데코레이터 방식으로 처리
-    # CORS는 Flask-CORS로 처리
-    # 에러 핸들링은 Flask 기본 에러 핸들러로 처리
-    
     # 기본 에러 핸들러 등록
     register_error_handlers(app)
     
@@ -95,13 +90,16 @@ def register_blueprints(app):
     app.register_blueprint(login_bp, url_prefix='/api/v1/auth')
     app.register_blueprint(token_bp, url_prefix='/api/v1/auth')
     
-    # 사용자 관련 Blueprint
-    # from .routes.user import user_bp
-    # app.register_blueprint(user_bp, url_prefix='/api/user')
+    # 학습 관련 Blueprint들 등록
+    from .routes.learning.session.start import session_start_bp
+    from .routes.learning.session.message import session_message_bp
+    from .routes.learning.quiz.submit import quiz_submit_bp
+    from .routes.learning.session.complete import session_complete_bp
+    app.register_blueprint(session_start_bp, url_prefix='/api/v1/learning/session')
+    app.register_blueprint(session_message_bp, url_prefix='/api/v1/learning/session')
+    app.register_blueprint(quiz_submit_bp, url_prefix='/api/v1/learning/quiz')
+    app.register_blueprint(session_complete_bp, url_prefix='/api/v1/learning/session')
     
-    # 학습 관련 Blueprint
-    # from .routes.learning import learning_bp
-    # app.register_blueprint(learning_bp, url_prefix='/api/learning')
 
 def register_error_handlers(app):
     """에러 핸들러 등록 함수
@@ -132,7 +130,7 @@ def register_error_handlers(app):
     @app.errorhandler(401)
     def unauthorized(error):
         """401 에러 핸들러"""
-        app.logger.warning(f"401 Error: {request.path}")
+        app.logger.warning(f"403 Error: {request.path}")
         return {"error": "Unauthorized", "message": "인증이 필요합니다."}, 401
     
     @app.errorhandler(403)

@@ -427,8 +427,7 @@ class ResponseGenerator:
         
         # State 업데이트 - 정제된 내용을 theory_draft에도 저장
         updated_state = state_manager.update_workflow_response(state, workflow_response)
-        # updated_state = state_manager.update_agent_draft(updated_state, "theory_educator", refined_content)
-        # update_session_progress는 TheoryEducator에서 이미 호출됨
+        updated_state = state_manager.update_agent_draft(updated_state, "theory_educator", refined_content)
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
         
         return updated_state
