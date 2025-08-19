@@ -103,9 +103,9 @@ backend/
 │   │   │   │   └── submit.py         # 답변 제출
 │   │   │   └── session/              # 세션 관리
 │   │   │       ├── __init__.py
-│   │   │       ├── message.py        # 메시지 처리
-│   │   │       ├── start.py          # 세션 시작
-│   │   │       └── status.py         # 세션 상태
+│   │   │       ├── complete.py       # ✅ 구현됨: 세션 정리
+│   │   │       ├── message.py        # ✅ 구현됨: 메시지 처리
+│   │   │       └── start.py          # ✅ 구현됨: 세션 시작
 │   │   └── system/                   # 시스템 관련 라우트 (완성됨)
 │   │       ├── __init__.py           # ✅ 수정됨: system_blueprints 정의
 │   │       ├── health.py             # ✅ 구현됨: 헬스체크 API
@@ -122,7 +122,7 @@ backend/
 │   │   │   ├── __init__.py
 │   │   │   ├── content_service.py    # 컨텐츠 처리 서비스
 │   │   │   ├── quiz_service.py       # 퀴즈 처리 서비스
-│   │   │   └── session_service.py    # 세션 관리 서비스
+│   │   │   └── session_service.py    # ✅ 구현됨: 세션 관리 서비스
 │   │   ├── dashboard/               # 대쉬보드
 │   │   │   ├── __init__.py
 │   │   │   └── dashboard_service.py  # 대시보드 통계 서비스
