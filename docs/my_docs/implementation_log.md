@@ -5,8 +5,10 @@
 ### frontend .vue 파일 작성 지침
  - 모바일과 태블릿 관련 디자인은 작성하지 않는다.
 
-
 ## **2025년 8월 19일** - 대시보드 시스템 완전 구현
+
+### 대시보드 관련 페이지, 스토어, 서비스 구현
+ - dashboardService.js, dashboardStore.js, DashboardPage.vue
 
 ### JWT 토큰 구조 개선
 - **기존**: user_id, login_id, user_type, current_chapter 정보만 포함
