@@ -1,59 +1,6 @@
 <!-- frontend/src/App.vue -->
 <!-- AI 활용법 학습 튜터 루트 컴포넌트 -->
 
-<script setup>
-import { RouterView } from 'vue-router'
-import { ref, onMounted } from 'vue'
-import { apiService } from './services/api.js'
-import { useAuthStore } from './stores/authStore.js'
-import HeaderComponent from './components/common/HeaderComponent.vue'
-
-// 백엔드 연결 상태 관리
-const backendStatus = ref({
-  isConnected: false,
-  isLoading: true,
-  message: '',
-  lastChecked: null
-})
-
-// 백엔드 연결 상태 확인 함수
-const checkBackendConnection = async () => {
-  backendStatus.value.isLoading = true
-  
-  try {
-    const result = await apiService.checkConnection()
-    
-    if (result.success) {
-      backendStatus.value.isConnected = true
-      backendStatus.value.message = result.data || 'Backend connected successfully'
-    } else {
-      backendStatus.value.isConnected = false
-      backendStatus.value.message = `Connection failed: ${result.error}`
-    }
-  } catch (error) {
-    backendStatus.value.isConnected = false
-    backendStatus.value.message = `Unexpected error: ${error.message}`
-  } finally {
-    backendStatus.value.isLoading = false
-    backendStatus.value.lastChecked = new Date().toLocaleTimeString('ko-KR')
-  }
-}
-
-// 컴포넌트 마운트 시 초기화
-onMounted(async () => {
-  // 인증 스토어 초기화
-  const authStore = useAuthStore()
-  try {
-    await authStore.initialize()
-  } catch (error) {
-    console.error('인증 초기화 실패:', error)
-  }
-  
-  // 백엔드 연결 확인
-  checkBackendConnection()
-})
-</script>
-
 <template>
   <div id="app">
     <!-- 헤더 컴포넌트 사용 -->
@@ -112,6 +59,59 @@ onMounted(async () => {
     </footer>
   </div>
 </template>
+
+<script setup>
+import { RouterView } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { apiService } from './services/api.js'
+import { useAuthStore } from './stores/authStore.js'
+import HeaderComponent from './components/common/HeaderComponent.vue'
+
+// 백엔드 연결 상태 관리
+const backendStatus = ref({
+  isConnected: false,
+  isLoading: true,
+  message: '',
+  lastChecked: null
+})
+
+// 백엔드 연결 상태 확인 함수
+const checkBackendConnection = async () => {
+  backendStatus.value.isLoading = true
+  
+  try {
+    const result = await apiService.checkConnection()
+    
+    if (result.success) {
+      backendStatus.value.isConnected = true
+      backendStatus.value.message = result.data || 'Backend connected successfully'
+    } else {
+      backendStatus.value.isConnected = false
+      backendStatus.value.message = `Connection failed: ${result.error}`
+    }
+  } catch (error) {
+    backendStatus.value.isConnected = false
+    backendStatus.value.message = `Unexpected error: ${error.message}`
+  } finally {
+    backendStatus.value.isLoading = false
+    backendStatus.value.lastChecked = new Date().toLocaleTimeString('ko-KR')
+  }
+}
+
+// 컴포넌트 마운트 시 초기화
+onMounted(async () => {
+  // 인증 스토어 초기화
+  const authStore = useAuthStore()
+  try {
+    await authStore.initialize()
+  } catch (error) {
+    console.error('인증 초기화 실패:', error)
+  }
+  
+  // 백엔드 연결 확인
+  checkBackendConnection()
+})
+</script>
 
 <style scoped>
 /* 전체 앱 레이아웃 */

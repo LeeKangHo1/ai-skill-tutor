@@ -23,7 +23,7 @@ import AboutView from '../views/common/AboutView.vue'
 import LoginPage from '../views/auth/LoginPage.vue'
 import DiagnosisPage from '../views/diagnosis/DiagnosisPage.vue'
 import DiagnosisResultPage from '../views/diagnosis/DiagnosisResultPage.vue'
-// import DashboardPage from '../views/dashboard/DashboardPage.vue'
+import DashboardPage from '../views/dashboard/DashboardPage.vue'
 // import LearningPage from '../views/learning/LearningPage.vue'
 
 const routes = [
@@ -90,23 +90,23 @@ const routes = [
     }
   },
 
+  // 대시보드 (인증 + 진단 완료 필요)
+{
+  path: '/dashboard',
+  name: 'dashboard', 
+  component: DashboardPage,
+  beforeEnter: requireDiagnosis,
+  meta: {
+    title: '대시보드',
+    description: '학습 현황 대시보드',
+    requireAuth: true,
+    requireDiagnosis: true
+  }
+}
+
   
   // ================== 향후 구현 예정 (주석 처리) ==================
   
-  // 대시보드 (인증 + 진단 완료 필요)
-  // {
-  //   path: '/dashboard',
-  //   name: 'dashboard',
-  //   component: DashboardPage,
-  //   beforeEnter: requireDiagnosis,
-  //   meta: {
-  //     title: '대시보드',
-  //     description: '학습 현황 대시보드',
-  //     requireAuth: true,
-  //     requireDiagnosis: true
-  //   }
-  // },
-
   // 학습 진행 페이지 (인증 + 진단 완료 필요)
   // {
   //   path: '/learning',

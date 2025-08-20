@@ -256,8 +256,8 @@ class DashboardService:
         try:
             # 프로젝트 루트에서 JSON 파일 경로 구성
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(os.path.dirname(current_dir))  # backend 폴더
-            json_path = os.path.join(project_root, 'data', 'chapters', 'chapters_metadata.json')
+            backend_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))  # backend 폴더
+            json_path = os.path.join(backend_root, 'data', 'chapters', 'chapters_metadata.json')
             
             with open(json_path, 'r', encoding='utf-8') as f:
                 chapters_data = json.load(f)

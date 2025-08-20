@@ -2,6 +2,7 @@
 // 진단 관련 API 호출 서비스
 
 import api from './api.js'
+import { useAuthStore } from '../stores/authStore.js' // 추가
 
 /**
  * 진단 문항 조회
@@ -39,6 +40,13 @@ export const selectUserType = async (selectedType) => {
     const response = await api.post('/diagnosis/select-type', { 
       selected_type: selectedType 
     })
+    
+    // 유형 선택 후 authStore 업데이트 - 추가된 부분
+    if (response.data.success) {
+      const authStore = useAuthStore()
+      authStore.updateDiagnosisStatus(selectedType)
+    }
+    
     return response.data
   } catch (error) {
     console.error('사용자 유형 선택 실패:', error)

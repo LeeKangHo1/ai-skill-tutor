@@ -72,80 +72,10 @@ export const useDashboardStore = defineStore('dashboard', {
     },
 
     /**
-     * 진행 중인 챕터 수
-     */
-    inProgressChaptersCount: (state) => {
-      return state.chapterStatus.filter(chapter => 
-        chapter.status === 'in_progress'
-      ).length
-    },
-
-    /**
      * 전체 챕터 수
      */
     totalChaptersCount: (state) => {
       return state.chapterStatus.length
-    },
-
-    /**
-     * 학습 가능한 다음 챕터
-     */
-    nextAvailableChapter: (state) => {
-      return state.chapterStatus.find(chapter => 
-        chapter.status === 'available' || chapter.status === 'in_progress'
-      )
-    },
-
-    /**
-     * 학습 활동 여부 (최근 7일 기준)
-     */
-    isActivelearner: (state) => {
-      if (!state.learningStatistics.last_study_date) return false
-      
-      const lastStudyDate = new Date(state.learningStatistics.last_study_date)
-      const sevenDaysAgo = new Date()
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-      
-      return lastStudyDate >= sevenDaysAgo
-    },
-
-    /**
-     * 학습 성과 요약
-     */
-    learningPerformanceSummary: (state) => {
-      const stats = state.learningStatistics
-      
-      return {
-        totalQuestions: stats.total_multiple_choice_count + stats.total_subjective_count,
-        averageAccuracy: stats.total_multiple_choice_count > 0 ? stats.multiple_choice_accuracy : 0,
-        averageScore: stats.total_subjective_count > 0 ? stats.subjective_average_score : 0,
-        studyFrequency: stats.total_study_sessions > 0 ? 
-          Math.round(stats.total_study_time_minutes / stats.total_study_sessions) : 0
-      }
-    },
-
-    /**
-     * 데이터 신선도 확인 (5분 기준)
-     */
-    isDataFresh: (state) => {
-      if (!state.lastUpdated) return false
-      
-      const fiveMinutesAgo = new Date()
-      fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5)
-      
-      return new Date(state.lastUpdated) >= fiveMinutesAgo
-    },
-
-    /**
-     * 진행률 단계별 분류
-     */
-    progressLevel: (state) => {
-      const percentage = state.userProgress.completion_percentage
-      
-      if (percentage >= 80) return 'advanced'
-      if (percentage >= 50) return 'intermediate' 
-      if (percentage >= 20) return 'beginner'
-      return 'starter'
     },
 
     /**
@@ -166,8 +96,8 @@ export const useDashboardStore = defineStore('dashboard', {
      * 대시보드 데이터 초기화
      */
     async initialize() {
-      if (this.isInitialized && this.isDataFresh) {
-        return // 이미 초기화되고 데이터가 신선한 경우 스킵
+      if (this.isInitialized) {
+        return // 이미 초기화된 경우 스킵
       }
 
       this.isLoading = true
@@ -378,7 +308,7 @@ export const useDashboardStore = defineStore('dashboard', {
     },
 
     /**
-     * 데이터 유효성 확인
+     * 데이터 유효성 확인 (API 응답 검증)
      */
     validateData() {
       const issues = []
