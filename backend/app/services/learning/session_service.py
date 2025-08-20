@@ -8,9 +8,21 @@ import os
 from app.core.langraph.state_manager import state_manager, TutorState
 from app.core.langraph.workflow import execute_tutor_workflow_sync
 from app.utils.auth.jwt_handler import decode_token
-from app.utils.response.formatter import success_response, error_response
 from app.utils.database.connection import fetch_one
 from app.utils.database.query_builder import QueryBuilder
+
+
+# 세션 서비스용 오류 응답 헬퍼 함수 (API 문서 표준 형식)
+def error_response(code, message, details=None):
+    """세션 서비스용 오류 응답 (API 문서 표준 형식)"""
+    return {
+        "success": False,
+        "error": {
+            "code": code,
+            "message": message,
+            "details": details or {}
+        }
+    }
 
 
 class SessionService:
@@ -62,10 +74,15 @@ class SessionService:
             if user_type == "unassigned":
                 return error_response("DIAGNOSIS_NOT_COMPLETED", "진단을 먼저 완료해주세요.")
             
-            # 사용자 학습 권한 확인 (JWT 검증 제외)
+            # 사용자 학습 권한 확인
             access_validation = self._validate_learning_access(user_id, chapter_number, section_number)
-            if not access_validation["valid"]:
-                return error_response(access_validation["error_code"], access_validation["message"])
+            if not isinstance(access_validation, dict):
+                return error_response("ACCESS_VALIDATION_ERROR", f"권한 확인 결과 형식 오류: {type(access_validation)}")
+            
+            if not access_validation.get("valid", False):
+                error_code = access_validation.get("error_code", "ACCESS_DENIED")
+                error_message = access_validation.get("message", "접근이 거부되었습니다.")
+                return error_response(error_code, error_message)
             
             # 기존 활성 세션이 있다면 정리
             self._clear_user_state(user_id)
@@ -97,8 +114,12 @@ class SessionService:
             session_id = f"session_{user_id}_{int(datetime.now().timestamp())}"
             self._store_user_state(user_id, final_state, session_id)
             
-            # 세션 정보 및 워크플로우 응답 반환
+            # 워크플로우 응답 추출
+            workflow_response = self._extract_workflow_response(final_state)
+            
+            # 세션 정보 구성
             session_info = {
+                "session_id": session_id,
                 "chapter_number": chapter_number,
                 "section_number": section_number,
                 "chapter_title": self._get_chapter_title(chapter_number),
@@ -106,12 +127,28 @@ class SessionService:
                 "estimated_duration": "15분"  # 기본값
             }
             
-            workflow_response = final_state.get("workflow_response", {})
+            # 안전한 응답 데이터 추출
+            if isinstance(workflow_response, dict):
+                content = workflow_response.get("content", {})
+                if isinstance(content, dict):
+                    message = content.get("content", "세션이 시작되었습니다.")
+                    message_type = content.get("type", "theory")
+                else:
+                    message = "세션이 시작되었습니다."
+                    message_type = "theory"
+            else:
+                message = "세션이 시작되었습니다."
+                message_type = "theory"
             
-            return success_response({
-                "session_info": session_info,
-                "workflow_response": workflow_response
-            }, "학습 세션이 시작되었습니다.")
+            # API 문서 표준 형식에 맞게 응답 반환
+            return {
+                "success": True,
+                "data": {
+                    "session_info": session_info,
+                    "workflow_response": workflow_response
+                },
+                "message": "학습 세션이 시작되었습니다."
+            }
             
         except Exception as e:
             return error_response("SESSION_START_ERROR", f"세션 시작 중 오류 발생: {str(e)}")
@@ -159,9 +196,13 @@ class SessionService:
             # 워크플로우 응답 반환
             workflow_response = final_state.get("workflow_response", {})
             
-            return success_response({
-                "workflow_response": workflow_response
-            }, "메시지가 처리되었습니다.")
+            return {
+                "success": True,
+                "data": {
+                    "workflow_response": workflow_response
+                },
+                "message": "메시지가 처리되었습니다."
+            }
             
         except Exception as e:
             return error_response("MESSAGE_PROCESS_ERROR", f"메시지 처리 중 오류 발생: {str(e)}")
@@ -206,9 +247,13 @@ class SessionService:
             # 워크플로우 응답 반환
             workflow_response = final_state.get("workflow_response", {})
             
-            return success_response({
-                "workflow_response": workflow_response
-            }, "퀴즈 답변이 평가되었습니다.")
+            return {
+                "success": True,
+                "data": {
+                    "workflow_response": workflow_response
+                },
+                "message": "퀴즈 답변이 평가되었습니다."
+            }
             
         except Exception as e:
             return error_response("QUIZ_SUBMIT_ERROR", f"퀴즈 답변 처리 중 오류 발생: {str(e)}")
@@ -256,9 +301,13 @@ class SessionService:
             # 워크플로우 응답 반환
             workflow_response = final_state.get("workflow_response", {})
             
-            return success_response({
-                "workflow_response": workflow_response
-            }, "세션이 완료되었습니다.")
+            return {
+                "success": True,
+                "data": {
+                    "workflow_response": workflow_response
+                },
+                "message": "세션이 완료되었습니다."
+            }
             
         except Exception as e:
             return error_response("SESSION_COMPLETE_ERROR", f"세션 완료 중 오류 발생: {str(e)}")
@@ -287,10 +336,14 @@ class SessionService:
             current_state = self._get_user_state(user_id)
             
             if not current_state:
-                return success_response({
-                    "has_active_session": False,
-                    "session_info": None
-                }, "활성 세션이 없습니다.")
+                return {
+                    "success": True,
+                    "data": {
+                        "has_active_session": False,
+                        "session_info": None
+                    },
+                    "message": "활성 세션이 없습니다."
+                }
             
             # 세션 정보 구성
             session_info = {
@@ -303,9 +356,13 @@ class SessionService:
                 "last_activity": self._user_states[user_id]["last_activity"].isoformat()
             }
             
-            return success_response({
-                "session_info": session_info
-            }, "세션 상태를 조회했습니다.")
+            return {
+                "success": True,
+                "data": {
+                    "session_info": session_info
+                },
+                "message": "세션 상태를 조회했습니다."
+            }
             
         except Exception as e:
             return error_response("SESSION_STATUS_ERROR", f"세션 상태 조회 중 오류 발생: {str(e)}")
@@ -433,6 +490,10 @@ class SessionService:
                 }
             }
     
+    # ==========================================
+    # 권한 검증 및 유틸리티 메서드
+    # ==========================================
+    
     def _validate_learning_access(self, user_id: int, chapter_number: int, section_number: int) -> Dict[str, Any]:
         """
         사용자 학습 권한 검증 (진행 상태만 확인)
@@ -447,13 +508,13 @@ class SessionService:
         """
         try:
             # 사용자 진행 상태 확인
-            progress_query = (QueryBuilder()
+            query, params = (QueryBuilder()
                             .select(["current_chapter", "current_section"])
                             .from_table("user_progress")
                             .where("user_id = %s", [user_id])
                             .build())
             
-            progress_result = fetch_one(progress_query['query'], progress_query['params'])
+            progress_result = fetch_one(query, params)
             
             if not progress_result:
                 # 진행 상태가 없으면 1챕터 1섹션만 허용
@@ -466,8 +527,38 @@ class SessionService:
                         "message": "1챕터 1섹션부터 시작해주세요."
                     }
             
-            current_chapter = progress_result["current_chapter"]
-            current_section = progress_result["current_section"]
+            # progress_result 형태에 따른 안전한 처리
+            try:
+                if isinstance(progress_result, tuple):
+                    # 튜플 형태: (current_chapter, current_section)
+                    if len(progress_result) >= 2:
+                        current_chapter, current_section = progress_result[0], progress_result[1]
+                    else:
+                        raise ValueError(f"튜플 길이가 부족합니다: {len(progress_result)}")
+                elif isinstance(progress_result, dict):
+                    # 딕셔너리 형태: {"current_chapter": 1, "current_section": 1}
+                    current_chapter = progress_result.get("current_chapter")
+                    current_section = progress_result.get("current_section")
+                    
+                    if current_chapter is None or current_section is None:
+                        raise ValueError(f"필수 필드가 누락되었습니다: current_chapter={current_chapter}, current_section={current_section}")
+                else:
+                    # 예상치 못한 형태의 결과
+                    raise ValueError(f"지원하지 않는 결과 형식: {type(progress_result)}")
+                
+                # 값 타입 검증 및 변환
+                current_chapter = int(current_chapter) if current_chapter is not None else None
+                current_section = int(current_section) if current_section is not None else None
+                
+                if current_chapter is None or current_section is None:
+                    raise ValueError(f"진행 상태 값이 유효하지 않습니다: chapter={current_chapter}, section={current_section}")
+                
+            except (ValueError, TypeError, IndexError) as parse_error:
+                return {
+                    "valid": False,
+                    "error_code": "ACCESS_VALIDATION_ERROR",
+                    "message": f"진행 상태 데이터 파싱 오류: {str(parse_error)}"
+                }
             
             # 챕터 접근 권한 확인
             if chapter_number < current_chapter:
@@ -616,7 +707,7 @@ class SessionService:
         session_count = len(self._user_states)
         self._user_states.clear()
         return session_count
-    
+
 
 # state 공유를 위한 세션 서비스 단일 인스턴스
 session_service = SessionService()

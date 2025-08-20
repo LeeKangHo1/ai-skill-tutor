@@ -99,6 +99,10 @@ def register_blueprints(app):
     app.register_blueprint(session_message_bp, url_prefix='/api/v1/learning/session')
     app.register_blueprint(quiz_submit_bp, url_prefix='/api/v1/learning/quiz')
     app.register_blueprint(session_complete_bp, url_prefix='/api/v1/learning/session')
+
+    # 대시보드 관련 Blueprint들 등록
+    from .routes.dashboard.overview import overview_bp
+    app.register_blueprint(overview_bp, url_prefix='/api/v1/dashboard')
     
 
 def register_error_handlers(app):
