@@ -108,8 +108,8 @@ class QuizManager:
         """
         updated_state = copy.deepcopy(state)
         
-        # 기본 퀴즈 정보
-        quiz_type = quiz_json.get("quiz_type", "multiple_choice")
+        # 기본 퀴즈 정보 (올바른 키 사용)
+        quiz_type = quiz_json.get("type", "multiple_choice")  # quiz_type → type 수정
         updated_state["quiz_type"] = quiz_type
         updated_state["quiz_content"] = quiz_json.get("question", "")
         updated_state["quiz_hint"] = quiz_json.get("hint", "")
