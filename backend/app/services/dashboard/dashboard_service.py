@@ -1,417 +1,422 @@
 # backend/app/services/dashboard_service.py
-# 대시보드 서비스 - 학습 현황 및 통계 조회
+"""
+대시보드 서비스
+사용자의 학습 현황, 통계, 챕터별 진행 상태를 조회하는 서비스입니다.
+"""
 
 import logging
-from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from typing import Dict, List, Any, Optional
+from datetime import datetime
 
-from app.utils.auth.jwt_handler import decode_jwt_token
 from app.utils.database.connection import fetch_one, fetch_all
 from app.utils.database.query_builder import QueryBuilder
-from app.utils.response.formatter import ResponseFormatter
+from app.utils.response.formatter import success_response, error_response
 from app.utils.response.error_formatter import ErrorFormatter
+from app.config.db_config import DatabaseQueryError
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
 
-
 class DashboardService:
-    """
-    대시보드 서비스 클래스
-    사용자 학습 현황, 통계, 챕터 진행 상태 등을 제공합니다.
-    """
+    """대시보드 관련 비즈니스 로직을 처리하는 서비스 클래스"""
     
-    def __init__(self):
-        self.service_name = "DashboardService"
-    
-    def get_dashboard_overview(self, token: str) -> Dict[str, Any]:
+    @staticmethod
+    def get_dashboard_overview(user_id: int) -> tuple:
         """
         대시보드 개요 데이터 조회
         
         Args:
-            token: JWT 액세스 토큰
+            user_id (int): 사용자 ID
             
         Returns:
-            Dict: 대시보드 개요 응답
-            {
-                "success": true,
-                "data": {
-                    "user_progress": {...},
-                    "learning_statistics": {...},
-                    "chapter_status": [...]
+            tuple: (응답 데이터, HTTP 상태 코드)
+        """
+        try:
+            # 사용자 진행 상태 조회
+            user_progress = DashboardService._get_user_progress(user_id)
+            if not user_progress:
+                return ErrorFormatter.format_database_error(
+                    Exception("사용자 진행 상태를 찾을 수 없습니다.")
+                )
+            
+            # 학습 통계 조회
+            learning_statistics = DashboardService._get_learning_statistics(user_id)
+            if not learning_statistics:
+                return ErrorFormatter.format_database_error(
+                    Exception("학습 통계를 찾을 수 없습니다.")
+                )
+            
+            # 챕터 상태 조회 (섹션 정보 포함)
+            chapter_status = DashboardService._get_chapter_status(user_id)
+            
+            # 응답 데이터 구성
+            dashboard_data = {
+                "user_progress": {
+                    "current_chapter": user_progress["current_chapter"],
+                    "current_section": user_progress["current_section"],
+                    "completion_percentage": DashboardService._calculate_completion_percentage(
+                        user_progress["current_chapter"], 
+                        user_progress["current_section"]
+                    )
                 },
-                "message": "대시보드 정보를 조회했습니다."
+                "learning_statistics": {
+                    "total_study_time_minutes": learning_statistics["total_study_time_minutes"],
+                    "total_study_sessions": learning_statistics["total_study_sessions"],
+                    "multiple_choice_accuracy": float(learning_statistics["multiple_choice_accuracy"]),
+                    "subjective_average_score": float(learning_statistics["subjective_average_score"]),
+                    "total_multiple_choice_count": learning_statistics["total_multiple_choice_count"],
+                    "total_subjective_count": learning_statistics["total_subjective_count"],
+                    "last_study_date": learning_statistics["last_study_date"].strftime("%Y-%m-%d") if learning_statistics["last_study_date"] else None
+                },
+                "chapter_status": chapter_status
             }
-        """
-        try:
-            # JWT 토큰 검증 및 사용자 정보 추출
-            user_info = self._validate_token_and_get_user(token)
-            if not user_info.get('success'):
-                return user_info
             
-            user_id = user_info['data']['user_id']
-            user_type = user_info['data']['user_type']
-            
-            # 진단 완료 여부 확인
-            if not user_info['data'].get('diagnosis_completed', False):
-                return ErrorFormatter.format_authorization_error("진단 미완료", "대시보드 조회")[0]
-            
-            # 대시보드 데이터 수집
-            dashboard_data = {}
-            
-            # 1. 사용자 진행 상태 조회
-            user_progress = self._get_user_progress(user_id)
-            dashboard_data['user_progress'] = user_progress
-            
-            # 2. 학습 통계 조회
-            learning_statistics = self._get_learning_statistics(user_id)
-            dashboard_data['learning_statistics'] = learning_statistics
-            
-            # 3. 챕터별 상태 조회
-            chapter_status = self._get_chapter_status(user_id, user_type)
-            dashboard_data['chapter_status'] = chapter_status
-            
-            return ResponseFormatter.success_response(
+            logger.info(f"대시보드 개요 조회 성공: user_id={user_id}")
+            return success_response(
                 data=dashboard_data,
-                message="대시보드 정보를 조회했습니다."
-            )[0]
+                message="대시보드 데이터를 성공적으로 조회했습니다."
+            )
             
+        except DatabaseQueryError as e:
+            logger.error(f"대시보드 조회 데이터베이스 오류: {e}")
+            return ErrorFormatter.format_database_error(e)
         except Exception as e:
-            logger.error(f"대시보드 개요 조회 오류: {e}")
-            return ResponseFormatter.error_response(
-                "DASHBOARD_OVERVIEW_ERROR",
-                f"대시보드 정보 조회 중 오류가 발생했습니다: {str(e)}",
-                status_code=500
-            )[0]
+            logger.error(f"대시보드 조회 예상치 못한 오류: {e}")
+            return ErrorFormatter.format_external_api_error("대시보드 서비스", e)
     
-    def _validate_token_and_get_user(self, token: str) -> Dict[str, Any]:
-        """
-        JWT 토큰 검증 및 사용자 정보 조회
-        
-        Args:
-            token: JWT 액세스 토큰
-            
-        Returns:
-            Dict: 사용자 정보 또는 에러 응답
-        """
-        try:
-            # JWT 토큰 디코딩
-            decoded_token = decode_jwt_token(token)
-            if not decoded_token:
-                return ErrorFormatter.format_authentication_error("token_invalid")[0]
-            
-            user_id = decoded_token.get('user_id')
-            if not user_id:
-                return ErrorFormatter.format_authentication_error("token_invalid")[0]
-            
-            # 사용자 정보 조회
-            user_query = """
-                SELECT user_id, login_id, username, user_type, diagnosis_completed
-                FROM users 
-                WHERE user_id = %s
-            """
-            user_record = fetch_one(user_query, (user_id,))
-            
-            if not user_record:
-                return ErrorFormatter.format_authentication_error("token_invalid")[0]
-            
-            return {
-                'success': True,
-                'data': {
-                    'user_id': user_record['user_id'],
-                    'login_id': user_record['login_id'],
-                    'username': user_record['username'],
-                    'user_type': user_record['user_type'],
-                    'diagnosis_completed': user_record['diagnosis_completed']
-                }
-            }
-            
-        except Exception as e:
-            logger.error(f"토큰 검증 오류: {e}")
-            return ErrorFormatter.format_authentication_error("token_invalid")[0]
-    
-    def _get_user_progress(self, user_id: int) -> Dict[str, Any]:
+    @staticmethod
+    def _get_user_progress(user_id: int) -> Optional[Dict[str, Any]]:
         """
         사용자 진행 상태 조회
         
         Args:
-            user_id: 사용자 ID
+            user_id (int): 사용자 ID
             
         Returns:
-            Dict: 사용자 진행 상태 정보
+            Optional[Dict[str, Any]]: 사용자 진행 상태 데이터
         """
-        try:
-            progress_query = """
-                SELECT 
-                    current_chapter,
-                    current_section,
-                    last_study_date
-                FROM user_progress 
-                WHERE user_id = %s
-            """
-            progress_record = fetch_one(progress_query, (user_id,))
-            
-            if not progress_record:
-                # user_progress 레코드가 없는 경우 기본값 반환
-                return {
-                    "current_chapter": 1,
-                    "current_section": 1,
-                    "total_chapters": 8,  # 기본값 (추후 동적으로 계산)
-                    "completion_percentage": 0.0
-                }
-            
-            current_chapter = progress_record['current_chapter']
-            current_section = progress_record['current_section']
-            
-            # TODO: 사용자 타입에 따른 총 챕터 수 동적 계산
-            # 현재는 기본값 8개 챕터로 설정
-            total_chapters = 8
-            
-            # 완료율 계산 (간단한 공식: (완료된 챕터 수) / 총 챕터 수 * 100)
-            completed_chapters = max(0, current_chapter - 1)
-            completion_percentage = (completed_chapters / total_chapters) * 100.0
-            
-            return {
-                "current_chapter": current_chapter,
-                "current_section": current_section,
-                "total_chapters": total_chapters,
-                "completion_percentage": round(completion_percentage, 1)
-            }
-            
-        except Exception as e:
-            logger.error(f"사용자 진행 상태 조회 오류: {e}")
-            return {
-                "current_chapter": 1,
-                "current_section": 1,
-                "total_chapters": 8,
-                "completion_percentage": 0.0
-            }
+        query_builder = QueryBuilder()
+        query, params = query_builder.select([
+            'current_chapter',
+            'current_section', 
+            'last_study_date'
+        ]).from_table('user_progress').where('user_id = %s', [user_id]).build()
+        
+        result = fetch_one(query, params)
+        return result
     
-    def _get_learning_statistics(self, user_id: int) -> Dict[str, Any]:
+    @staticmethod
+    def _get_learning_statistics(user_id: int) -> Optional[Dict[str, Any]]:
         """
         학습 통계 조회
         
         Args:
-            user_id: 사용자 ID
+            user_id (int): 사용자 ID
             
         Returns:
-            Dict: 학습 통계 정보
+            Optional[Dict[str, Any]]: 학습 통계 데이터
         """
-        try:
-            stats_query = """
-                SELECT 
-                    total_study_time_minutes,
-                    total_study_sessions,
-                    total_completed_sessions,
-                    multiple_choice_accuracy,
-                    subjective_average_score,
-                    last_study_date
-                FROM user_statistics 
-                WHERE user_id = %s
-            """
-            stats_record = fetch_one(stats_query, (user_id,))
-            
-            if not stats_record:
-                # user_statistics 레코드가 없는 경우 기본값 반환
-                return {
-                    "total_study_time_minutes": 0,
-                    "total_study_sessions": 0,
-                    "total_completed_sessions": 0,
-                    "multiple_choice_accuracy": 0.0,
-                    "subjective_average_score": 0.0,
-                    "last_study_date": None
-                }
-            
-            # 마지막 학습일 포맷팅
-            last_study_date = None
-            if stats_record['last_study_date']:
-                if isinstance(stats_record['last_study_date'], date):
-                    last_study_date = stats_record['last_study_date'].strftime('%Y-%m-%d')
-                else:
-                    last_study_date = str(stats_record['last_study_date'])
-            
-            return {
-                "total_study_time_minutes": stats_record['total_study_time_minutes'] or 0,
-                "total_study_sessions": stats_record['total_study_sessions'] or 0,
-                "total_completed_sessions": stats_record['total_completed_sessions'] or 0,
-                "multiple_choice_accuracy": float(stats_record['multiple_choice_accuracy'] or 0.0),
-                "subjective_average_score": float(stats_record['subjective_average_score'] or 0.0),
-                "last_study_date": last_study_date
-            }
-            
-        except Exception as e:
-            logger.error(f"학습 통계 조회 오류: {e}")
-            return {
-                "total_study_time_minutes": 0,
-                "total_study_sessions": 0,
-                "total_completed_sessions": 0,
-                "multiple_choice_accuracy": 0.0,
-                "subjective_average_score": 0.0,
-                "last_study_date": None
-            }
+        query = """
+        SELECT 
+            total_study_time_minutes,
+            total_study_sessions,
+            multiple_choice_accuracy,
+            subjective_average_score,
+            total_multiple_choice_count,
+            total_subjective_count,
+            last_study_date
+        FROM user_statistics 
+        WHERE user_id = %s
+        """
+        
+        result = fetch_one(query, (user_id,))
+        return result
     
-    def _get_chapter_status(self, user_id: int, user_type: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _get_chapter_status(user_id: int) -> List[Dict[str, Any]]:
         """
-        챕터별 진행 상태 조회
+        챕터별 상태 조회 (섹션 정보 포함)
         
         Args:
-            user_id: 사용자 ID
-            user_type: 사용자 타입 ("beginner" 또는 "advanced")
+            user_id (int): 사용자 ID
             
         Returns:
-            List[Dict]: 챕터별 상태 정보 리스트
+            List[Dict[str, Any]]: 챕터별 상태 데이터
         """
         try:
-            # 사용자 현재 진행 상태 조회
-            current_progress = self._get_user_progress(user_id)
-            current_chapter = current_progress['current_chapter']
+            # 사용자의 현재 진행 상태 조회
+            current_progress = DashboardService._get_user_progress(user_id)
+            current_chapter = current_progress["current_chapter"] if current_progress else 1
+            current_section = current_progress["current_section"] if current_progress else 1
             
-            # 완료된 챕터들의 학습 통계 조회
-            completed_chapters_query = """
-                SELECT 
-                    chapter_number,
-                    COUNT(*) as session_count,
-                    AVG(study_duration_minutes) as avg_study_time,
-                    MIN(session_start_time) as first_session,
-                    MAX(session_start_time) as last_session
-                FROM learning_sessions 
-                WHERE user_id = %s 
-                GROUP BY chapter_number
-                ORDER BY chapter_number
-            """
-            completed_chapters = fetch_all(completed_chapters_query, (user_id,))
+            # 완료된 세션 정보 조회 (챕터/섹션별 완료 날짜)
+            completed_sessions = DashboardService._get_completed_sessions(user_id)
             
-            # 챕터별 퀴즈 성과 조회
-            quiz_stats_query = """
-                SELECT 
-                    ls.chapter_number,
-                    AVG(CASE WHEN sq.quiz_type = 'multiple_choice' AND sq.multiple_answer_correct = 1 THEN 100 ELSE 0 END) as mc_accuracy,
-                    AVG(CASE WHEN sq.quiz_type = 'subjective' THEN sq.subjective_answer_score ELSE NULL END) as subj_avg_score
-                FROM learning_sessions ls
-                JOIN session_quizzes sq ON ls.session_id = sq.session_id
-                WHERE ls.user_id = %s
-                GROUP BY ls.chapter_number
-                ORDER BY ls.chapter_number
-            """
-            quiz_stats = fetch_all(quiz_stats_query, (user_id,))
+            # 하드코딩된 챕터/섹션 구조 (향후 DB나 JSON 파일로 분리 가능)
+            chapters_structure = DashboardService._get_chapters_structure()
             
             # 챕터별 상태 생성
             chapter_status_list = []
-            total_chapters = 8 if user_type == "beginner" else 10
             
-            # 완료된 챕터 통계를 딕셔너리로 변환
-            completed_stats = {ch['chapter_number']: ch for ch in completed_chapters}
-            quiz_stats_dict = {qs['chapter_number']: qs for qs in quiz_stats}
-            
-            for chapter_num in range(1, total_chapters + 1):
-                chapter_info = {
-                    "chapter_number": chapter_num,
-                    "chapter_title": self._get_chapter_title(chapter_num),
-                    "status": self._determine_chapter_status(chapter_num, current_chapter),
-                    "completion_date": None,
-                    "session_count": 0,
-                    "avg_study_time_minutes": 0,
-                    "average_score": 0
-                }
+            for chapter_num, chapter_info in chapters_structure.items():
+                # 챕터 상태 결정
+                chapter_status = DashboardService._determine_chapter_status(
+                    chapter_num, current_chapter, current_section
+                )
                 
-                # 완료된 챕터인 경우 통계 추가
-                if chapter_num in completed_stats:
-                    stats = completed_stats[chapter_num]
-                    chapter_info.update({
-                        "session_count": stats['session_count'],
-                        "avg_study_time_minutes": int(stats['avg_study_time'] or 0),
-                        "completion_date": stats['last_session'].strftime('%Y-%m-%d') if stats['last_session'] else None
+                # 챕터 완료 날짜 조회
+                chapter_completion_date = DashboardService._get_chapter_completion_date(
+                    chapter_num, completed_sessions
+                )
+                
+                # 섹션별 상태 생성
+                sections = []
+                for section_num, section_title in chapter_info["sections"].items():
+                    section_status = DashboardService._determine_section_status(
+                        chapter_num, section_num, current_chapter, current_section
+                    )
+                    
+                    section_completion_date = DashboardService._get_section_completion_date(
+                        chapter_num, section_num, completed_sessions
+                    )
+                    
+                    sections.append({
+                        "section_number": section_num,
+                        "section_title": section_title,
+                        "status": section_status,
+                        "completion_date": section_completion_date
                     })
                 
-                # 퀴즈 성과 추가
-                if chapter_num in quiz_stats_dict:
-                    quiz_stat = quiz_stats_dict[chapter_num]
-                    mc_accuracy = quiz_stat['mc_accuracy'] or 0
-                    subj_score = quiz_stat['subj_avg_score'] or 0
-                    
-                    # 객관식과 주관식 점수를 평균내어 종합 점수 계산
-                    if subj_score > 0:
-                        chapter_info["average_score"] = int((mc_accuracy + subj_score) / 2)
-                    else:
-                        chapter_info["average_score"] = int(mc_accuracy)
-                
-                chapter_status_list.append(chapter_info)
+                chapter_status_list.append({
+                    "chapter_number": chapter_num,
+                    "chapter_title": chapter_info["title"],
+                    "status": chapter_status,
+                    "completion_date": chapter_completion_date,
+                    "sections": sections
+                })
             
             return chapter_status_list
             
         except Exception as e:
             logger.error(f"챕터 상태 조회 오류: {e}")
-            # 에러 시 기본 챕터 리스트 반환
-            return self._get_default_chapter_status(user_type)
+            return []
     
-    def _get_chapter_title(self, chapter_number: int) -> str:
+    @staticmethod
+    def _get_completed_sessions(user_id: int) -> List[Dict[str, Any]]:
         """
-        챕터 번호에 따른 제목 반환
+        완료된 세션 정보 조회
         
         Args:
-            chapter_number: 챕터 번호
+            user_id (int): 사용자 ID
             
         Returns:
-            str: 챕터 제목
+            List[Dict[str, Any]]: 완료된 세션 리스트
         """
-        chapter_titles = {
-            1: "AI는 무엇인가?",
-            2: "LLM이란 무엇인가",
-            3: "다양한 AI 챗봇들 소개",
-            4: "프롬프트란 무엇인가",
-            5: "좋은 프롬프트 작성법",
-            6: "ChatGPT로 할 수 있는 것들",
-            7: "AI와 함께하는 일상업무",
-            8: "AI 활용 고급 팁과 주의사항",
-            9: "고급 프롬프트 엔지니어링",  # 실무 응용형 전용
-            10: "API 연동 및 자동화"        # 실무 응용형 전용
-        }
-        return chapter_titles.get(chapter_number, f"{chapter_number}챕터")
+        query_builder = QueryBuilder()
+        query, params = query_builder.select([
+            'chapter_number',
+            'section_number', 
+            'DATE(session_end_time) as completion_date',
+            'retry_decision_result'
+        ]).from_table('learning_sessions').where('user_id = %s', [user_id]).where('retry_decision_result = %s', ['proceed']).order_by('session_end_time', 'ASC').build()
+        
+        results = fetch_all(query, params)
+        return results or []
     
-    def _determine_chapter_status(self, chapter_number: int, current_chapter: int) -> str:
+    @staticmethod
+    def _get_chapters_structure() -> Dict[int, Dict[str, Any]]:
+        """
+        하드코딩된 챕터/섹션 구조 반환
+        향후 DB의 chapters 테이블이나 JSON 파일로 분리 예정
+        
+        Returns:
+            Dict[int, Dict[str, Any]]: 챕터 구조 데이터
+        """
+        return {
+            1: {
+                "title": "AI는 무엇인가?",
+                "sections": {
+                    1: "AI의 정의와 특징",
+                    2: "AI의 역사와 발전", 
+                    3: "AI의 종류와 분류",
+                    4: "AI의 활용 사례"
+                }
+            },
+            2: {
+                "title": "LLM이란 무엇인가",
+                "sections": {
+                    1: "LLM의 기본 개념",
+                    2: "LLM의 동작 원리",
+                    3: "대표적인 LLM 모델들",
+                    4: "LLM의 한계와 특징"
+                }
+            },
+            3: {
+                "title": "프롬프트란 무엇인가",
+                "sections": {
+                    1: "프롬프트의 기본 개념",
+                    2: "효과적인 프롬프트 작성법",
+                    3: "프롬프트 엔지니어링 기초",
+                    4: "프롬프트 실습과 예제"
+                }
+            },
+            4: {
+                "title": "좋은 프롬프트 작성법",
+                "sections": {
+                    1: "역할 부여의 마법",
+                    2: "구체적 조건 제시하기",
+                    3: "형식 지정 방법",
+                    4: "이미지 생성 프롬프트"
+                }
+            },
+            5: {
+                "title": "ChatGPT로 할 수 있는 것들",
+                "sections": {
+                    1: "문서 요약하기",
+                    2: "똑똑한 AI 번역기",
+                    3: "아이디어 발전시키기",
+                    4: "여행 계획 짜기"
+                }
+            },
+            6: {
+                "title": "AI와 함께하는 일상업무",
+                "sections": {
+                    1: "이메일 작성하기",
+                    2: "엑셀 함수 활용",
+                    3: "회의록 정리",
+                    4: "업무 비서 만들기"
+                }
+            },
+            7: {
+                "title": "다양한 AI 챗봇들 소개",
+                "sections": {
+                    1: "ChatGPT 소개",
+                    2: "Claude 소개",
+                    3: "Gemini 소개",
+                    4: "한국형 챗봇들"
+                }
+            },
+            8: {
+                "title": "AI 활용 고급 팁과 주의사항",
+                "sections": {
+                    1: "환각 현상과 해결 방법",
+                    2: "Chain-of-Thought 활용",
+                    3: "AI와 함께 학습하기",
+                    4: "AI 윤리 문제"
+                }
+            }
+        }
+    
+    @staticmethod
+    def _determine_chapter_status(chapter_num: int, current_chapter: int, current_section: int) -> str:
         """
         챕터 상태 결정
         
         Args:
-            chapter_number: 챕터 번호
-            current_chapter: 현재 진행 중인 챕터
+            chapter_num (int): 판단할 챕터 번호
+            current_chapter (int): 현재 진행 중인 챕터
+            current_section (int): 현재 진행 중인 섹션
             
         Returns:
-            str: 챕터 상태 ("completed", "in_progress", "locked")
+            str: 챕터 상태 ('completed', 'in_progress', 'locked')
         """
-        if chapter_number < current_chapter:
+        if chapter_num < current_chapter:
             return "completed"
-        elif chapter_number == current_chapter:
+        elif chapter_num == current_chapter:
             return "in_progress"
         else:
             return "locked"
     
-    def _get_default_chapter_status(self, user_type: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _determine_section_status(chapter_num: int, section_num: int, current_chapter: int, current_section: int) -> str:
         """
-        기본 챕터 상태 리스트 반환 (에러 시 사용)
+        섹션 상태 결정
         
         Args:
-            user_type: 사용자 타입
+            chapter_num (int): 섹션이 속한 챕터 번호
+            section_num (int): 판단할 섹션 번호
+            current_chapter (int): 현재 진행 중인 챕터
+            current_section (int): 현재 진행 중인 섹션
             
         Returns:
-            List[Dict]: 기본 챕터 상태 리스트
+            str: 섹션 상태 ('completed', 'in_progress', 'locked')
         """
-        total_chapters = 8 if user_type == "beginner" else 10
-        default_chapters = []
+        if chapter_num < current_chapter:
+            return "completed"
+        elif chapter_num == current_chapter:
+            if section_num < current_section:
+                return "completed"
+            elif section_num == current_section:
+                return "in_progress"
+            else:
+                return "locked"
+        else:
+            return "locked"
+    
+    @staticmethod
+    def _get_chapter_completion_date(chapter_num: int, completed_sessions: List[Dict[str, Any]]) -> Optional[str]:
+        """
+        챕터 완료 날짜 조회 (해당 챕터의 마지막 섹션 완료 날짜)
         
-        for chapter_num in range(1, total_chapters + 1):
-            default_chapters.append({
-                "chapter_number": chapter_num,
-                "chapter_title": self._get_chapter_title(chapter_num),
-                "status": "locked" if chapter_num > 1 else "in_progress",
-                "completion_date": None,
-                "session_count": 0,
-                "avg_study_time_minutes": 0,
-                "average_score": 0
-            })
+        Args:
+            chapter_num (int): 챕터 번호
+            completed_sessions (List[Dict[str, Any]]): 완료된 세션 리스트
+            
+        Returns:
+            Optional[str]: 완료 날짜 (YYYY-MM-DD 형식) 또는 None
+        """
+        chapter_sessions = [s for s in completed_sessions if s["chapter_number"] == chapter_num]
+        if not chapter_sessions:
+            return None
         
-        return default_chapters
+        # 해당 챕터의 가장 늦은 완료 날짜 반환
+        latest_date = max(chapter_sessions, key=lambda x: x["completion_date"])
+        return latest_date["completion_date"].strftime("%Y-%m-%d") if latest_date["completion_date"] else None
+    
+    @staticmethod
+    def _get_section_completion_date(chapter_num: int, section_num: int, completed_sessions: List[Dict[str, Any]]) -> Optional[str]:
+        """
+        섹션 완료 날짜 조회
+        
+        Args:
+            chapter_num (int): 챕터 번호
+            section_num (int): 섹션 번호
+            completed_sessions (List[Dict[str, Any]]): 완료된 세션 리스트
+            
+        Returns:
+            Optional[str]: 완료 날짜 (YYYY-MM-DD 형식) 또는 None
+        """
+        for session in completed_sessions:
+            if (session["chapter_number"] == chapter_num and 
+                session["section_number"] == section_num):
+                return session["completion_date"].strftime("%Y-%m-%d") if session["completion_date"] else None
+        
+        return None
+    
+    @staticmethod
+    def _calculate_completion_percentage(current_chapter: int, current_section: int) -> float:
+        """
+        전체 학습 진행률 계산
+        
+        Args:
+            current_chapter (int): 현재 챕터
+            current_section (int): 현재 섹션
+            
+        Returns:
+            float: 진행률 (0.0 ~ 100.0)
+        """
+        # 총 챕터 수와 섹션 수 (하드코딩, 향후 동적으로 변경 가능)
+        total_chapters = 8
+        sections_per_chapter = 4
+        total_sections = total_chapters * sections_per_chapter
+        
+        # 완료된 섹션 수 계산
+        completed_sections = (current_chapter - 1) * sections_per_chapter + (current_section - 1)
+        
+        # 진행률 계산 (소수점 첫째 자리까지)
+        percentage = (completed_sections / total_sections) * 100
+        return round(percentage, 1)
 
 
-# 전역 인스턴스 생성
+# 서비스 인스턴스 생성
 dashboard_service = DashboardService()

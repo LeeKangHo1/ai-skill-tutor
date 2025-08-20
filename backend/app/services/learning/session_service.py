@@ -611,6 +611,12 @@ class SessionService:
         
         return len(expired_users)
     
+    def clear_all_sessions(self) -> int:
+        """모든 활성 세션 정리 (테스트용)"""
+        session_count = len(self._user_states)
+        self._user_states.clear()
+        return session_count
+    
 
 # state 공유를 위한 세션 서비스 단일 인스턴스
 session_service = SessionService()
