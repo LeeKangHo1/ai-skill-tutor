@@ -29,6 +29,7 @@ class JWTHandler:
                 - user_id: 사용자 ID
                 - login_id: 로그인 ID  
                 - user_type: 사용자 유형
+                - diagnosis_completed: 진단 완료 여부
                 
         Returns:
             str: 생성된 access token
@@ -38,6 +39,7 @@ class JWTHandler:
             'user_id': user_data['user_id'],
             'login_id': user_data['login_id'],
             'user_type': user_data.get('user_type', 'unassigned'),
+            'diagnosis_completed': user_data.get('diagnosis_completed', False),
             'token_type': 'access',
             'iat': now,  # issued at
             'exp': now + timedelta(minutes=self.access_token_expire_minutes)  # expiration
@@ -120,7 +122,8 @@ class JWTHandler:
         return {
             'user_id': payload.get('user_id'),
             'login_id': payload.get('login_id'),
-            'user_type': payload.get('user_type', 'unassigned')
+            'user_type': payload.get('user_type', 'unassigned'),
+            'diagnosis_completed': payload.get('diagnosis_completed', False)
         }
 
 

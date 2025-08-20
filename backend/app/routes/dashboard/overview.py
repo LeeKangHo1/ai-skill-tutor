@@ -8,7 +8,7 @@ import logging
 from flask import Blueprint, request, jsonify
 
 from app.services.dashboard.dashboard_service import dashboard_service
-from app.utils.auth.jwt_handler import require_auth
+from app.utils.auth.jwt_handler import require_auth, get_current_user_from_request
 from app.utils.response.formatter import success_response, error_response
 from app.utils.response.error_formatter import ErrorFormatter
 
@@ -21,12 +21,9 @@ overview_bp = Blueprint('dashboard_overview', __name__)
 
 @overview_bp.route('/overview', methods=['GET'])
 @require_auth
-def get_dashboard_overview(current_user):
+def get_dashboard_overview():
     """
     대시보드 개요 데이터 조회 API
-    
-    Args:
-        current_user (dict): JWT 토큰에서 추출한 사용자 정보
         
     Returns:
         JSON: 대시보드 개요 데이터
@@ -59,6 +56,12 @@ def get_dashboard_overview(current_user):
         }
     """
     try:
+        # JWT 토큰에서 직접 사용자 정보 추출
+        current_user = get_current_user_from_request()
+        if not current_user:
+            logger.error("JWT 토큰에서 사용자 정보를 추출할 수 없습니다.")
+            return ErrorFormatter.format_authentication_error("token_invalid")
+        
         # JWT 토큰에서 사용자 ID 추출
         user_id = current_user.get('user_id')
         if not user_id:

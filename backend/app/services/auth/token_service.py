@@ -95,7 +95,8 @@ class TokenService:
         token_data = {
             'user_id': user_info['user_id'],
             'login_id': user_info['login_id'],
-            'user_type': user_info['user_type']
+            'user_type': user_info['user_type'],
+            'diagnosis_completed': user_info['diagnosis_completed']
         }
         
         new_access_token = generate_access_token(token_data)

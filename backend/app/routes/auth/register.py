@@ -58,7 +58,8 @@ def register():
         access_token = generate_access_token({
             'user_id': user_info['user_id'],
             'login_id': user_info['login_id'],
-            'user_type': user_info['user_type']
+            'user_type': user_info['user_type'],
+            'diagnosis_completed': user_info.get('diagnosis_completed', False)
         })
         refresh_token = generate_refresh_token(user_info['user_id'])
         
