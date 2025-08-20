@@ -153,38 +153,34 @@ def _analyze_intent_with_llm(user_message: str, current_stage: str, user_type: s
     # JSON 출력 파서 설정
     parser = JsonOutputParser(pydantic_object=IntentAnalysisResult)
     
-    # 프롬프트 템플릿 정의
+    # 프롬프트 템플릿 정의 (버전 2: 예시 중심 접근)
     prompt_template = PromptTemplate(
-        template="""당신은 AI 학습 튜터 시스템의 사용자 의도 분석 전문가입니다.
+        template="""사용자 메시지를 next_step 또는 question으로 분류하세요.
 
-사용자의 메시지를 분석하여 다음 2가지 의도 중 하나로 분류해주세요:
+**분류 예시:**
 
-1. **next_step**: 학습을 계속 진행하고 싶은 의도
-   - 다음 단계, 챕터 시작, 퀴즈 요청, 계속 진행 등
-   - "네", "좋아요", "시작해주세요", "다음" 등의 긍정적 응답
-   - 새로운 세션/챕터 시작 요청
+✅ **next_step 예시:**
+- "네", "좋아", "계속", "다음", "시작해주세요"
+- "퀴즈 내주세요", "문제 풀어볼게요"
+- "2챕터 시작할게요", "진행해주세요"
+- "이해했어요, 다음으로"
+- "알겠습니다"
 
-2. **question**: 궁금한 것을 질문하는 의도  
-   - 개념 설명 요청, 차이점 문의, 이해 안 되는 부분 질문
-   - "뭐예요?", "어떻게?", "왜?", "차이가 뭔가요?" 등
-   - 추가 설명이나 도움 요청
+✅ **question 예시:**
+- "AI와 머신러닝의 차이가 뭐예요?"
+- "왜 그런 건가요?", "어떻게 작동하나요?"
+- "좀 더 자세히 설명해주세요"
+- "이 부분이 이해가 안 돼요"
+- "예시를 더 들어주세요"
 
 **현재 상황:**
-- 진행 단계: {current_stage}
-- 사용자 유형: {user_type}
-- 사용자 메시지: "{user_message}"
+- 메시지: "{user_message}"
+- 진행단계: {current_stage}
 
-**워크플로우 규칙:**
-- **theory_completed**: 질문 OR 퀴즈 진행 (둘 다 가능)
-- **quiz_and_feedback_completed**: 질문 OR 새 세션 시작 (둘 다 가능)
-
-**단계별 분류 기준:**
-- **theory_completed**: 이론 학습 직후이므로 질문이 많이 나올 수 있음
-- **quiz_and_feedback_completed**: 추가 질문 또는 새 학습 시작
-- **beginner**: 질문 성향이 높음, 불확실한 경우 question 가중치
-- **advanced**: 빠른 진행 선호, 불확실한 경우 next_step 가중치
-
-참고: 이 메시지는 키워드 기반 분류에서 애매하다고 판단된 복잡한 메시지입니다.
+**판단 원칙:**
+1. 의문사(뭐, 왜, 어떻게, 언제)나 물음표(?)가 있으면 → question
+2. 긍정 응답이나 진행 요청 → next_step  
+3. 애매하면 메시지 길이 고려: 짧고 단순하면 next_step, 길고 복잡하면 question
 
 {format_instructions}""",
         input_variables=["user_message", "current_stage", "user_type"],
