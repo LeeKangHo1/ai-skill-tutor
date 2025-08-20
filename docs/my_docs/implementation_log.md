@@ -2,6 +2,10 @@
 
 ## **2025년 8월 19일** - 대시보드 시스템 완전 구현
 
+### JWT 토큰 구조 개선
+- **기존**: user_id, login_id, user_type, current_chapter 정보만 포함
+- **개선**: current_section 필드 추가로 사용자의 정확한 학습 위치 추적 가능
+
 ### 1. DashboardService 클래스 완전 구현
 - **파일 위치**: `backend/app/services/dashboard/dashboard_service.py`
 - **핵심 기능**: JSON 기반 챕터 구조 + DB 기반 완료 날짜 추적
@@ -17,6 +21,8 @@
 - **서비스 연동**: dashboard_service.get_dashboard_overview() 호출
 
 ### 3. API 응답 구조 최종 확정
+
+#### GET /dashboard/overview (대시보드 개요)
 
 ```json
 {

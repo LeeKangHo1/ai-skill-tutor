@@ -252,15 +252,15 @@ Authorization: Bearer {access_token}
     "user_progress": {
       "current_chapter": 2,
       "current_section": 1,
-      "total_chapters": 8,
       "completion_percentage": 25.0
     },
     "learning_statistics": {
       "total_study_time_minutes": 150,
       "total_study_sessions": 8,
-      "total_completed_sessions": 6,
       "multiple_choice_accuracy": 85.5,
       "subjective_average_score": 78.2,
+      "total_multiple_choice_count": 12,
+      "total_subjective_count": 6,
       "last_study_date": "2025-08-05"
     },
     "chapter_status": [
@@ -268,19 +268,15 @@ Authorization: Bearer {access_token}
         "chapter_number": 1,
         "chapter_title": "AI는 무엇인가?",
         "status": "completed",
-        "completion_date": "2025-08-04"
-      },
-      {
-        "chapter_number": 2,
-        "chapter_title": "LLM이란 무엇인가",
-        "status": "in_progress",
-        "completion_date": null
-      },
-      {
-        "chapter_number": 3,
-        "chapter_title": "프롬프트란 무엇인가",
-        "status": "locked",
-        "completion_date": null
+        "completion_date": "2025-08-04",
+        "sections": [
+          {
+            "section_number": 1,
+            "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+            "status": "completed",
+            "completion_date": "2025-08-02"
+          }
+        ]
       }
     ]
   }
