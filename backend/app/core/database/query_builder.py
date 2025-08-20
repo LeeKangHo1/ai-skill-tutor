@@ -1,7 +1,13 @@
 # backend/app/core/database/query_builder.py
 """
+⚠️ DEPRECATED - 이 모듈은 더 이상 사용되지 않습니다.
+현재 프로젝트에서는 app.utils.database.query_builder 모듈을 사용합니다.
+
 SQL 쿼리 빌더 모듈
 기본 SQL 생성, 파라미터 바인딩, JSON 컬럼 지원을 제공합니다.
+
+⚠️ 사용 중단됨: 2025-08-20
+대체 모듈: app.utils.database.query_builder
 """
 
 from typing import Dict, List, Any, Optional, Union, Tuple

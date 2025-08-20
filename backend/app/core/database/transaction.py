@@ -1,7 +1,13 @@
 # backend/app/core/database/transaction.py
 """
+⚠️ DEPRECATED - 이 모듈은 더 이상 사용되지 않습니다.
+현재 프로젝트에서는 app.utils.database.transaction 모듈을 사용합니다.
+
 트랜잭션 관리자 모듈
 자동 롤백 및 커밋 컨텍스트 관리자를 제공합니다.
+
+⚠️ 사용 중단됨: 2025-08-20
+대체 모듈: app.utils.database.transaction
 """
 
 import pymysql

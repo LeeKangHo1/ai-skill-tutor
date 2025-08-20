@@ -1,7 +1,13 @@
 # backend/app/core/database/schema_validator.py
 """
+⚠️ DEPRECATED - 이 모듈은 더 이상 사용되지 않습니다.
+현재 프로젝트에서는 별도의 스키마 검증 도구를 사용하거나 수동으로 관리합니다.
+
 데이터베이스 스키마 검증 도구
 테이블 구조, 인덱스, 제약조건을 검증하는 기능을 제공합니다.
+
+⚠️ 사용 중단됨: 2025-08-20
+대체 방법: 수동 스키마 검증 또는 별도 도구 사용
 """
 
 from typing import Dict, List, Any, Optional, Tuple

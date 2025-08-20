@@ -1,7 +1,13 @@
 # backend/app/core/database/mysql_client.py
 """
+⚠️ DEPRECATED - 이 모듈은 더 이상 사용되지 않습니다.
+현재 프로젝트에서는 app.config.db_config 모듈을 사용합니다.
+
 MySQL 데이터베이스 클라이언트 모듈
 데이터베이스 연결과 기본 작업을 관리합니다.
+
+⚠️ 사용 중단됨: 2025-08-20
+대체 모듈: app.config.db_config.DatabaseConnectionManager
 """
 
 import pymysql
