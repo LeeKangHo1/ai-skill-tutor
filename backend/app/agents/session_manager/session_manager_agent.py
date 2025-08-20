@@ -152,13 +152,18 @@ class SessionManager:
             "quiz_type": quiz_type,
             "quiz_content": state.get("quiz_content", ""),
             "quiz_hint": state.get("quiz_hint", ""),
-            "user_answer": state.get("user_answer", "")
+            "user_answer": state.get("user_answer", ""),
+            "evaluation_feedback": state.get("evaluation_feedback", "")
         }
         
         # 객관식 전용 필드
         if quiz_type == "multiple_choice":
+            # JSON 배열을 문자열로 직렬화
+            quiz_options = state.get("quiz_options", [])
+            quiz_options_json = json.dumps(quiz_options, ensure_ascii=False) if quiz_options else "[]"
+            
             quiz_data.update({
-                "quiz_options": state.get("quiz_options", []),  # JSON 배열
+                "quiz_options": quiz_options_json,  # JSON 문자열
                 "quiz_correct_answer": state.get("quiz_correct_answer"),  # 정답 번호 (1-4)
                 "quiz_explanation": state.get("quiz_explanation", ""),
                 "multiple_answer_correct": state.get("multiple_answer_correct", False),
@@ -170,9 +175,13 @@ class SessionManager:
         
         # 주관식 전용 필드
         else:  # subjective
+            # JSON 배열을 문자열로 직렬화
+            evaluation_criteria = state.get("quiz_evaluation_criteria", [])
+            evaluation_criteria_json = json.dumps(evaluation_criteria, ensure_ascii=False) if evaluation_criteria else "[]"
+            
             quiz_data.update({
                 "quiz_sample_answer": state.get("quiz_sample_answer", ""),
-                "quiz_evaluation_criteria": state.get("quiz_evaluation_criteria", []),  # JSON 배열
+                "quiz_evaluation_criteria": evaluation_criteria_json,  # JSON 문자열
                 "subjective_answer_score": state.get("subjective_answer_score", 0),
                 # 객관식 필드는 NULL
                 "quiz_options": None,

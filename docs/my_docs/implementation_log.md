@@ -1,5 +1,11 @@
 # 구현 로그 (Implementation Log)
 
+## 📋 향후 개발 지침 (2025년 8월 20일)
+
+### frontend .vue 파일 작성 지침
+ - 모바일과 태블릿 관련 디자인은 작성하지 않는다.
+
+
 ## **2025년 8월 19일** - 대시보드 시스템 완전 구현
 
 ### JWT 토큰 구조 개선
@@ -344,3 +350,4 @@ class StateManager:
 - **OutputParser**: JSON 출력은 `JsonOutputParser` + Pydantic 스키마, 텍스트는 `StrOutputParser`
 - import는 "from langchain_core.prompts import PromptTemplate" , "from langchain_core.output_parsers import JsonOutputParser"
 - db를 다루는 경우 backend/app/utils/database/connection.py, query_builder.py, transaction.py 파일의 유틸리티를 활용할 것
+
