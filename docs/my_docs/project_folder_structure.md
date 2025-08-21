@@ -207,107 +207,66 @@ backend/
 ---
 
 
-# 프론트엔드 폴더 구조 (v1.3 - 2025.08.11 업데이트)
+# 프론트엔드 폴더 구조 (v2.0 - 2025.08.21 업데이트)
 
 ```
-ai-skill-tutor-frontend/
-├── public/
-│   ├── assets/
-│   │   ├── fonts/
-│   │   └── images/
-│   │       ├── icons/
-│   │       └── logo.png
-│   ├── favicon.ico
-│   └── index.html
+frontend/
 ├── src/
-│   ├── App.vue                    # ✅ 수정됨: 퀵 액션 영역 제거, 깔끔한 구조로 정리
+│   ├── __tests__/                 # 테스트 파일
+│   │   └── basic.test.js          # 기본 테스트
+│   ├── App.vue                    # Vue 앱 루트 컴포넌트
 │   ├── assets/
-│   │   ├── icons/
-│   │   └── images/
+│   │   ├── icons/                 # 아이콘 파일들
+│   │   └── images/                # 이미지 파일들
 │   ├── components/
-│   │   ├── auth/                  # ✅ 인증 관련 컴포넌트 (완성됨)
-│   │   │   ├── LoginForm.vue         # ✅ 구현됨: 실시간 검증 로그인 폼
-│   │   │   └── RegisterForm.vue      # ✅ 구현됨: 중복 확인 및 검증 회원가입 폼
-│   │   ├── common/
-│   │   │   ├── AlertMessage.vue      # 알림 메시지 (미구현)
-│   │   │   ├── HeaderComponent.vue   # ✅ 구현됨: 로그인 상태별 헤더 (로그인/로그아웃 버튼)
-│   │   │   └── LoadingModal.vue      # 로딩 모달 (미구현)
-│   │   ├── dashboard/             # 대시보드 관련 컴포넌트 (미구현)
-│   │   │   ├── ChapterCard.vue
-│   │   │   ├── ChapterList.vue
-│   │   │   └── LearningStats.vue
-│   │   ├── diagnosis/             # ✅ 진단 관련 컴포넌트 (완전 구현)
-│   │   │   ├── DiagnosisQuestion.vue  # ✅ 구현됨: 문항 표시 및 답변 수집
-│   │   │   └── ProgressBar.vue        # ✅ 구현됨: 진행률 표시
-│   │   └── learning/              # 학습 관련 컴포넌트 (미구현)
-│   │       ├── MainContentArea.vue
-│   │       ├── SessionProgressIndicator.vue
-│   │       ├── chat/
-│   │       │   ├── ChatArea.vue
-│   │       │   ├── ChatHistory.vue
-│   │       │   ├── ChatInput.vue
-│   │       │   └── QuizAnswerInput.vue
-│   │       └── content/
-│   │           ├── FeedbackContent.vue
-│   │           ├── QuizContent.vue
-│   │           ├── SessionCompleteContent.vue
-│   │           └── TheoryContent.vue
+│   │   ├── auth/                  # 인증 관련 컴포넌트
+│   │   ├── common/                # 공통 컴포넌트
+│   │   ├── dashboard/             # 대시보드 관련 컴포넌트
+│   │   ├── diagnosis/             # 진단 관련 컴포넌트
+│   │   └── learning/              # 학습 관련 컴포넌트
 │   ├── main.js                    # Vue 앱 진입점
 │   ├── router/
-│   │   ├── authGuard.js           # ✅ 구현됨: 페이지별 접근 권한 제어 가드
-│   │   └── index.js               # ✅ 수정됨: 인증 가드 적용 및 라우트 보안 설정
+│   │   ├── authGuard.js           # 인증 가드
+│   │   └── index.js               # 라우터 설정
 │   ├── services/
-│   │   ├── api.js                 # ✅ 구현됨: HTTP 클라이언트 + 자동 토큰 갱신 인터셉터
-│   │   ├── authService.js         # ✅ 구현됨: 인증 관련 API (로그인/회원가입/중복확인)
-│   │   ├── dashboardService.js    # 대시보드 관련 API (미구현)
-│   │   ├── diagnosisService.js    # ✅ 구현됨: 진단 관련 API (완전 구현)
-│   │   └── learningService.js     # 학습 관련 API (미구현)
+│   │   ├── api.js                 # HTTP 클라이언트
+│   │   ├── authService.js         # 인증 관련 API
+│   │   ├── dashboardService.js    # 대시보드 관련 API
+│   │   ├── diagnosisService.js    # 진단 관련 API
+│   │   ├── index.js               # 서비스 통합 export
+│   │   └── learningService.js     # 학습 관련 API
 │   ├── stores/
-│   │   ├── authStore.js           # ✅ 구현됨: 인증 상태 관리 및 자동 토큰 갱신
-│   │   ├── dashboardStore.js      # 대시보드 상태 관리 (미구현)
-│   │   ├── diagnosisStore.js      # ✅ 구현됨: 진단 관련 상태 관리 (완전 구현)
+│   │   ├── authStore.js           # 인증 상태 관리
+│   │   ├── dashboardStore.js      # 대시보드 상태 관리
+│   │   ├── diagnosisStore.js      # 진단 상태 관리
 │   │   ├── index.js               # Pinia store 설정
-│   │   └── tutorStore.js          # 학습 세션 상태 관리 (미구현)
+│   │   └── tutorStore.js          # 학습 세션 상태 관리
 │   ├── styles/
-│   │   ├── components/
-│   │   │   ├── _buttons.scss
-│   │   │   ├── _cards.scss
-│   │   │   ├── _forms.scss
-│   │   │   └── _modals.scss
+│   │   ├── components/            # 컴포넌트별 스타일
+│   │   ├── pages/                 # 페이지별 스타일
 │   │   ├── main.scss              # 메인 스타일시트
-│   │   ├── mixins.scss            # SCSS 믹스인
-│   │   ├── pages/
-│   │   │   ├── _dashboard.scss
-│   │   │   ├── _diagnosis-result.scss # ✅ 신규: 진단 결과 페이지 스타일
-│   │   │   ├── _diagnosis.scss    # ✅ 신규: 진단 페이지 스타일
-│   │   │   ├── _learning.scss
-│   │   │   └── _login.scss
 │   │   └── variables.scss         # SCSS 변수
+│   ├── test-setup.js              # 테스트 설정 파일
 │   ├── utils/
 │   │   ├── constants.js           # 상수 정의
-│   │   ├── cookieUtils.js         # ✅ 구현됨: 쿠키 관리 유틸리티
-│   │   ├── formatters.js          # 데이터 포맷팅 함수
+│   │   ├── cookieUtils.js         # 쿠키 관리 유틸리티
+│   │   ├── formatting.js          # 데이터 포맷팅 함수
 │   │   ├── helpers.js             # 유틸리티 함수
-│   │   ├── tokenManager.js        # ✅ 구현됨: Access Token 관리 유틸리티
-│   │   └── validators.js          # 입력값 검증 함수
+│   │   ├── tokenManager.js        # Access Token 관리 유틸리티
+│   │   └── validation.js          # 입력값 검증 함수
 │   └── views/
+│       ├── __tests__/             # 뷰 테스트 파일
 │       ├── auth/                  # 인증 관련 페이지
-│       │   └── LoginPage.vue          # ✅ 구현됨: 통합 인증 페이지 (탭 기반 로그인/회원가입)
 │       ├── common/                # 공통 페이지
-│       │   ├── AboutView.vue          # 소개 페이지 (기본)
-│       │   └── HomeView.vue           # 홈 페이지 (기본)
 │       ├── dashboard/             # 대시보드 관련 페이지
-│       │   └── DashboardPage.vue      # 대시보드 페이지 (미구현)
 │       ├── diagnosis/             # 진단 관련 페이지
-│       │   ├── DiagnosisPage.vue      # ✅ 구현됨: 사용자 진단 페이지 (완전 구현)
-│       │   └── DiagnosisResultPage.vue # ✅ 신규: 진단 결과 및 유형 선택 페이지 (완전 구현)
 │       └── learning/              # 학습 관련 페이지
-│           └── LearningPage.vue       # 학습 진행 페이지 (미구현)
 ├── .env                           # 환경 변수
-├── .gitignore
-├── index.html                     # ✅ 수정됨: FontAwesome CDN 추가
-├── package.json                   # ✅ 수정됨: 새로운 의존성 추가 가능성
-├── README.md
+├── .gitignore                     # Git 무시 파일
+├── index.html                     # HTML 템플릿
+├── package-lock.json              # NPM 패키지 잠금 파일
+├── package.json                   # NPM 패키지 설정
+├── README.md                      # 프로젝트 설명
 └── vite.config.js                 # Vite 설정
 ```
 

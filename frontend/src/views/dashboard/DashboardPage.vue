@@ -1,5 +1,5 @@
 <!-- frontend/src/views/dashboard/DashboardPage.vue -->
-<!-- 대시보드 페이지 -->
+<!-- 대시보드 페이지 - 리팩터링 완료 -->
  
 <template>
   <div class="dashboard-page">
@@ -13,7 +13,7 @@
     </div>
 
     <div v-else class="dashboard-container">
-      <!-- 기존 템플릿 내용 유지 -->
+      <!-- 페이지 헤더 -->
       <div class="page-header">
         <div class="header-content">
           <div class="header-info">
@@ -38,6 +38,7 @@
         </div>
       </div>
 
+      <!-- 에러 알림 -->
       <div v-if="error" class="error-alert">
         <div class="alert alert-danger">
           <i class="fas fa-exclamation-triangle"></i>
@@ -50,9 +51,10 @@
         </div>
       </div>
 
-      <!-- 데이터가 있을 때만 렌더링 -->
+      <!-- 학습 현황 요약 -->
       <div v-if="dashboardData" class="learning-overview">
         <div class="overview-grid">
+          <!-- 진행률 카드 -->
           <div class="overview-card progress-card">
             <div class="card-header">
               <h3 class="card-title">
@@ -86,6 +88,7 @@
             </div>
           </div>
 
+          <!-- 통계 카드 -->
           <div class="overview-card stats-card">
             <div class="card-header">
               <h3 class="card-title">
@@ -121,156 +124,16 @@
         </div>
       </div>
 
-      <div v-if="dashboardData" class="chapter-section">
-        <div class="section-header">
-          <h2 class="section-title">
-            <i class="fas fa-list"></i>
-            챕터별 학습 현황
-          </h2>
-          <div class="section-controls">
-            <div class="chapter-summary">
-              <span class="summary-item completed">
-                <i class="fas fa-check-circle"></i>
-                완료: {{ dashboardData.completedChaptersCount }}개
-              </span>
-              <span class="summary-item total">
-                <i class="fas fa-book"></i>
-                전체: {{ dashboardData.totalChaptersCount }}개
-              </span>
-            </div>
-            <button
-              @click="toggleChapterList"
-              class="toggle-btn"
-              :class="{ 'expanded': isChapterListExpanded }"
-            >
-              <i class="fas fa-chevron-down"></i>
-              {{ isChapterListExpanded ? '접기' : '펼치기' }}
-            </button>
-          </div>
-        </div>
-
-        <div class="chapter-list">
-          <div
-            v-for="chapter in currentChapterList"
-            :key="chapter.chapter_number"
-            class="chapter-card"
-            :class="[
-              `status-${chapter.status}`,
-              { 'current': chapter.chapter_number === dashboardData.userProgress.current_chapter }
-            ]"
-          >
-            <!-- 기존 챕터 카드 내용 유지 -->
-            <div class="chapter-header">
-              <div class="chapter-info">
-                <div class="chapter-number">
-                  <span class="chapter-icon">{{ chapter.status_icon }}</span>
-                  <span class="chapter-text">{{ chapter.chapter_number }}챕터</span>
-                </div>
-                <h3 class="chapter-title">{{ chapter.chapter_title }}</h3>
-              </div>
-              <div class="chapter-status">
-                <span class="status-badge" :class="`badge-${chapter.status}`">
-                  {{ getStatusText(chapter.status) }}
-                </span>
-                <div v-if="chapter.formatted_completion_date" class="completion-date">
-                  <i class="fas fa-calendar-check"></i>
-                  {{ chapter.formatted_completion_date }}
-                </div>
-              </div>
-            </div>
-
-            <div v-if="chapter.sections && chapter.sections.length > 0" class="section-list">
-              <div
-                v-for="section in chapter.sections"
-                :key="`${chapter.chapter_number}-${section.section_number}`"
-                class="section-item"
-                :class="[
-                  `status-${section.status}`,
-                  {
-                    'current': chapter.chapter_number === dashboardData.userProgress.current_chapter &&
-                               section.section_number === dashboardData.userProgress.current_section
-                  }
-                ]"
-              >
-                <div class="section-info">
-                  <span class="section-icon">{{ section.status_icon }}</span>
-                  <span class="section-title">{{ section.section_title }}</span>
-                </div>
-                <div v-if="section.formatted_completion_date" class="section-date">
-                  {{ section.formatted_completion_date }}
-                </div>
-              </div>
-            </div>
-
-            <div class="chapter-actions">
-              <button
-                @click="goToLearningPage"
-                class="btn btn-primary start-learning-btn"
-              >
-                <i class="fas fa-play"></i>
-                학습 계속하기
-              </button>
-            </div>
-          </div>
-
-          <Transition name="chapter-expand">
-            <div v-show="isChapterListExpanded" class="expanded-chapters">
-              <div
-                v-for="chapter in otherChapterList"
-                :key="chapter.chapter_number"
-                class="chapter-card"
-                :class="[
-                  `status-${chapter.status}`,
-                  { 'current': chapter.chapter_number === dashboardData.userProgress.current_chapter }
-                ]"
-              >
-                <!-- 기존 확장 챕터 내용 유지 -->
-                <div class="chapter-header">
-                  <div class="chapter-info">
-                    <div class="chapter-number">
-                      <span class="chapter-icon">{{ chapter.status_icon }}</span>
-                      <span class="chapter-text">{{ chapter.chapter_number }}챕터</span>
-                    </div>
-                    <h3 class="chapter-title">{{ chapter.chapter_title }}</h3>
-                  </div>
-                  <div class="chapter-status">
-                    <span class="status-badge" :class="`badge-${chapter.status}`">
-                      {{ getStatusText(chapter.status) }}
-                    </span>
-                    <div v-if="chapter.formatted_completion_date" class="completion-date">
-                      <i class="fas fa-calendar-check"></i>
-                      {{ chapter.formatted_completion_date }}
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="chapter.sections && chapter.sections.length > 0" class="section-list">
-                  <div
-                    v-for="section in chapter.sections"
-                    :key="`${chapter.chapter_number}-${section.section_number}`"
-                    class="section-item"
-                    :class="[
-                      `status-${section.status}`,
-                      {
-                        'current': chapter.chapter_number === dashboardData.userProgress.current_chapter &&
-                                   section.section_number === dashboardData.userProgress.current_section
-                      }
-                    ]"
-                  >
-                    <div class="section-info">
-                      <span class="section-icon">{{ section.status_icon }}</span>
-                      <span class="section-title">{{ section.section_title }}</span>
-                    </div>
-                    <div v-if="section.formatted_completion_date" class="section-date">
-                      {{ section.formatted_completion_date }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </div>
+      <!-- 챕터 섹션 -->
+      <ChapterSection
+        v-if="dashboardData"
+        :chapter-status="dashboardData.chapterStatus"
+        :current-chapter="dashboardData.userProgress.current_chapter"
+        :current-section="dashboardData.userProgress.current_section"
+        :completed-count="dashboardData.completedChaptersCount"
+        :total-count="dashboardData.totalChaptersCount"
+        @start-learning="goToLearningPage"
+      />
     </div>
   </div>
 </template>
@@ -280,9 +143,14 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watchEffect } from 'vu
 import { useRouter } from 'vue-router'
 import { useDashboardStore } from '../../stores/dashboardStore'
 import { useAuthStore } from '../../stores/authStore'
+import ChapterSection from '../../components/dashboard/ChapterSection.vue'
 
 export default {
   name: 'DashboardPage',
+  
+  components: {
+    ChapterSection
+  },
   
   setup() {
     const router = useRouter()
@@ -294,7 +162,6 @@ export default {
     const isRefreshing = ref(false)
     const error = ref(null)
     const isInitialized = ref(false)
-    const isChapterListExpanded = ref(false)
     const dashboardData = ref(null)
 
     // 스토어 상태 안전하게 접근하기 위한 computed
@@ -324,32 +191,7 @@ export default {
       }
     })
 
-    // 계산된 속성
-    const currentChapterList = computed(() => {
-      if (!dashboardData.value?.chapterStatus || !Array.isArray(dashboardData.value.chapterStatus)) return []
-      return dashboardData.value.chapterStatus.filter(chapter => 
-        parseInt(chapter.chapter_number) === parseInt(dashboardData.value.userProgress.current_chapter)
-      )
-    })
-
-    const otherChapterList = computed(() => {
-      if (!dashboardData.value?.chapterStatus || !Array.isArray(dashboardData.value.chapterStatus)) return []
-      return dashboardData.value.chapterStatus.filter(chapter => 
-        parseInt(chapter.chapter_number) !== parseInt(dashboardData.value.userProgress.current_chapter)
-      )
-    })
-
     // 메서드들
-    const getStatusText = (status) => {
-      const statusMap = {
-        'completed': '완료',
-        'in_progress': '진행중',
-        'available': '시작 가능',
-        'locked': '잠김'
-      }
-      return statusMap[status] || '알 수 없음'
-    }
-
     const refreshDashboard = async () => {
       try {
         isRefreshing.value = true
@@ -371,10 +213,6 @@ export default {
       if (dashboardStore && typeof dashboardStore.clearError === 'function') {
         dashboardStore.clearError()
       }
-    }
-
-    const toggleChapterList = () => {
-      isChapterListExpanded.value = !isChapterListExpanded.value
     }
 
     const goToLearningPage = () => {
@@ -430,16 +268,11 @@ export default {
       isRefreshing,
       error,
       isInitialized,
-      isChapterListExpanded,
       dashboardData,
-      currentChapterList,
-      otherChapterList,
       
       // 메서드
-      getStatusText,
       refreshDashboard,
       clearError,
-      toggleChapterList,
       goToLearningPage
     }
   }
@@ -756,265 +589,6 @@ export default {
       gap: 0.5rem;
     }
   }
-}
-
-// 챕터 섹션
-.chapter-section {
-  margin-bottom: 3rem;
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-  }
-
-  .section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: $text-dark;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .section-controls {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-  }
-
-  .chapter-summary {
-    display: flex;
-    gap: 1rem;
-
-    .summary-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      
-      &.completed { color: $success; }
-      &.total { color: $secondary; }
-    }
-  }
-
-  .toggle-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: $gray-100;
-    border: 1px solid $gray-200;
-    border-radius: $border-radius-lg;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: $gray-700;
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: $gray-200;
-      border-color: $gray-300;
-    }
-
-    i {
-      transition: transform 0.3s ease;
-    }
-
-    &.expanded i {
-      transform: rotate(180deg);
-    }
-  }
-}
-
-// 챕터 카드
-.chapter-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-
-  .expanded-chapters {
-    margin-top: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.0rem;
-  }
-
-  .chapter-card {
-    background: $white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 20px rgba($black, 0.08);
-    overflow: hidden;
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent;
-    animation: fadeInUp 0.5s ease-out;
-
-    &:nth-child(2) { animation-delay: 0.1s; }
-    &:nth-child(3) { animation-delay: 0.2s; }
-    &:nth-child(4) { animation-delay: 0.3s; }
-    
-    &.current {
-      border-left-color: $brand-purple;
-      box-shadow: 0 8px 30px rgba($brand-purple, 0.15);
-    }
-    &.status-completed { border-left-color: $success; }
-    &.status-in_progress { border-left-color: $warning; }
-    &.status-locked { opacity: 0.6; }
-
-    .chapter-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.5rem;
-      border-bottom: 1px solid $gray-200;
-    }
-
-    .chapter-info {
-      flex: 1;
-    }
-
-    .chapter-number {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .chapter-icon {
-      font-size: 1.25rem;
-    }
-
-    .chapter-text {
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: $secondary;
-      text-transform: uppercase;
-    }
-
-    .chapter-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: $text-dark;
-      margin: 0;
-    }
-
-    .chapter-status {
-      text-align: right;
-    }
-
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: $border-radius-pill;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      margin-bottom: 0.5rem;
-      
-      &.badge-completed { background: lighten($success, 35%); color: darken($success, 20%); }
-      &.badge-in_progress { background: lighten($warning, 25%); color: darken($warning, 30%); }
-      &.badge-available { background: lighten($primary, 40%); color: darken($primary, 15%); }
-      &.badge-locked { background: $gray-100; color: $secondary; }
-    }
-
-    .completion-date {
-      font-size: 0.75rem;
-      color: $secondary;
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-  }
-}
-
-// 섹션 리스트
-.section-list {
-  padding: 1rem 1.5rem;
-  background: $gray-100;
-  border-bottom: 1px solid $gray-200;
-
-  .section-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid $gray-200;
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &.current {
-      background: rgba($brand-purple, 0.1);
-      margin: 0 -0.5rem;
-      padding: 0.5rem;
-      border-radius: $border-radius-lg;
-    }
-  }
-
-  .section-info {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex: 1;
-  }
-
-  .section-icon {
-    font-size: 0.875rem;
-  }
-
-  .section-title {
-    font-size: 0.875rem;
-    color: $gray-700;
-  }
-
-  .section-date {
-    font-size: 0.75rem;
-    color: $secondary;
-  }
-}
-
-// 챕터 액션
-.chapter-actions {
-  padding: 1.5rem;
-
-  .start-learning-btn {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border-radius: $border-radius-lg;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-    background: $brand-purple;
-    border: 1px solid $brand-purple;
-    color: $white;
-
-    &:hover:not(:disabled) {
-      background: darken($brand-purple, 10%);
-      border-color: darken($brand-purple, 10%);
-    }
-  }
-}
-
-// 챕터 목록 펼치기/접기 애니메이션
-.chapter-expand-enter-active,
-.chapter-expand-leave-active {
-  transition: all 0.4s ease;
-  max-height: 2000px;
-  overflow: hidden;
-}
-
-.chapter-expand-enter-from,
-.chapter-expand-leave-to {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-10px);
 }
 
 // 기타 유틸리티
