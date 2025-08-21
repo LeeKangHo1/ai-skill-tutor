@@ -1,8 +1,8 @@
 # backend/app/routes/diagnosis/submit.py
 
 from flask import Blueprint, request, jsonify
-from app.utils.database.connection import get_db_connection
-from app.utils.auth.jwt_handler import get_current_user_from_request
+from app.utils.database.connection import get_db_connection, fetch_one
+from app.utils.auth.jwt_handler import get_current_user_from_request, generate_access_token
 from app.utils.logging.logger import log_error
 from app.services.diagnosis_service import calculate_score, recommend_type_by_score, update_user_type_in_db
 
@@ -96,7 +96,7 @@ def submit_diagnosis():
 def select_user_type():
     """
     사용자 유형 선택 API
-    사용자가 최종 선택한 유형을 데이터베이스에 저장합니다.
+    사용자가 최종 선택한 유형을 데이터베이스에 저장하고 새로운 JWT 토큰을 발급합니다.
     """
     try:
         current_user = get_current_user_from_request()
@@ -134,6 +134,47 @@ def select_user_type():
                 }
             }), 500
 
+        # DB 업데이트 후 최신 사용자 정보로 새로운 JWT 토큰 생성
+        try:
+            # 데이터베이스에서 최신 사용자 정보 조회
+            updated_user = fetch_one(
+                """
+                SELECT user_id, login_id, user_type, diagnosis_completed 
+                FROM users 
+                WHERE user_id = %s
+                """,
+                (current_user['user_id'],)
+            )
+            
+            if not updated_user:
+                return jsonify({
+                    "success": False,
+                    "error": {
+                        "code": "USER_NOT_FOUND",
+                        "message": "사용자 정보를 찾을 수 없습니다."
+                    }
+                }), 404
+            
+            # 새로운 access_token 생성
+            token_data = {
+                'user_id': updated_user['user_id'],
+                'login_id': updated_user['login_id'],
+                'user_type': updated_user['user_type'],
+                'diagnosis_completed': bool(updated_user['diagnosis_completed'])
+            }
+            
+            new_access_token = generate_access_token(token_data)
+            
+        except Exception as token_error:
+            log_error(token_error, {"route": "/select-type", "action": "token_generation"})
+            return jsonify({
+                "success": False,
+                "error": {
+                    "code": "TOKEN_GENERATION_ERROR",
+                    "message": "토큰 생성 중 오류가 발생했습니다."
+                }
+            }), 500
+
         # 선택된 유형에 따른 정보 직접 반환
         type_info_map = {
             "beginner": {
@@ -150,9 +191,13 @@ def select_user_type():
             }
         }
 
+        # 응답에 새로운 access_token 포함
+        response_data = type_info_map[selected_type]
+        response_data['access_token'] = new_access_token
+
         return jsonify({
             "success": True,
-            "data": type_info_map[selected_type],
+            "data": response_data,
             "message": "사용자 유형이 성공적으로 설정되었습니다."
         }), 200
 

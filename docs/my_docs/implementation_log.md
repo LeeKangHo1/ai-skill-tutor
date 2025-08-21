@@ -1,5 +1,7 @@
 # 구현 로그 (Implementation Log)
 
+### frontend 폴더의 composable 관련 폴더와 파일 삭제
+
 ## 📋 향후 개발 지침 (2025년 8월 20일)
 
 ### frontend 폴더 .vue 파일 작성 지침

@@ -337,6 +337,21 @@ export const useAuthStore = defineStore('auth', {
     },
 
     /**
+     * 새로운 토큰으로 사용자 정보 업데이트
+     */
+    updateUserFromToken(newToken) {
+      if (newToken) {
+        const payload = tokenManager.parseToken(newToken)
+        if (payload && this.user) {
+          this.user.diagnosis_completed = payload.diagnosis_completed || false
+          this.user.user_type = payload.user_type || this.user.user_type
+          // localStorage도 업데이트
+          tokenManager.setUserInfo(this.user)
+        }
+      }
+    },
+
+    /**
      * 현재 챕터 업데이트
      */
     updateCurrentChapter(chapterNumber) {
