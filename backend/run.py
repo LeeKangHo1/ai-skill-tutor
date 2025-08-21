@@ -12,8 +12,9 @@ app = create_app(config_name)
 
 if __name__ == '__main__':
     # 개발 서버 실행
+    debug_mode = os.environ.get('FLASK_DEBUG', '1') == '1'
     app.run(
         host='0.0.0.0',  # 모든 인터페이스에서 접근 가능
         port=5000,       # 포트 5000 사용
-        debug=True       # 디버그 모드 활성화
+        debug=debug_mode  # 환경 변수에 따라 디버그 모드 설정
     )
