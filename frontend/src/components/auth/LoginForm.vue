@@ -8,7 +8,6 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="auth-form">
-      <!-- 로그인 ID 입력 -->
       <div class="form-group">
         <label for="loginId" class="form-label">
           로그인 ID
@@ -31,7 +30,6 @@
         </div>
       </div>
 
-      <!-- 비밀번호 입력 -->
       <div class="form-group">
         <label for="password" class="form-label">
           비밀번호
@@ -65,7 +63,6 @@
         </div>
       </div>
 
-      <!-- 로그인 유지 옵션 -->
       <div class="form-group">
         <div class="form-check">
           <input
@@ -81,13 +78,11 @@
         </div>
       </div>
 
-      <!-- 에러 메시지 표시 -->
       <div v-if="generalError" class="alert alert-danger" role="alert">
         <i class="fas fa-exclamation-circle"></i>
         {{ generalError }}
       </div>
 
-      <!-- 로그인 버튼 -->
       <button
         type="submit"
         class="btn btn-primary btn-block"
@@ -97,7 +92,6 @@
         {{ isLoading ? '로그인 중...' : '로그인' }}
       </button>
 
-      <!-- 추가 링크들 -->
       <div class="form-footer">
         <div class="link-group">
           <a href="#" class="auth-link" @click.prevent="$emit('forgot-password')">
@@ -276,30 +270,32 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+// 폼 레이아웃 및 헤더
 .login-form {
   max-width: 400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .form-header {
   text-align: center;
   margin-bottom: 2rem;
+
+  .form-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: $gray-900;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-subtitle {
+    color: $secondary;
+    margin-bottom: 0;
+  }
 }
 
-.form-title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
-}
-
-.form-subtitle {
-  color: #6c757d;
-  margin-bottom: 0;
-}
-
+// 공통 폼 스타일
 .auth-form {
   width: 100%;
 }
@@ -312,97 +308,101 @@ export default {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
-}
+  color: $gray-900;
 
-.required {
-  color: #dc3545;
+  .required {
+    color: $danger;
+  }
 }
 
 .form-control {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 0.375rem;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
   font-size: 1rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+  }
+
+  &.is-invalid {
+    border-color: $danger;
+  }
+
+  &:disabled {
+    background-color: $gray-100;
+    opacity: 0.65;
+  }
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.form-control.is-invalid {
-  border-color: #dc3545;
-}
-
-.form-control:disabled {
-  background-color: #f8f9fa;
-  opacity: 0.65;
-}
-
+// 비밀번호 입력창
 .password-input-wrapper {
   position: relative;
+
+  .password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: $secondary;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: color 0.15s ease-in-out;
+
+    &:hover:not(:disabled) {
+      color: $gray-900;
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
 }
 
-.password-toggle {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 0.25rem;
-  transition: color 0.15s ease-in-out;
-}
-
-.password-toggle:hover:not(:disabled) {
-  color: #333;
-}
-
-.password-toggle:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
+// 체크박스
 .form-check {
   display: flex;
   align-items: center;
+
+  .form-check-input {
+    margin-right: 0.5rem;
+  }
+
+  .form-check-label {
+    color: $secondary;
+    cursor: pointer;
+    margin-bottom: 0;
+  }
 }
 
-.form-check-input {
-  margin-right: 0.5rem;
-}
-
-.form-check-label {
-  color: #6c757d;
-  cursor: pointer;
-  margin-bottom: 0;
-}
-
+// 피드백 및 알림
 .invalid-feedback {
   display: block;
-  color: #dc3545;
+  color: $danger;
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 
 .alert {
   padding: 0.75rem 1rem;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   margin-bottom: 1rem;
+
+  &.alert-danger {
+    color: darken($danger, 25%);
+    background-color: lighten($danger, 35%);
+    border: 1px solid lighten($danger, 25%);
+  }
 }
 
-.alert-danger {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-}
-
+// 버튼
 .btn {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -410,30 +410,30 @@ export default {
   font-weight: 500;
   text-align: center;
   text-decoration: none;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.15s ease-in-out;
-}
 
-.btn-primary {
-  color: #fff;
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-}
+  &.btn-primary {
+    color: $white;
+    background-color: $primary;
+    border-color: $primary;
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #0b5ed7;
-  border-color: #0a58ca;
-}
+    &:hover:not(:disabled) {
+      background-color: darken($primary, 10%);
+      border-color: darken($primary, 10%);
+    }
 
-.btn-primary:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.btn-block {
-  width: 100%;
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+  
+  &.btn-block {
+    width: 100%;
+  }
 }
 
 .spinner-border-sm {
@@ -441,47 +441,38 @@ export default {
   height: 1rem;
 }
 
+// 폼 푸터
 .form-footer {
   margin-top: 1.5rem;
   text-align: center;
+
+  .link-group {
+    margin-bottom: 0.75rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .auth-link {
+    color: $primary;
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.5rem;
+
+    &:hover {
+      color: darken($primary, 10%);
+      text-decoration: underline;
+    }
+  }
 }
 
-.link-group {
-  margin-bottom: 0.75rem;
-}
-
-.link-group:last-child {
-  margin-bottom: 0;
-}
-
-.auth-link {
-  color: #0d6efd;
-  text-decoration: none;
-  font-weight: 500;
-  margin-left: 0.5rem;
-}
-
-.auth-link:hover {
-  color: #0b5ed7;
-  text-decoration: underline;
-}
-
+// 유틸리티
 .text-muted {
-  color: #6c757d;
+  color: $secondary;
 }
 
 .me-2 {
   margin-right: 0.5rem;
-}
-
-/* 반응형 디자인 */
-@media (max-width: 576px) {
-  .login-form {
-    padding: 1rem;
-  }
-  
-  .form-title {
-    font-size: 1.5rem;
-  }
 }
 </style>

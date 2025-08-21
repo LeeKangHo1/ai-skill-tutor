@@ -3,7 +3,6 @@
 
 <template>
   <div class="progress-container">
-    <!-- 진행률 텍스트 -->
     <div class="progress-text">
       <span class="current">{{ currentStep }}</span>
       <span class="separator">/</span>
@@ -11,7 +10,6 @@
       <span class="percentage">({{ percentage }}%)</span>
     </div>
     
-    <!-- 진행률 바 -->
     <div class="progress-bar">
       <div 
         class="progress-fill" 
@@ -19,7 +17,6 @@
       ></div>
     </div>
     
-    <!-- 단계별 점 표시 -->
     <div class="progress-dots" v-if="showDots">
       <div 
         v-for="(step, index) in totalSteps" 
@@ -84,11 +81,11 @@ export default {
     text-align: center;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
-    color: #666;
+    color: $secondary;
     
     .current {
       font-weight: bold;
-      color: #007bff;
+      color: $primary;
     }
     
     .separator {
@@ -104,14 +101,14 @@ export default {
   .progress-bar {
     width: 100%;
     height: 8px;
-    background-color: #e9ecef;
+    background-color: $gray-200;
     border-radius: 4px;
     overflow: hidden;
     margin-bottom: 1rem;
     
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+      background: linear-gradient(90deg, $primary 0%, darken($primary, 10%) 100%);
       border-radius: 4px;
       transition: width 0.3s ease;
     }
@@ -135,42 +132,27 @@ export default {
       transition: all 0.3s ease;
       
       &.completed {
-        background-color: #28a745;
-        color: white;
+        background-color: $success;
+        color: $white;
         
         &:hover {
-          background-color: #218838;
+          background-color: darken($success, 5%);
         }
       }
       
       &.current {
-        background-color: #007bff;
-        color: white;
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+        background-color: $primary;
+        color: $white;
+        box-shadow: 0 0 0 3px rgba($primary, 0.3);
       }
       
       &.pending {
-        background-color: #e9ecef;
-        color: #6c757d;
+        background-color: $gray-200;
+        color: $secondary;
         
         &:hover {
-          background-color: #dee2e6;
+          background-color: $gray-300;
         }
-      }
-    }
-  }
-}
-
-// 반응형 디자인
-@media (max-width: 768px) {
-  .progress-container {
-    .progress-dots {
-      gap: 0.3rem;
-      
-      .dot {
-        width: 28px;
-        height: 28px;
-        font-size: 0.75rem;
       }
     }
   }

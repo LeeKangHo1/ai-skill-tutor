@@ -8,7 +8,6 @@
     </div>
 
     <form @submit.prevent="handleSubmit" class="auth-form">
-      <!-- 로그인 ID 입력 -->
       <div class="form-group">
         <label for="loginId" class="form-label">
           로그인 ID
@@ -54,7 +53,6 @@
         </div>
       </div>
 
-      <!-- 사용자명 입력 -->
       <div class="form-group">
         <label for="username" class="form-label">
           사용자명
@@ -80,7 +78,6 @@
         </div>
       </div>
 
-      <!-- 이메일 입력 -->
       <div class="form-group">
         <label for="email" class="form-label">
           이메일
@@ -126,7 +123,6 @@
         </div>
       </div>
 
-      <!-- 비밀번호 입력 -->
       <div class="form-group">
         <label for="password" class="form-label">
           비밀번호
@@ -175,7 +171,6 @@
         </div>
       </div>
 
-      <!-- 비밀번호 확인 -->
       <div class="form-group">
         <label for="passwordConfirm" class="form-label">
           비밀번호 확인
@@ -212,7 +207,6 @@
         </div>
       </div>
 
-      <!-- 약관 동의 -->
       <div class="form-group">
         <div class="form-check">
           <input
@@ -235,13 +229,11 @@
         </div>
       </div>
 
-      <!-- 에러 메시지 표시 -->
       <div v-if="generalError" class="alert alert-danger" role="alert">
         <i class="fas fa-exclamation-circle"></i>
         {{ generalError }}
       </div>
 
-      <!-- 회원가입 버튼 -->
       <button
         type="submit"
         class="btn btn-primary btn-block"
@@ -251,15 +243,6 @@
         {{ isLoading ? '가입 중...' : '회원가입' }}
       </button>
 
-      <!-- 추가 링크들 -->
-      <div class="form-footer">
-        <div class="link-group">
-          <span class="text-muted">이미 계정이 있으신가요?</span>
-          <a href="#" class="auth-link" @click.prevent="$emit('switch-to-login')">
-            로그인
-          </a>
-        </div>
-      </div>
     </form>
   </div>
 </template>
@@ -622,30 +605,32 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+// 폼 레이아웃 및 헤더
 .register-form {
   max-width: 450px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .form-header {
   text-align: center;
   margin-bottom: 2rem;
+
+  .form-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: $gray-900;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-subtitle {
+    color: $secondary;
+    margin-bottom: 0;
+  }
 }
 
-.form-title {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
-}
-
-.form-subtitle {
-  color: #6c757d;
-  margin-bottom: 0;
-}
-
+// 공통 폼 스타일
 .auth-form {
   width: 100%;
 }
@@ -658,192 +643,178 @@ export default {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #333;
-}
+  color: $gray-900;
 
-.required {
-  color: #dc3545;
+  .required {
+    color: $danger;
+  }
 }
 
 .form-control {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 0.375rem;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
   font-size: 1rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+  }
+
+  &.is-invalid {
+    border-color: $danger;
+  }
+
+  &.is-valid {
+    border-color: $success;
+  }
+
+  &:disabled {
+    background-color: $gray-100;
+    opacity: 0.65;
+  }
 }
 
-.form-control:focus {
-  outline: none;
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.form-control.is-invalid {
-  border-color: #dc3545;
-}
-
-.form-control.is-valid {
-  border-color: #198754;
-}
-
-.form-control:disabled {
-  background-color: #f8f9fa;
-  opacity: 0.65;
-}
-
+// 중복 확인 버튼
 .input-with-check {
   position: relative;
+
+  .check-availability-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 0.25rem 0.5rem;
+    background: $gray-100;
+    border: 1px solid $border-color;
+    border-radius: $border-radius-sm;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+
+    &:hover:not(:disabled) {
+      background: $gray-200;
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    &.checking {
+      background: lighten($primary, 35%);
+    }
+  }
 }
 
-.check-availability-btn {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 0.25rem 0.5rem;
-  background: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-}
-
-.check-availability-btn:hover:not(:disabled) {
-  background: #e9ecef;
-}
-
-.check-availability-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.check-availability-btn.checking {
-  background: #e3f2fd;
-}
-
+// 비밀번호 입력창
 .password-input-wrapper {
   position: relative;
+
+  .password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: $secondary;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: color 0.15s ease-in-out;
+
+    &:hover:not(:disabled) {
+      color: $gray-900;
+    }
+
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
 }
 
-.password-toggle {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 0.25rem;
-  transition: color 0.15s ease-in-out;
-}
-
-.password-toggle:hover:not(:disabled) {
-  color: #333;
-}
-
-.password-toggle:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
+// 비밀번호 강도
 .password-strength {
   margin-top: 0.5rem;
+
+  .strength-meter {
+    height: 4px;
+    background-color: $gray-200;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+  }
+
+  .strength-bar {
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+    &.weak { background-color: $danger; }
+    &.medium { background-color: $warning; }
+    &.strong { background-color: $success; }
+  }
+
+  .strength-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    &.weak { color: $danger; }
+    &.medium { color: $warning; }
+    &.strong { color: $success; }
+  }
 }
 
-.strength-meter {
-  height: 4px;
-  background-color: #e9ecef;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 0.25rem;
-}
-
-.strength-bar {
-  height: 100%;
-  transition: width 0.3s ease-in-out;
-}
-
-.strength-bar.weak {
-  background-color: #dc3545;
-}
-
-.strength-bar.medium {
-  background-color: #ffc107;
-}
-
-.strength-bar.strong {
-  background-color: #198754;
-}
-
-.strength-text {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.strength-text.weak {
-  color: #dc3545;
-}
-
-.strength-text.medium {
-  color: #ffc107;
-}
-
-.strength-text.strong {
-  color: #198754;
-}
-
+// 체크박스
 .form-check {
   display: flex;
   align-items: flex-start;
+
+  .form-check-input {
+    margin-right: 0.5rem;
+    margin-top: 0.25rem;
+    &.is-invalid {
+      border-color: $danger;
+    }
+  }
+
+  .form-check-label {
+    color: $secondary;
+    cursor: pointer;
+    margin-bottom: 0;
+    line-height: 1.5;
+  }
+
+  .terms-link {
+    color: $primary;
+    text-decoration: none;
+
+    &:hover {
+      color: darken($primary, 10%);
+      text-decoration: underline;
+    }
+  }
 }
 
-.form-check-input {
-  margin-right: 0.5rem;
-  margin-top: 0.25rem;
-}
-
-.form-check-input.is-invalid {
-  border-color: #dc3545;
-}
-
-.form-check-label {
-  color: #6c757d;
-  cursor: pointer;
-  margin-bottom: 0;
-  line-height: 1.5;
-}
-
-.terms-link {
-  color: #0d6efd;
-  text-decoration: none;
-}
-
-.terms-link:hover {
-  color: #0b5ed7;
-  text-decoration: underline;
-}
-
+// 피드백 및 알림
 .invalid-feedback {
   display: block;
-  color: #dc3545;
+  color: $danger;
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 
 .valid-feedback {
   display: block;
-  color: #198754;
+  color: $success;
   font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 
 .check-required-feedback {
   display: block;
-  color: #fd7e14;
+  color: $warning;
   font-size: 0.875rem;
   margin-top: 0.25rem;
   font-weight: 500;
@@ -851,16 +822,17 @@ export default {
 
 .alert {
   padding: 0.75rem 1rem;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   margin-bottom: 1rem;
+
+  &.alert-danger {
+    color: darken($danger, 25%);
+    background-color: lighten($danger, 35%);
+    border: 1px solid lighten($danger, 25%);
+  }
 }
 
-.alert-danger {
-  color: #721c24;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-}
-
+// 버튼
 .btn {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -868,30 +840,30 @@ export default {
   font-weight: 500;
   text-align: center;
   text-decoration: none;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.15s ease-in-out;
-}
 
-.btn-primary {
-  color: #fff;
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-}
+  &.btn-primary {
+    color: $white;
+    background-color: $primary;
+    border-color: $primary;
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #0b5ed7;
-  border-color: #0a58ca;
-}
+    &:hover:not(:disabled) {
+      background-color: darken($primary, 10%);
+      border-color: darken($primary, 10%);
+    }
 
-.btn-primary:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.btn-block {
-  width: 100%;
+    &:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+  }
+  
+  &.btn-block {
+    width: 100%;
+  }
 }
 
 .spinner-border-sm {
@@ -899,51 +871,14 @@ export default {
   height: 1rem;
 }
 
+// 유틸리티
 .text-success {
-  color: #198754;
+  color: $success;
 }
-
-.form-footer {
-  margin-top: 1.5rem;
-  text-align: center;
-}
-
-.link-group {
-  margin-bottom: 0.75rem;
-}
-
-.link-group:last-child {
-  margin-bottom: 0;
-}
-
-.auth-link {
-  color: #0d6efd;
-  text-decoration: none;
-  font-weight: 500;
-  margin-left: 0.5rem;
-}
-
-.auth-link:hover {
-  color: #0b5ed7;
-  text-decoration: underline;
-}
-
 .text-muted {
-  color: #6c757d;
+  color: $secondary;
 }
-
 .me-2 {
   margin-right: 0.5rem;
-}
-
-/* 반응형 디자인 */
-@media (max-width: 576px) {
-  .register-form {
-    padding: 1rem;
-  }
-  
-  .form-title {
-    font-size: 1.5rem;
-  }
 }
 </style>

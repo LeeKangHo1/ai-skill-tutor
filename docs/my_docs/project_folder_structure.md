@@ -252,11 +252,6 @@ ai-skill-tutor-frontend/
 │   │           ├── QuizContent.vue
 │   │           ├── SessionCompleteContent.vue
 │   │           └── TheoryContent.vue
-│   ├── composables/
-│   │   ├── useApi.js              # API 호출 컴포저블 (미구현)
-│   │   ├── useAuth.js             # 인증 관련 컴포저블 (미구현)
-│   │   ├── useLearning.js         # 학습 세션 컴포저블 (미구현)
-│   │   └── useNotification.js     # 알림 컴포저블 (미구현)
 │   ├── main.js                    # Vue 앱 진입점
 │   ├── router/
 │   │   ├── authGuard.js           # ✅ 구현됨: 페이지별 접근 권한 제어 가드

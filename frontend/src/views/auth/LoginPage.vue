@@ -2,9 +2,7 @@
 
 <template>
   <div class="login-page">
-    <!-- 배경 및 레이아웃 -->
     <div class="page-container">
-      <!-- 왼쪽 브랜딩 영역 -->
       <div class="branding-section">
         <div class="branding-content">
           <div class="logo-container">
@@ -32,10 +30,8 @@
         </div>
       </div>
 
-      <!-- 오른쪽 폼 영역 -->
       <div class="form-section">
         <div class="form-container">
-          <!-- 탭 네비게이션 -->
           <div class="tab-navigation">
             <button
               type="button"
@@ -55,9 +51,7 @@
             </button>
           </div>
 
-          <!-- 폼 컨텐츠 -->
           <div class="form-content">
-            <!-- 로딩 오버레이 -->
             <div v-if="isPageLoading" class="loading-overlay">
               <div class="loading-spinner">
                 <div class="spinner-border text-primary" role="status">
@@ -67,7 +61,6 @@
               </div>
             </div>
 
-            <!-- 로그인 폼 -->
             <Transition name="fade" mode="out-in">
               <LoginForm
                 v-if="currentTab === 'login'"
@@ -78,7 +71,6 @@
               />
             </Transition>
 
-            <!-- 회원가입 폼 -->
             <Transition name="fade" mode="out-in">
               <RegisterForm
                 v-if="currentTab === 'register'"
@@ -94,7 +86,6 @@
       </div>
     </div>
 
-    <!-- 성공 알림 모달 -->
     <div v-if="showSuccessModal" class="modal-overlay" @click="closeSuccessModal">
       <div class="modal-content success-modal" @click.stop>
         <div class="modal-header">
@@ -118,7 +109,6 @@
       </div>
     </div>
 
-    <!-- 약관/개인정보처리방침 모달 -->
     <div v-if="showTermsModal" class="modal-overlay" @click="closeTermsModal">
       <div class="modal-content terms-modal" @click.stop>
         <div class="modal-header">
@@ -375,10 +365,11 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+// 페이지 전체 레이아웃
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $brand-gradient;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -390,161 +381,167 @@ export default {
   max-width: 1200px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 600px;
-  background: white;
+  height: 900px; // ✨ min-height에서 고정 height로 변경
+  background: $white;
   border-radius: 1rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  box-shadow: 0 20px 40px rgba($black, 0.1);
+  overflow: hidden; // ✨ 내용이 넘칠 경우를 대비해 추가
 }
 
+// 왼쪽 브랜딩 섹션
 .branding-section {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-  color: white;
+  background: linear-gradient(135deg, $brand-purple 0%, #7c3aed 100%);
+  color: $white;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 3rem;
+  // ✨ align-items: center 제거 -> padding으로 위치 고정
+  padding: 10rem 3rem; 
   position: relative;
-}
-
-.branding-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
-}
-
-.branding-content {
-  position: relative;
-  z-index: 1;
   text-align: center;
+
+  // 패턴 오버레이
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.3;
+  }
+
+  .branding-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo-container {
+    margin-bottom: 2rem;
+  }
+
+  .brand-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: rgba($white, 0.9);
+  }
+
+  .brand-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0;
+    line-height: 1.2;
+  }
+
+  .brand-description {
+    font-size: 1.25rem;
+    margin: 1.5rem 0 2.5rem;
+    opacity: 0.9;
+    line-height: 1.6;
+  }
+
+  .feature-list {
+    text-align: left;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+
+  .feature-icon {
+    margin-right: 0.75rem;
+    color: $success;
+    font-size: 1.25rem;
+  }
 }
 
-.logo-container {
-  margin-bottom: 2rem;
-}
-
-.brand-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.brand-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 0;
-  line-height: 1.2;
-}
-
-.brand-description {
-  font-size: 1.25rem;
-  margin: 1.5rem 0 2.5rem;
-  opacity: 0.9;
-  line-height: 1.6;
-}
-
-.feature-list {
-  text-align: left;
-  max-width: 300px;
-  margin: 0 auto;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-}
-
-.feature-icon {
-  margin-right: 0.75rem;
-  color: #10b981;
-  font-size: 1.25rem;
-}
-
+// 오른쪽 폼 섹션
 .form-section {
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 2rem;
+  // ✨ align-items: center 제거 -> padding으로 위치 고정
+  padding: 3rem 2rem;
   position: relative;
+
+  .form-container {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tab-navigation {
+    display: flex;
+    margin-bottom: 2rem;
+    background: $gray-100;
+    border-radius: $border-radius-lg;
+    padding: 0.25rem;
+  }
+
+  .tab-button {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: none;
+    border: none;
+    border-radius: $border-radius;
+    font-weight: 500;
+    color: $secondary;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+
+    &.active {
+      background: $white;
+      color: $primary;
+      box-shadow: 0 2px 4px rgba($black, 0.1);
+    }
+
+    &:hover:not(.active) {
+      color: $gray-700;
+      background: rgba($white, 0.5);
+    }
+  }
+
+  .form-content {
+    position: relative;
+    flex-grow: 1;
+  }
+
+  .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba($white, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: $border-radius-lg;
+  }
+
+  .loading-spinner {
+    text-align: center;
+  }
+
+  .loading-text {
+    margin-top: 1rem;
+    color: $secondary;
+    font-weight: 500;
+  }
+
+  .spinner-border {
+    width: 3rem;
+    height: 3rem;
+  }
 }
 
-.form-container {
-  width: 100%;
-  max-width: 450px;
-}
-
-.tab-navigation {
-  display: flex;
-  margin-bottom: 2rem;
-  background: #f8f9fa;
-  border-radius: 0.5rem;
-  padding: 0.25rem;
-}
-
-.tab-button {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  background: none;
-  border: none;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  color: #6c757d;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-}
-
-.tab-button.active {
-  background: white;
-  color: #0d6efd;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.tab-button:hover:not(.active) {
-  color: #495057;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.form-content {
-  position: relative;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-  border-radius: 0.5rem;
-}
-
-.loading-spinner {
-  text-align: center;
-}
-
-.loading-text {
-  margin-top: 1rem;
-  color: #6c757d;
-  font-weight: 500;
-}
-
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
-}
-
-/* 전환 애니메이션 */
+// 전환 애니메이션
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease-in-out;
@@ -555,14 +552,14 @@ export default {
   opacity: 0;
 }
 
-/* 모달 스타일 */
+// 모달 스타일
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba($black, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -571,87 +568,90 @@ export default {
 }
 
 .modal-content {
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 20px 40px rgba($black, 0.15);
   max-width: 500px;
   width: 100%;
   max-height: 80vh;
   overflow: hidden;
+
+  .modal-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0;
+    color: $gray-900;
+  }
+
+  .modal-body {
+    padding: 1rem 2rem;
+  }
+
+  .modal-footer {
+    padding: 1rem 2rem 2rem;
+    text-align: center;
+  }
 }
 
-.success-modal .modal-header {
-  text-align: center;
-  padding: 2rem 2rem 1rem;
+.success-modal {
+  .modal-header {
+    text-align: center;
+    padding: 2rem 2rem 1rem;
+  }
+
+  .success-icon {
+    font-size: 4rem;
+    color: $success;
+    margin-bottom: 1rem;
+  }
+
+  .user-info {
+    background: $gray-100;
+    padding: 1rem;
+    border-radius: $border-radius-lg;
+    margin-top: 1rem;
+
+    p {
+      margin-bottom: 0.5rem;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
 }
 
-.success-icon {
-  font-size: 4rem;
-  color: #10b981;
-  margin-bottom: 1rem;
+.terms-modal {
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem 1rem;
+    border-bottom: 1px solid $gray-200;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: $secondary;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    &:hover {
+      color: $gray-900;
+    }
+  }
+
+  .terms-content {
+    max-height: 400px;
+    overflow-y: auto;
+    white-space: pre-line;
+    line-height: 1.6;
+    color: $gray-700;
+  }
 }
 
-.modal-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0;
-  color: #333;
-}
-
-.modal-body {
-  padding: 1rem 2rem;
-}
-
-.user-info {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-top: 1rem;
-}
-
-.user-info p {
-  margin-bottom: 0.5rem;
-}
-
-.user-info p:last-child {
-  margin-bottom: 0;
-}
-
-.modal-footer {
-  padding: 1rem 2rem 2rem;
-  text-align: center;
-}
-
-.terms-modal .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 2rem 1rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #6c757d;
-  cursor: pointer;
-  padding: 0.25rem;
-  line-height: 1;
-}
-
-.modal-close:hover {
-  color: #333;
-}
-
-.terms-content {
-  max-height: 400px;
-  overflow-y: auto;
-  white-space: pre-line;
-  line-height: 1.6;
-  color: #555;
-}
-
+// 공통 버튼 스타일
 .btn {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -659,34 +659,33 @@ export default {
   font-weight: 500;
   text-align: center;
   text-decoration: none;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.15s ease-in-out;
 }
 
 .btn-primary {
-  color: #fff;
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-}
-
-.btn-primary:hover {
-  background-color: #0b5ed7;
-  border-color: #0a58ca;
+  color: $white;
+  background-color: $primary;
+  border-color: $primary;
+  &:hover {
+    background-color: darken($primary, 10%);
+    border-color: darken($primary, 10%);
+  }
 }
 
 .btn-secondary {
-  color: #fff;
-  background-color: #6c757d;
-  border-color: #6c757d;
+  color: $white;
+  background-color: $secondary;
+  border-color: $secondary;
+  &:hover {
+    background-color: darken($secondary, 10%);
+    border-color: darken($secondary, 10%);
+  }
 }
 
-.btn-secondary:hover {
-  background-color: #5c636a;
-  border-color: #565e64;
-}
-
+// 유틸리티
 .visually-hidden {
   position: absolute !important;
   width: 1px !important;
@@ -697,54 +696,5 @@ export default {
   clip: rect(0, 0, 0, 0) !important;
   white-space: nowrap !important;
   border: 0 !important;
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .page-container {
-    grid-template-columns: 1fr;
-    max-width: 100%;
-    margin: 0;
-    border-radius: 0;
-  }
-
-  .branding-section {
-    padding: 2rem 1rem;
-  }
-
-  .brand-title {
-    font-size: 2rem;
-  }
-
-  .brand-description {
-    font-size: 1.1rem;
-  }
-
-  .form-section {
-    padding: 1.5rem 1rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .login-page {
-    padding: 0;
-  }
-
-  .branding-section {
-    padding: 1.5rem 1rem;
-  }
-
-  .brand-title {
-    font-size: 1.75rem;
-  }
-
-  .feature-item {
-    font-size: 1rem;
-  }
-
-  .modal-content {
-    margin: 1rem;
-    max-width: calc(100% - 2rem);
-  }
 }
 </style>

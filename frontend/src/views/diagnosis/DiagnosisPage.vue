@@ -1,22 +1,19 @@
-<!-- frontend/src/views/DiagnosisPage.vue -->
+<!-- frontend/src/views/diagnosis/DiagnosisPage.vue -->
 <!-- 사용자 진단 페이지 -->
 
 <template>
   <div class="diagnosis-page">
     <div class="container">
-      <!-- 페이지 헤더 -->
       <div class="page-header">
         <h1>사용자 진단</h1>
         <p>몇 가지 질문을 통해 당신에게 맞는 학습 경로를 찾아드리겠습니다.</p>
       </div>
 
-      <!-- 로딩 상태 -->
       <div v-if="diagnosisStore.isLoading && !diagnosisStore.questions.length" class="loading-state">
         <div class="spinner"></div>
         <p>진단 문항을 불러오는 중...</p>
       </div>
 
-      <!-- 에러 상태 -->
       <div v-else-if="diagnosisStore.error" class="error-state">
         <div class="error-icon">⚠️</div>
         <h3>문제가 발생했습니다</h3>
@@ -24,13 +21,10 @@
         <button class="btn btn-primary" @click="retryLoad">다시 시도</button>
       </div>
 
-      <!-- 진단 진행 상태 -->
       <div v-else-if="diagnosisStore.questions.length > 0" class="diagnosis-content">
-        <!-- 진행률 표시 -->
         <ProgressBar :current-step="diagnosisStore.currentQuestionIndex + 1"
           :total-steps="diagnosisStore.totalQuestions" @go-to-step="goToQuestion" />
 
-        <!-- 현재 문항 -->
         <DiagnosisQuestion v-if="diagnosisStore.currentQuestion" :question="diagnosisStore.currentQuestion"
           :total-questions="diagnosisStore.totalQuestions" :existing-answer="getCurrentAnswer()"
           :is-first-question="diagnosisStore.currentQuestionIndex === 0"
@@ -144,9 +138,14 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .diagnosis-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $brand-gradient;
   padding: 2rem 0;
 
   .container {
@@ -157,7 +156,7 @@ export default {
 
   .page-header {
     text-align: center;
-    color: white;
+    color: $white;
     margin-bottom: 3rem;
 
     h1 {
@@ -175,17 +174,17 @@ export default {
 
   .loading-state,
   .error-state {
-    background: white;
+    background: $white;
     border-radius: 12px;
     padding: 3rem 2rem;
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba($black, 0.1);
 
     .spinner {
       width: 40px;
       height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007bff;
+      border: 4px solid $gray-200;
+      border-top-color: $primary;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto 1rem;
@@ -197,24 +196,22 @@ export default {
     }
 
     h3 {
-      color: #dc3545;
+      color: $danger;
       margin-bottom: 1rem;
     }
 
     p {
-      color: #6c757d;
+      color: $secondary;
       margin-bottom: 2rem;
     }
   }
 
   .diagnosis-content {
-    background: white;
+    background: $white;
     border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba($black, 0.1);
   }
-
-
 
   .btn {
     padding: 0.75rem 2rem;
@@ -225,54 +222,17 @@ export default {
     transition: all 0.3s ease;
 
     &.btn-primary {
-      background-color: #007bff;
-      color: white;
+      background-color: $primary;
+      color: $white;
 
       &:hover:not(:disabled) {
-        background-color: #0056b3;
+        background-color: darken($primary, 10%);
       }
     }
-
-
 
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-    }
-  }
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-// 반응형 디자인
-@media (max-width: 768px) {
-  .diagnosis-page {
-    padding: 1rem 0;
-
-    .page-header {
-      margin-bottom: 2rem;
-
-      h1 {
-        font-size: 2rem;
-      }
-
-      p {
-        font-size: 1rem;
-      }
-    }
-
-    .diagnosis-content,
-    .loading-state,
-    .error-state {
-      padding: 1.5rem 1rem;
     }
   }
 }

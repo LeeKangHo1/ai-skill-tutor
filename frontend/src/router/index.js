@@ -24,7 +24,8 @@ import LoginPage from '../views/auth/LoginPage.vue'
 import DiagnosisPage from '../views/diagnosis/DiagnosisPage.vue'
 import DiagnosisResultPage from '../views/diagnosis/DiagnosisResultPage.vue'
 import DashboardPage from '../views/dashboard/DashboardPage.vue'
-// import LearningPage from '../views/learning/LearningPage.vue'
+// ✨ 수정: LearningPage 컴포넌트 import 활성화
+import LearningPage from '../views/learning/LearningPage.vue'
 
 const routes = [
   // 홈 페이지 (누구나 접근 가능)
@@ -91,131 +92,33 @@ const routes = [
   },
 
   // 대시보드 (인증 + 진단 완료 필요)
-{
-  path: '/dashboard',
-  name: 'dashboard', 
-  component: DashboardPage,
-  beforeEnter: requireDiagnosis,
-  meta: {
-    title: '대시보드',
-    description: '학습 현황 대시보드',
-    requireAuth: true,
-    requireDiagnosis: true
-  }
-}
+  {
+    path: '/dashboard',
+    name: 'dashboard', 
+    component: DashboardPage,
+    beforeEnter: requireDiagnosis,
+    meta: {
+      title: '대시보드',
+      description: '학습 현황 대시보드',
+      requireAuth: true,
+      requireDiagnosis: true
+    }
+  },
 
+  // ✨ 수정: 학습 진행 페이지 경로 활성화
+  {
+    path: '/learning',
+    name: 'learning',
+    component: LearningPage,
+    beforeEnter: requireDiagnosis,
+    meta: {
+      title: '학습 진행',
+      description: '학습 세션 진행',
+      requireAuth: true,
+      requireDiagnosis: true
+    }
+  },
   
-  // ================== 향후 구현 예정 (주석 처리) ==================
-  
-  // 학습 진행 페이지 (인증 + 진단 완료 필요)
-  // {
-  //   path: '/learning',
-  //   name: 'learning',
-  //   component: LearningPage,
-  //   beforeEnter: requireDiagnosis,
-  //   meta: {
-  //     title: '학습 진행',
-  //     description: '학습 세션 진행',
-  //     requireAuth: true,
-  //     requireDiagnosis: true
-  //   }
-  // },
-
-  // 특정 챕터 학습 (챕터별 접근 권한)
-  // {
-  //   path: '/learning/chapter/:chapterNumber',
-  //   name: 'learning-chapter',
-  //   component: LearningPage,
-  //   beforeEnter: (to, from, next) => {
-  //     const chapterNumber = parseInt(to.params.chapterNumber)
-  //     return requireLearningAccess(chapterNumber)(to, from, next)
-  //   },
-  //   meta: {
-  //     title: '챕터 학습',
-  //     description: '특정 챕터 학습',
-  //     requireAuth: true,
-  //     requireDiagnosis: true
-  //   }
-  // },
-
-  // AI 입문자 전용 페이지 (향후 구현)
-  /*
-  {
-    path: '/beginner',
-    name: 'beginner-content',
-    component: () => import('../views/BeginnerContentPage.vue'),
-    beforeEnter: requireUserType('beginner'),
-    meta: {
-      title: 'AI 입문자 콘텐츠',
-      description: 'AI 입문자 전용 콘텐츠',
-      requireAuth: true,
-      requireDiagnosis: true,
-      requiredUserType: 'beginner'
-    }
-  },
-  */
-
-  // 실무 응용형 전용 페이지 (향후 구현)
-  /*
-  {
-    path: '/advanced',
-    name: 'advanced-content',
-    component: () => import('../views/AdvancedContentPage.vue'),
-    beforeEnter: requireUserType('advanced'),
-    meta: {
-      title: '실무 응용형 콘텐츠',
-      description: '실무 응용형 전용 콘텐츠',
-      requireAuth: true,
-      requireDiagnosis: true,
-      requiredUserType: 'advanced'
-    }
-  },
-  */
-
-  // 프로필 페이지 (향후 구현)
-  /*
-  {
-    path: '/profile',
-    name: 'profile',
-    component: () => import('../views/ProfilePage.vue'),
-    beforeEnter: requireAuth,
-    meta: {
-      title: '프로필',
-      description: '사용자 프로필 관리',
-      requireAuth: true,
-      requireDiagnosis: false
-    }
-  },
-  */
-
-  // 설정 페이지 (향후 구현)
-  /*
-  {
-    path: '/settings',
-    name: 'settings',
-    component: () => import('../views/SettingsPage.vue'),
-    beforeEnter: requireAuth,
-    meta: {
-      title: '설정',
-      description: '계정 설정',
-      requireAuth: true,
-      requireDiagnosis: false
-    }
-  },
-  */
-
-  // 404 에러 페이지 (향후 구현)
-  /*
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'not-found',
-    component: () => import('../views/NotFoundPage.vue'),
-    meta: {
-      title: '페이지를 찾을 수 없음',
-      description: '404 에러'
-    }
-  }
-  */
 ]
 
 const router = createRouter({

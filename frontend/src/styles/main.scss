@@ -1,25 +1,16 @@
 // frontend/src/styles/main.scss
 // AI 활용법 학습 튜터 메인 스타일시트
 
-// 변수 및 믹스인 import
-@import './variables.scss';
-@import './mixins.scss';
+// ✨ 1. 변수 및 믹스인 import (가장 먼저 선언)
+// variables.scss를 불러와 전역 변수를 사용할 수 있도록 합니다.
+@import 'variables'; 
 
-// 컴포넌트 스타일 import
+// ✨ 2. 컴포넌트 스타일 import
+// 필요한 컴포넌트 스타일만 가져옵니다.
 @import './components/buttons';
-@import './components/forms';
-@import './components/cards';
-@import './components/modals';
-@import './components/navigation';
-@import './components/alerts';
 
-// 페이지 스타일 import
-@import './pages/home';
-@import './pages/auth';
-@import './pages/dashboard';
-@import './pages/learning';
 
-// 전역 리셋 및 기본 스타일
+// ✨ 4. 전역 리셋 및 기본 스타일
 * {
   margin: 0;
   padding: 0;
@@ -29,8 +20,8 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
-  color: $text-color;
-  background-color: $background-color;
+  color: $text-dark; // $text-color -> $text-dark로 변경
+  background-color: $gray-100; // $background-color -> $gray-100으로 변경
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -46,8 +37,6 @@ h1 { font-size: 2.5rem; }
 h2 { font-size: 2rem; }
 h3 { font-size: 1.5rem; }
 h4 { font-size: 1.25rem; }
-h5 { font-size: 1.1rem; }
-h6 { font-size: 1rem; }
 
 p {
   margin-bottom: 1rem;
@@ -55,12 +44,12 @@ p {
 
 // 링크 스타일
 a {
-  color: $primary-color;
+  color: $primary; // $primary-color -> $primary로 변경
   text-decoration: none;
   transition: color 0.3s ease;
 
   &:hover {
-    color: darken($primary-color, 10%);
+    color: darken($primary, 10%); // $primary-color -> $primary로 변경
   }
 }
 
@@ -73,26 +62,9 @@ a {
 
 // 유틸리티 클래스
 .text-center { text-align: center; }
-.text-left { text-align: left; }
 .text-right { text-align: right; }
 
-.mb-1 { margin-bottom: 0.5rem; }
 .mb-2 { margin-bottom: 1rem; }
-.mb-3 { margin-bottom: 1.5rem; }
-.mb-4 { margin-bottom: 2rem; }
-
-.mt-1 { margin-top: 0.5rem; }
 .mt-2 { margin-top: 1rem; }
-.mt-3 { margin-top: 1.5rem; }
-.mt-4 { margin-top: 2rem; }
 
-// 반응형 유틸리티
-@media (max-width: 768px) {
-  .container {
-    padding: 0 15px;
-  }
-  
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.75rem; }
-  h3 { font-size: 1.25rem; }
-}
+// ✨ 반응형 유틸리티 코드 제거

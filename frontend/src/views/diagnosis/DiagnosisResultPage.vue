@@ -1,22 +1,19 @@
-<!-- frontend/src/views/DiagnosisResultPage.vue -->
+<!-- frontend/src/views/diagnosis/DiagnosisResultPage.vue -->
 <!-- 사용자 진단 결과 페이지 -->
 
 <template>
   <div class="diagnosis-result-page">
     <div class="container">
-      <!-- 페이지 헤더 -->
       <div class="page-header">
         <h1>진단 결과</h1>
         <p>당신에게 맞는 학습 유형을 선택해주세요.</p>
       </div>
       
-      <!-- 로딩 상태 -->
       <div v-if="diagnosisStore.isLoading" class="loading-state">
         <div class="spinner"></div>
         <p>결과를 처리 중입니다...</p>
       </div>
       
-      <!-- 에러 상태 -->
       <div v-else-if="diagnosisStore.error" class="error-state">
         <div class="error-icon">⚠️</div>
         <h3>알림</h3>
@@ -24,7 +21,6 @@
         <button class="btn btn-primary" @click="clearError">확인</button>
       </div>
       
-      <!-- 진단 결과가 없는 경우 -->
       <div v-else-if="!diagnosisStore.diagnosisResult" class="no-result-state">
         <div class="error-icon">❌</div>
         <h3>진단 결과를 찾을 수 없습니다</h3>
@@ -32,7 +28,6 @@
         <button class="btn btn-primary" @click="goBack">진단으로 돌아가기</button>
       </div>
       
-      <!-- 유형 선택 완료 상태 -->
       <div v-else-if="diagnosisStore.isCompleted" class="completion-state">
         <div class="completion-icon">🎉</div>
         <h2>유형 선택이 완료되었습니다!</h2>
@@ -53,7 +48,6 @@
         </div>
       </div>
       
-      <!-- 유형 선택 상태 -->
       <div v-else class="type-selection-content">
         <div class="result-summary">
           <h2>진단이 완료되었습니다!</h2>
@@ -291,9 +285,14 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .diagnosis-result-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: $brand-gradient;
   padding: 2rem 0;
   
   .container {
@@ -304,7 +303,7 @@ export default {
   
   .page-header {
     text-align: center;
-    color: white;
+    color: $white;
     margin-bottom: 3rem;
     
     h1 {
@@ -322,18 +321,24 @@ export default {
   
   .loading-state,
   .error-state,
-  .no-result-state {
-    background: white;
+  .no-result-state,
+  .completion-state,
+  .type-selection-content {
+    background: $white;
     border-radius: 12px;
     padding: 3rem 2rem;
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    
+    box-shadow: 0 10px 30px rgba($black, 0.1);
+  }
+
+  .loading-state,
+  .error-state,
+  .no-result-state {
     .spinner {
       width: 40px;
       height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007bff;
+      border: 4px solid $gray-200;
+      border-top-color: $primary;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto 1rem;
@@ -345,89 +350,75 @@ export default {
     }
     
     h3 {
-      color: #dc3545;
+      color: $danger;
       margin-bottom: 1rem;
     }
     
     p {
-      color: #6c757d;
+      color: $secondary;
       margin-bottom: 2rem;
     }
   }
   
   .completion-state {
-    background: white;
-    border-radius: 12px;
-    padding: 3rem 2rem;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    
     .completion-icon {
       font-size: 4rem;
       margin-bottom: 1rem;
     }
     
     h2 {
-      color: #28a745;
+      color: $success;
       margin-bottom: 2rem;
     }
     
     .result-card {
-      background: #f8f9fa;
+      background: $gray-100;
       border-radius: 8px;
       padding: 2rem;
       margin: 2rem 0;
       
       h3 {
         margin-bottom: 1rem;
-        color: #495057;
+        color: $gray-700;
       }
       
-      .user-type {
-        .type-badge {
-          display: inline-block;
-          padding: 0.5rem 1.5rem;
-          border-radius: 25px;
-          font-weight: bold;
-          font-size: 1.1rem;
-          
-          &.type-beginner {
-            background-color: #e3f2fd;
-            color: #1976d2;
-          }
-          
-          &.type-advanced {
-            background-color: #f3e5f5;
-            color: #7b1fa2;
-          }
+      .user-type .type-badge {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        border-radius: $border-radius-pill;
+        font-weight: bold;
+        font-size: 1.1rem;
+        
+        &.type-beginner {
+          background-color: lighten($primary, 35%);
+          color: darken($primary, 10%);
+        }
+        
+        &.type-advanced {
+          background-color: lighten($brand-purple, 35%);
+          color: darken($brand-purple, 10%);
         }
       }
     }
   }
   
   .type-selection-content {
-    background: white;
-    border-radius: 12px;
     padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    
+
     .result-summary {
-      text-align: center;
       margin-bottom: 2rem;
       
       h2 {
-        color: #28a745;
+        color: $success;
         margin-bottom: 1rem;
       }
       
-      .score-info {
-        p {
-          color: #6c757d;
-          font-size: 1.1rem;
-          
-          strong {
-            color: #495057;
-          }
+      .score-info p {
+        color: $secondary;
+        font-size: 1.1rem;
+        
+        strong {
+          color: $gray-700;
         }
       }
     }
@@ -437,29 +428,25 @@ export default {
       grid-template-columns: 1fr 1fr;
       gap: 1.5rem;
       margin-bottom: 2rem;
-      
-      @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-      }
     }
     
     .type-card {
-      border: 2px solid #e9ecef;
+      border: 2px solid $gray-200;
       border-radius: 12px;
       padding: 1.5rem;
       cursor: pointer;
       transition: all 0.3s ease;
       
       &:hover {
-        border-color: #007bff;
+        border-color: $primary;
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+        box-shadow: 0 8px 25px rgba($primary, 0.15);
       }
       
       &.selected {
-        border-color: #007bff;
-        background-color: #f8f9ff;
-        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.2);
+        border-color: $primary;
+        background-color: lighten($primary, 40%);
+        box-shadow: 0 8px 25px rgba($primary, 0.2);
       }
       
       .type-header {
@@ -470,26 +457,22 @@ export default {
         
         h3 {
           margin: 0;
-          color: #495057;
+          color: $gray-700;
           font-size: 1.2rem;
         }
         
-        .recommended-badge {
-          background-color: #28a745;
-          color: white;
+        .recommended-badge, .coming-soon-badge {
+          color: $white;
           padding: 0.25rem 0.75rem;
-          border-radius: 15px;
+          border-radius: $border-radius-pill;
           font-size: 0.8rem;
           font-weight: 600;
         }
-        
+
+        .recommended-badge { background-color: $success; }
         .coming-soon-badge {
-          background-color: #ffc107;
-          color: #212529;
-          padding: 0.25rem 0.75rem;
-          border-radius: 15px;
-          font-size: 0.8rem;
-          font-weight: 600;
+          background-color: $warning;
+          color: $gray-900;
         }
       }
       
@@ -499,14 +482,13 @@ export default {
           gap: 1rem;
           margin-bottom: 1rem;
           
-          .chapters,
-          .duration {
-            background-color: #f8f9fa;
+          .chapters, .duration {
+            background-color: $gray-100;
             padding: 0.5rem 1rem;
-            border-radius: 20px;
+            border-radius: $border-radius-pill;
             font-size: 0.9rem;
             font-weight: 500;
-            color: #495057;
+            color: $gray-700;
           }
         }
         
@@ -517,12 +499,12 @@ export default {
           
           li {
             padding: 0.25rem 0;
-            color: #6c757d;
+            color: $secondary;
             font-size: 0.9rem;
             
             &:before {
               content: "✓";
-              color: #28a745;
+              color: $success;
               font-weight: bold;
               margin-right: 0.5rem;
             }
@@ -536,7 +518,7 @@ export default {
         cursor: not-allowed;
         
         &:hover {
-          border-color: #e9ecef;
+          border-color: $gray-200;
           transform: none;
           box-shadow: none;
         }
@@ -547,14 +529,14 @@ export default {
           left: 0;
           right: 0;
           bottom: 0;
-          background-color: rgba(255, 255, 255, 0.8);
+          background-color: rgba($white, 0.8);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
           
           p {
-            color: #6c757d;
+            color: $secondary;
             font-weight: 600;
             margin: 0;
             text-align: center;
@@ -585,20 +567,20 @@ export default {
     transition: all 0.3s ease;
     
     &.btn-primary {
-      background-color: #007bff;
-      color: white;
+      background-color: $primary;
+      color: $white;
       
       &:hover:not(:disabled) {
-        background-color: #0056b3;
+        background-color: darken($primary, 10%);
       }
     }
     
     &.btn-secondary {
-      background-color: #6c757d;
-      color: white;
+      background-color: $secondary;
+      color: $white;
       
       &:hover:not(:disabled) {
-        background-color: #5a6268;
+        background-color: darken($secondary, 10%);
       }
     }
     
@@ -612,46 +594,6 @@ export default {
     display: flex;
     justify-content: center;
     gap: 1rem;
-  }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-// 반응형 디자인
-@media (max-width: 768px) {
-  .diagnosis-result-page {
-    padding: 1rem 0;
-    
-    .page-header {
-      margin-bottom: 2rem;
-      
-      h1 {
-        font-size: 2rem;
-      }
-      
-      p {
-        font-size: 1rem;
-      }
-    }
-    
-    .type-selection-content,
-    .completion-state,
-    .loading-state,
-    .error-state,
-    .no-result-state {
-      padding: 1.5rem 1rem;
-    }
-    
-    .selection-actions {
-      flex-direction: column;
-      
-      .btn {
-        width: 100%;
-      }
-    }
   }
 }
 </style>

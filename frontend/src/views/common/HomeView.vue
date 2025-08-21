@@ -3,6 +3,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 
 // 백엔드 연결 상태 확인용 반응형 데이터
 const backendStatus = ref('연결 확인 중...')
@@ -36,8 +37,10 @@ onMounted(async () => {
           개인화된 학습 경험을 통해 AI 활용 능력을 체계적으로 향상시켜보세요.
         </p>
         <div class="hero-actions">
-          <button class="btn btn-primary">학습 시작하기</button>
-          <button class="btn btn-secondary">더 알아보기</button>
+          <!-- ✨ router-link로 변경하고 to="/learning" 경로 추가 -->
+          <router-link to="/learning" class="btn btn-primary">학습 시작하기</router-link>
+          <!-- ✨ router-link로 변경하고 to="/about" 경로 추가 -->
+          <router-link to="/about" class="btn btn-secondary">더 알아보기</router-link>
         </div>
       </div>
     </section>
@@ -80,17 +83,18 @@ onMounted(async () => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .home-view {
   max-width: 100%;
 }
 
-/* 히어로 섹션 */
+// 히어로 섹션
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: $brand-gradient;
+  color: $white;
   padding: 4rem 2rem;
   text-align: center;
+  // App.vue의 padding을 고려하여 마진 조정
   margin: -2rem -20px 2rem -20px;
 }
 
@@ -132,133 +136,101 @@ onMounted(async () => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s;
+  text-decoration: none; // router-link 스타일 초기화
+
+  &.btn-primary {
+    background-color: $success;
+    color: $white;
+    &:hover {
+      background-color: darken($success, 10%);
+      transform: translateY(-2px);
+    }
+  }
+
+  &.btn-secondary {
+    // ✨ 요청사항 반영: 투명 버튼 -> 흰색 버튼으로 변경
+    background-color: $white;
+    color: $brand-gradient-start;
+    border: none;
+    &:hover {
+      background-color: $gray-200;
+      transform: translateY(-2px);
+    }
+  }
 }
 
-.btn-primary {
-  background-color: #28a745;
-  color: white;
-}
-
-.btn-primary:hover {
-  background-color: #218838;
-  transform: translateY(-2px);
-}
-
-.btn-secondary {
-  background-color: transparent;
-  color: white;
-  border: 2px solid white;
-}
-
-.btn-secondary:hover {
-  background-color: white;
-  color: #667eea;
-}
-
-/* 상태 섹션 */
+// 상태 섹션
 .status-section {
   margin: 2rem 0;
 }
 
 .status-card {
-  background: white;
+  background: $white;
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba($black, 0.1);
+
+  h3 {
+    margin-bottom: 1rem;
+    color: $text-dark;
+  }
+
+  .status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .status-label {
+    font-weight: 500;
+    color: $secondary;
+  }
+
+  .status-value {
+    font-weight: 600;
+    &.connected { color: $success; }
+    &.disconnected { color: $danger; }
+  }
 }
 
-.status-card h3 {
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.status-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.status-label {
-  font-weight: 500;
-  color: #6c757d;
-}
-
-.status-value {
-  font-weight: 600;
-}
-
-.status-value.connected {
-  color: #28a745;
-}
-
-.status-value.disconnected {
-  color: #dc3545;
-}
-
-/* 기능 섹션 */
+// 기능 섹션
 .features-section {
   margin: 3rem 0;
-}
 
-.features-section h2 {
-  text-align: center;
-  margin-bottom: 2rem;
-  color: #2c3e50;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-.feature-card {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: transform 0.3s;
-}
-
-.feature-card:hover {
-  transform: translateY(-5px);
-}
-
-.feature-card h3 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-}
-
-.feature-card p {
-  color: #6c757d;
-  line-height: 1.6;
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .hero-title {
-    font-size: 2rem;
+  h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: $text-dark;
   }
-  
-  .hero-subtitle {
-    font-size: 1.2rem;
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
   }
-  
-  .hero-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .btn {
-    width: 200px;
-  }
-  
-  .status-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
+
+  .feature-card {
+    background: $white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba($black, 0.1);
+    text-align: center;
+    transition: transform 0.3s;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
+
+    h3 {
+      color: $text-dark;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      color: $secondary;
+      line-height: 1.6;
+    }
   }
 }
 </style>

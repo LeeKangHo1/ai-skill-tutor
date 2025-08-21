@@ -1,9 +1,9 @@
 <!-- frontend/src/components/common/HeaderComponent.vue -->
+
 <template>
   <header class="header-component">
     <div class="container">
       <div class="header-content">
-        <!-- 로고 영역 -->
         <div class="logo-section">
           <router-link to="/" class="logo-link">
             <i class="fas fa-robot logo-icon"></i>
@@ -11,7 +11,6 @@
           </router-link>
         </div>
 
-        <!-- 네비게이션 영역 -->
         <nav class="navigation">
           <router-link to="/" class="nav-link">홈</router-link>
           <router-link to="/about" class="nav-link">소개</router-link>
@@ -25,7 +24,6 @@
           </template>
         </nav>
 
-        <!-- 사용자 메뉴 영역 -->
         <div class="user-menu">
           <div v-if="isAuthenticated" class="user-info">
             <span class="user-name">{{ userName }}</span>
@@ -75,8 +73,8 @@ const handleLogout = async () => {
 
 <style lang="scss" scoped>
 .header-component {
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: $header-gradient;
+  box-shadow: 0 2px 10px rgba($black, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -99,12 +97,12 @@ const handleLogout = async () => {
       display: flex;
       align-items: center;
       text-decoration: none;
-      color: white;
+      color: $white;
 
       .logo-icon {
         font-size: 1.8rem;
         margin-right: 0.5rem;
-        color: #3498db;
+        color: $brand-blue;
       }
 
       .logo-text {
@@ -119,7 +117,7 @@ const handleLogout = async () => {
     gap: 1.5rem;
 
     .nav-link {
-      color: white;
+      color: $white;
       text-decoration: none;
       padding: 0.5rem 1rem;
       border-radius: 6px;
@@ -127,12 +125,12 @@ const handleLogout = async () => {
       font-weight: 500;
 
       &:hover {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba($white, 0.1);
         transform: translateY(-1px);
       }
 
       &.router-link-active {
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: rgba($white, 0.2);
         font-weight: 600;
       }
     }
@@ -143,7 +141,7 @@ const handleLogout = async () => {
       display: flex;
       align-items: center;
       gap: 1rem;
-      color: white;
+      color: $white;
 
       .user-name {
         font-weight: 500;
@@ -151,16 +149,16 @@ const handleLogout = async () => {
 
       .logout-btn {
         background: none;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
+        border: 1px solid rgba($white, 0.3);
+        color: $white;
         padding: 0.25rem 0.75rem;
         border-radius: 4px;
         cursor: pointer;
         transition: all 0.2s;
 
         &:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.5);
+          background-color: rgba($white, 0.1);
+          border-color: rgba($white, 0.5);
         }
       }
     }
@@ -175,47 +173,16 @@ const handleLogout = async () => {
         text-decoration: none;
         font-weight: 500;
         transition: all 0.2s;
-
-        &.btn-outline {
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-
-          &:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.5);
-          }
-        }
-
+        
         &.btn-primary {
-          background-color: #3498db;
-          color: white;
-          border: 1px solid #3498db;
+          background-color: $brand-blue;
+          color: $white;
+          border: 1px solid $brand-blue;
 
           &:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
+            background-color: darken($brand-blue, 10%);
+            border-color: darken($brand-blue, 10%);
           }
-        }
-      }
-    }
-  }
-}
-
-// 반응형 디자인
-@media (max-width: 768px) {
-  .header-component {
-    .navigation {
-      display: none;
-    }
-
-    .user-menu {
-      .auth-buttons {
-        flex-direction: column;
-        gap: 0.25rem;
-
-        .btn {
-          padding: 0.25rem 0.75rem;
-          font-size: 0.875rem;
         }
       }
     }

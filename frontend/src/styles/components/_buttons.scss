@@ -3,67 +3,75 @@
 
 // 기본 버튼 스타일
 .btn {
-  @include button-style($primary-color);
+  // @include button-style($primary); // 믹스인이 있다면 변수명 변경
   display: inline-flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: 0.5rem; // $spacing-sm 대체
   text-decoration: none;
-  font-size: $font-size-base;
+  font-size: 1rem; // $font-size-base 대체
   line-height: 1.5;
+  padding: 0.75rem 1.5rem; // 기본 패딩 추가
+  border-radius: $border-radius;
+  border: 1px solid transparent;
+  cursor: pointer;
   
   // 버튼 크기 변형
   &.btn-sm {
-    padding: $spacing-xs $spacing-sm;
-    font-size: $font-size-sm;
+    padding: 0.25rem 0.5rem; // $spacing-xs $spacing-sm 대체
+    font-size: 0.875rem; // $font-size-sm 대체
   }
   
   &.btn-lg {
-    padding: $spacing-md $spacing-lg;
-    font-size: $font-size-lg;
+    padding: 1rem 1.5rem; // $spacing-md $spacing-lg 대체
+    font-size: 1.25rem; // $font-size-lg 대체
   }
   
-  // 버튼 색상 변형
+  // ✨ 버튼 색상 변형 (변수명 표준에 맞게 수정)
+  &.btn-primary {
+    background-color: $primary;
+    color: $white;
+    &:hover { background-color: darken($primary, 10%); }
+  }
+
   &.btn-secondary {
-    @include button-style($secondary-color);
+    background-color: $secondary;
+    color: $white;
+    &:hover { background-color: darken($secondary, 10%); }
   }
   
   &.btn-success {
-    @include button-style($success-color);
+    background-color: $success;
+    color: $white;
+    &:hover { background-color: darken($success, 10%); }
   }
   
   &.btn-danger {
-    @include button-style($danger-color);
+    background-color: $danger;
+    color: $white;
+    &:hover { background-color: darken($danger, 10%); }
   }
   
   &.btn-warning {
-    @include button-style($warning-color, $gray-800);
+    background-color: $warning;
+    color: $gray-900;
+     &:hover { background-color: darken($warning, 10%); }
   }
   
   &.btn-info {
-    @include button-style($info-color);
+    background-color: $info;
+    color: $white;
+     &:hover { background-color: darken($info, 10%); }
   }
   
   // 아웃라인 버튼
   &.btn-outline {
     background-color: transparent;
-    color: $primary-color;
-    border: 2px solid $primary-color;
+    color: $primary;
+    border: 2px solid $primary;
     
     &:hover {
-      background-color: $primary-color;
+      background-color: $primary;
       color: $white;
-    }
-  }
-  
-  // 텍스트 버튼
-  &.btn-text {
-    background-color: transparent;
-    color: $primary-color;
-    box-shadow: none;
-    
-    &:hover {
-      background-color: rgba($primary-color, 0.1);
-      transform: none;
     }
   }
   
@@ -71,21 +79,6 @@
   &.btn-block {
     width: 100%;
     justify-content: center;
-  }
-  
-  // 로딩 상태
-  &.btn-loading {
-    position: relative;
-    color: transparent;
-    
-    &::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      @include loading-spinner(16px, $white);
-    }
   }
 }
 

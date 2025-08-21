@@ -3,14 +3,11 @@
 
 <template>
   <div class="diagnosis-question">
-    <!-- 문항 내용 -->
     <div class="question-content">
       <h3>{{ question.question_text }}</h3>
     </div>
     
-    <!-- 답변 선택 영역 -->
     <div class="answer-options">
-      <!-- 단일 선택 문항 -->
       <div 
         v-if="question.question_type === 'single_choice'"
         class="single-choice-options"
@@ -39,7 +36,6 @@
       </div>
     </div>
     
-    <!-- 네비게이션 버튼 -->
     <div class="navigation-buttons">
       <button 
         class="btn btn-secondary"
@@ -177,7 +173,7 @@ export default {
     h3 {
       font-size: 1.3rem;
       font-weight: 600;
-      color: #212529;
+      color: $gray-900;
       line-height: 1.4;
       margin: 0;
     }
@@ -191,19 +187,19 @@ export default {
       align-items: center;
       padding: 1rem;
       margin-bottom: 0.5rem;
-      border: 2px solid #e9ecef;
+      border: 2px solid $gray-200;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
       
       &:hover {
-        border-color: #007bff;
-        background-color: #f8f9fa;
+        border-color: $primary;
+        background-color: $gray-100;
       }
       
       &.selected {
-        border-color: #007bff;
-        background-color: #e3f2fd;
+        border-color: $primary;
+        background-color: lighten($primary, 35%);
       }
       
       .option-radio {
@@ -219,7 +215,7 @@ export default {
           display: block;
           width: 20px;
           height: 20px;
-          border: 2px solid #dee2e6;
+          border: 2px solid $gray-300;
           border-radius: 50%;
           position: relative;
           cursor: pointer;
@@ -233,7 +229,7 @@ export default {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background-color: #007bff;
+            background-color: $primary;
             opacity: 0;
             transition: opacity 0.3s ease;
           }
@@ -247,7 +243,7 @@ export default {
       .option-text {
         flex: 1;
         font-size: 1rem;
-        color: #495057;
+        color: $gray-700;
       }
     }
   }
@@ -266,44 +262,26 @@ export default {
       transition: all 0.3s ease;
       
       &.btn-secondary {
-        background-color: #6c757d;
-        color: white;
+        background-color: $secondary;
+        color: $white;
         
         &:hover:not(:disabled) {
-          background-color: #5a6268;
+          background-color: darken($secondary, 10%);
         }
       }
       
       &.btn-primary {
-        background-color: #007bff;
-        color: white;
+        background-color: $primary;
+        color: $white;
         
         &:hover:not(:disabled) {
-          background-color: #0056b3;
+          background-color: darken($primary, 10%);
         }
       }
       
       &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
-      }
-    }
-  }
-}
-
-// 반응형 디자인
-@media (max-width: 768px) {
-  .diagnosis-question {
-    padding: 1rem;
-    
-    .question-content h3 {
-      font-size: 1.1rem;
-    }
-    
-    .navigation-buttons {
-      .btn {
-        padding: 0.6rem 1.5rem;
-        font-size: 0.9rem;
       }
     }
   }

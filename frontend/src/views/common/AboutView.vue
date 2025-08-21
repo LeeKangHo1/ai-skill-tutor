@@ -86,17 +86,18 @@
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .about-view {
   max-width: 100%;
 }
 
-/* 소개 섹션 */
+// 소개 섹션
 .intro-section {
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  color: white;
+  background: $header-gradient;
+  color: $white;
   padding: 4rem 2rem;
   text-align: center;
+  // App.vue의 padding을 고려하여 마진 조정
   margin: -2rem -20px 3rem -20px;
 }
 
@@ -117,119 +118,97 @@
   line-height: 1.6;
 }
 
-/* 프로젝트 정보 섹션 */
+// 프로젝트 정보 섹션
 .project-info {
   margin: 3rem 0;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
 }
 
 .info-card {
-  background: white;
+  background: $white;
   border-radius: 8px;
   padding: 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba($black, 0.1);
   transition: transform 0.3s;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  h3 {
+    color: $text-dark;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+  }
+
+  p {
+    color: $secondary;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+
+  ul {
+    color: $secondary;
+    line-height: 1.8;
+    padding-left: 1.2rem;
+    margin-bottom: 0;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+  }
 }
 
-.info-card:hover {
-  transform: translateY(-5px);
-}
-
-.info-card h3 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  font-size: 1.3rem;
-}
-
-.info-card p {
-  color: #6c757d;
-  line-height: 1.6;
-  margin-bottom: 0;
-}
-
-.info-card ul {
-  color: #6c757d;
-  line-height: 1.8;
-  padding-left: 1.2rem;
-}
-
-.info-card li {
-  margin-bottom: 0.5rem;
-}
-
-/* 학습 플로우 섹션 */
+// 학습 플로우 섹션
 .learning-flow {
   margin: 4rem 0;
-}
 
-.learning-flow h2 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 3rem;
-  font-size: 2rem;
-}
-
-.flow-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-}
-
-.step {
-  text-align: center;
-  padding: 2rem 1rem;
-}
-
-.step-number {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 0 auto 1rem auto;
-}
-
-.step h4 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  font-size: 1.2rem;
-}
-
-.step p {
-  color: #6c757d;
-  line-height: 1.6;
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .page-title {
+  h2 {
+    text-align: center;
+    color: $text-dark;
+    margin-bottom: 3rem;
     font-size: 2rem;
   }
-  
-  .page-subtitle {
-    font-size: 1rem;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
+
   .flow-steps {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
   }
-  
-  .intro-section {
+
+  .step {
+    text-align: center;
     padding: 2rem 1rem;
+  }
+
+  .step-number {
+    width: 60px;
+    height: 60px;
+    background: $brand-gradient;
+    color: $white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto 1rem auto;
+  }
+
+  .step h4 {
+    color: $text-dark;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+  }
+
+  .step p {
+    color: $secondary;
+    line-height: 1.6;
   }
 }
 </style>
