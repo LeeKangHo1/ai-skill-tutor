@@ -161,10 +161,7 @@ class EvaluationFeedbackAgent:
                 quiz_data, user_answer, is_correct, user_type
             )
             
-            # 3. 점수를 100점 만점으로 변환 (1점이면 100점, 0점이면 0점)
-            final_score = 100 if score >= 1 else 0
-            
-            return final_score, feedback_text
+            return score, feedback_text
             
         except Exception as e:
             self.logger.error(f"객관식 처리 중 오류: {str(e)}")
@@ -206,8 +203,7 @@ class EvaluationFeedbackAgent:
         # 1. 평가 결과 업데이트 (v2.0 전용 메서드 사용)
         quiz_type = state["quiz_type"]
         if quiz_type == "multiple_choice":
-            # 객관식: 100점이면 정답 (이미 _process_multiple_choice에서 100점 만점으로 변환됨)
-            is_correct = score >= 100  # 100점이면 정답
+            is_correct = score >= 1  # 1점이면 정답
             updated_state = state_manager.update_evaluation_result(
                 state,
                 is_correct=is_correct,
