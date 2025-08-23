@@ -37,7 +37,7 @@
         class="quiz-option"
         :class="{ 
           'selected': selectedAnswer === option.value,
-          'disabled': isLoading || isSubmitted
+          'disabled': isOverallLoading || isSubmitted
         }"
         @click="selectOption(option.value)"
       >
@@ -61,7 +61,7 @@
         ref="subjectiveInputRef"
         class="subjective-input"
         :placeholder="subjectivePlaceholder"
-        :disabled="isLoading || isSubmitted"
+        :disabled="isOverallLoading || isSubmitted"
         rows="4"
         maxlength="500"
       ></textarea>
@@ -83,21 +83,21 @@
       <button 
         class="btn btn-secondary hint-btn"
         @click="requestHint"
-        :disabled="isLoading || hintUsed"
+        :disabled="isOverallLoading || hintUsed"
         v-if="!isSubmitted"
       >
         <span v-if="hintUsed">✅ 힌트 사용됨</span>
-        <span v-else-if="isLoading">⏳ 로딩중...</span>
+        <span v-else-if="isOverallLoading">⏳ 로딩중...</span>
         <span v-else>💡 힌트</span>
       </button>
       
       <button 
         class="btn btn-primary submit-btn"
         @click="submitAnswer"
-        :disabled="!canSubmit || isLoading"
+        :disabled="!canSubmit || isOverallLoading"
         v-if="!isSubmitted"
       >
-        <span v-if="isLoading" class="button-spinner"></span>
+        <span v-if="isOverallLoading" class="button-spinner"></span>
         <span v-else>{{ submitButtonText }}</span>
       </button>
 
@@ -109,6 +109,45 @@
         <button 
           class="btn btn-outline"
           @click="resetQuiz"
+          v-if="allowRetry && !showEvaluationResult"
+        >
+          🔄 다시 풀기
+        </button>
+      </div>
+    </div>
+
+    <!-- 평가 결과 표시 -->
+    <div v-if="showEvaluationResult && evaluationResult" class="evaluation-result">
+      <div class="result-header">
+        <div class="result-status" :class="{ 'correct': evaluationResult.is_correct, 'incorrect': !evaluationResult.is_correct }">
+          <span class="result-icon">
+            {{ evaluationResult.is_correct ? '✅' : '❌' }}
+          </span>
+          <span class="result-text">
+            {{ evaluationResult.is_correct ? '정답입니다!' : '틀렸습니다.' }}
+          </span>
+          <span class="result-score" v-if="evaluationResult.score !== undefined">
+            ({{ evaluationResult.score }}점)
+          </span>
+        </div>
+      </div>
+      
+      <div class="result-content">
+        <div v-if="evaluationResult.feedback" class="result-feedback">
+          <div class="feedback-label">피드백</div>
+          <div class="feedback-text">{{ evaluationResult.feedback }}</div>
+        </div>
+        
+        <div v-if="evaluationResult.explanation" class="result-explanation">
+          <div class="explanation-label">해설</div>
+          <div class="explanation-text">{{ evaluationResult.explanation }}</div>
+        </div>
+      </div>
+      
+      <div class="result-actions">
+        <button 
+          class="btn btn-outline"
+          @click="resetQuiz"
           v-if="allowRetry"
         >
           🔄 다시 풀기
@@ -117,7 +156,7 @@
     </div>
 
     <!-- 추가 정보 -->
-    <div class="quiz-footer" v-if="showFooter">
+    <div class="quiz-footer" v-if="showFooter && !showEvaluationResult">
       <div class="quiz-tips">
         <div class="tip-item">
           <span class="tip-icon">⚠️</span>
@@ -134,6 +173,12 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, defineProps, defineEmits } from 'vue'
+import { useLearningStore } from '../../stores/learningStore.js'
+import { useTutorStore } from '../../stores/tutorStore.js'
+
+// Store 인스턴스
+const learningStore = useLearningStore()
+const tutorStore = useTutorStore()
 
 // Props 정의
 const props = defineProps({
@@ -174,7 +219,7 @@ const props = defineProps({
 })
 
 // Emits 정의
-const emit = defineEmits(['submit-answer', 'request-hint', 'quiz-reset'])
+const emit = defineEmits(['submit-answer', 'request-hint', 'quiz-reset', 'evaluation-complete'])
 
 // 반응형 상태
 const selectedAnswer = ref('')
@@ -184,6 +229,11 @@ const currentHint = ref('')
 const hintUsed = ref(false)
 const isSubmitted = ref(false)
 const subjectiveInputRef = ref(null)
+
+// API 연동 상태
+const isSubmitting = ref(false)
+const evaluationResult = ref(null)
+const showEvaluationResult = ref(false)
 
 // 컴퓨티드 속성들
 const progressText = computed(() => 
@@ -232,7 +282,7 @@ const subjectivePlaceholder = computed(() =>
 )
 
 const canSubmit = computed(() => {
-  if (props.isLoading || isSubmitted.value) return false
+  if (props.isLoading || isSubmitted.value || isSubmitting.value || learningStore.isLoading) return false
   
   if (props.quizData.type === 'multiple_choice') {
     return selectedAnswer.value !== ''
@@ -244,33 +294,54 @@ const canSubmit = computed(() => {
 })
 
 const submitButtonText = computed(() => {
+  if (isSubmitting.value || learningStore.isLoading) {
+    return '제출 중...'
+  }
+  
   if (props.quizData.type === 'subjective') {
     return '답안 제출'
   }
   return '정답 제출'
 })
 
+// 전체 로딩 상태 (props와 store 상태 통합)
+const isOverallLoading = computed(() => {
+  return props.isLoading || learningStore.isLoading || isSubmitting.value
+})
+
 // 이벤트 핸들러들
 const selectOption = (value) => {
-  if (props.isLoading || isSubmitted.value) return
+  if (isOverallLoading.value || isSubmitted.value) return
   
   selectedAnswer.value = selectedAnswer.value === value ? '' : value
 }
 
 const requestHint = () => {
-  if (props.isLoading || hintUsed.value) return
+  if (props.isLoading || hintUsed.value || learningStore.isLoading) return
   
+  console.log('힌트 요청')
   hintUsed.value = true
   
   if (props.quizData.hint) {
     currentHint.value = props.quizData.hint
     showHint.value = true
+    
+    // 힌트 사용을 tutorStore를 통해 채팅에 기록
+    tutorStore.addChatMessage({
+      sender: '튜터',
+      message: `💡 힌트: ${props.quizData.hint}`,
+      type: 'hint',
+      timestamp: new Date()
+    })
   }
   
-  emit('request-hint')
+  emit('request-hint', {
+    hint: props.quizData.hint,
+    questionNumber: props.currentQuestionNumber
+  })
 }
 
-const submitAnswer = () => {
+const submitAnswer = async () => {
   if (!canSubmit.value) return
   
   const answer = props.quizData.type === 'multiple_choice' 
@@ -279,14 +350,85 @@ const submitAnswer = () => {
   
   if (!answer) return
   
+  console.log('퀴즈 답안 제출 시작:', { answer, type: props.quizData.type })
+  
+  // 제출 상태 설정
+  isSubmitting.value = true
   isSubmitted.value = true
   
-  emit('submit-answer', {
-    answer: answer,
-    type: props.quizData.type,
-    hintUsed: hintUsed.value,
-    questionNumber: props.currentQuestionNumber
-  })
+  try {
+    // learningStore의 submitQuiz API 호출
+    const result = await learningStore.submitQuiz(answer)
+    
+    if (result.success) {
+      console.log('퀴즈 제출 성공:', result.data)
+      
+      // 평가 결과 처리
+      if (result.data.evaluation_result) {
+        evaluationResult.value = result.data.evaluation_result
+        showEvaluationResult.value = true
+        
+        // 평가 결과를 tutorStore에 전달하여 채팅에 피드백 메시지 추가
+        tutorStore.processEvaluationResult(result.data.evaluation_result)
+        
+        console.log('평가 결과 처리 완료:', evaluationResult.value)
+      }
+      
+      // 워크플로우 응답이 있으면 tutorStore에 전달
+      if (result.data.workflow_response) {
+        tutorStore.updateFromWorkflowResponse(result.data.workflow_response)
+      }
+      
+      // 부모 컴포넌트에 평가 완료 알림
+      emit('evaluation-complete', {
+        answer: answer,
+        type: props.quizData.type,
+        hintUsed: hintUsed.value,
+        questionNumber: props.currentQuestionNumber,
+        evaluationResult: evaluationResult.value
+      })
+      
+      // 기존 emit도 유지 (하위 호환성)
+      emit('submit-answer', {
+        answer: answer,
+        type: props.quizData.type,
+        hintUsed: hintUsed.value,
+        questionNumber: props.currentQuestionNumber,
+        evaluationResult: evaluationResult.value
+      })
+      
+    } else {
+      console.error('퀴즈 제출 실패:', result.error)
+      
+      // 에러 발생 시 제출 상태 되돌리기
+      isSubmitted.value = false
+      
+      // 에러 메시지를 tutorStore를 통해 채팅에 표시
+      tutorStore.addChatMessage({
+        sender: '시스템',
+        message: `퀴즈 제출 중 오류가 발생했습니다: ${result.error}`,
+        type: 'error',
+        timestamp: new Date()
+      })
+    }
+    
+  } catch (error) {
+    console.error('퀴즈 제출 중 예외 발생:', error)
+    
+    // 에러 발생 시 제출 상태 되돌리기
+    isSubmitted.value = false
+    
+    // 에러 메시지를 tutorStore를 통해 채팅에 표시
+    tutorStore.addChatMessage({
+      sender: '시스템',
+      message: '퀴즈 제출 중 오류가 발생했습니다. 다시 시도해주세요.',
+      type: 'error',
+      timestamp: new Date()
+    })
+    
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 const resetQuiz = () => {
@@ -296,6 +438,9 @@ const resetQuiz = () => {
   currentHint.value = ''
   hintUsed.value = false
   isSubmitted.value = false
+  isSubmitting.value = false
+  evaluationResult.value = null
+  showEvaluationResult.value = false
   
   emit('quiz-reset')
 }
@@ -316,6 +461,36 @@ watch(subjectiveAnswer, () => {
       subjectiveInputRef.value.style.height = subjectiveInputRef.value.scrollHeight + 'px'
     }
   })
+})
+
+// learningStore의 에러 상태 감시
+watch(() => learningStore.hasError, (hasError) => {
+  if (hasError && learningStore.errorState.error_message) {
+    console.log('learningStore 에러 감지:', learningStore.errorState)
+    
+    // 제출 중이었다면 상태 되돌리기
+    if (isSubmitting.value) {
+      isSubmitted.value = false
+      isSubmitting.value = false
+    }
+    
+    // 에러 메시지를 tutorStore를 통해 채팅에 표시
+    tutorStore.addChatMessage({
+      sender: '시스템',
+      message: learningStore.errorState.error_message,
+      type: 'error',
+      timestamp: new Date()
+    })
+  }
+})
+
+// learningStore의 워크플로우 상태 변화 감시 (평가 결과 처리)
+watch(() => learningStore.workflowState.evaluation_result, (newEvaluationResult) => {
+  if (newEvaluationResult && isSubmitted.value) {
+    console.log('워크플로우에서 평가 결과 감지:', newEvaluationResult)
+    evaluationResult.value = newEvaluationResult
+    showEvaluationResult.value = true
+  }
 })
 </script>
 
@@ -655,6 +830,99 @@ watch(subjectiveAnswer, () => {
   border-radius: 0.375rem;
   text-align: center;
   width: 100%;
+}
+
+/* 평가 결과 표시 */
+.evaluation-result {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-top: 1rem;
+  animation: resultSlideIn 0.4s ease-out;
+}
+
+@keyframes resultSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-header {
+  margin-bottom: 1rem;
+}
+
+.result-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+}
+
+.result-status.correct {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.result-status.incorrect {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.result-icon {
+  font-size: 1.25rem;
+}
+
+.result-text {
+  font-size: 1rem;
+}
+
+.result-score {
+  font-size: 0.875rem;
+  opacity: 0.8;
+}
+
+.result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.result-feedback,
+.result-explanation {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+}
+
+.feedback-label,
+.explanation-label {
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.feedback-text,
+.explanation-text {
+  line-height: 1.5;
+  color: #212529;
+}
+
+.result-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
 }
 
 /* 퀴즈 푸터 */

@@ -1,4 +1,14 @@
 # backend/app/services/learning/session_service.py
+
+"""
+SessionService v2.4 - 학습 세션 서비스
+
+주요 v2.4 변경사항:
+- _extract_workflow_response() 메서드의 session_manager 부분 수정
+- retry_decision_result에 따른 다음 진행 상태 올바른 계산
+- SessionManager와 동일한 챕터/섹션 진행 로직 적용
+"""
+
 from typing import Dict, Any, Optional
 from datetime import datetime
 import copy
@@ -44,6 +54,9 @@ class SessionService:
         
         # State 만료 시간 (1시간)
         self.STATE_EXPIRE_SECONDS = 3600
+        
+        # chapters_metadata.json 캐시 (v2.4 추가)
+        self._chapters_metadata = None
     
     def start_session(self, token: str, chapter_number: int, section_number: int, user_message: str) -> Dict[str, Any]:
         """
@@ -295,7 +308,7 @@ class SessionService:
             # 워크플로우 실행 (SessionManager가 호출되어 DB 저장)
             final_state = execute_tutor_workflow_sync(updated_state)
             
-            # **State 초기화 전에 워크플로우 응답 먼저 추출**
+            # 워크플로우 응답을 먼저 추출 (State 초기화 전에)
             workflow_response = self._extract_workflow_response(final_state)
             
             # SessionManager에서 DB 저장이 완료되면 State 초기화
@@ -407,11 +420,11 @@ class SessionService:
             del self._user_states[user_id]
     
     # ==========================================
-    # 워크플로우 응답 처리 메서드
+    # 워크플로우 응답 처리 메서드 (v2.4 수정)
     # ==========================================
     
     def _extract_workflow_response(self, state: TutorState) -> Dict[str, Any]:
-        """워크플로우 실행 결과에서 응답 추출"""
+        """워크플로우 실행 결과에서 응답 추출 (v2.4: session_manager 부분 수정)"""
         # response_generator에서 생성한 workflow_response 형태 추출
         current_agent = state.get("current_agent", "")
         session_progress_stage = state.get("session_progress_stage", "")
@@ -470,15 +483,28 @@ class SessionService:
                 }
             }
         elif current_agent == "session_manager":
+            # v2.4: retry_decision_result에 따른 올바른 다음 진행 상태 계산
+            decision_result = state.get("retry_decision_result", "proceed")
+            current_chapter = state.get("current_chapter")
+            current_section = state.get("current_section")
+            
+            if decision_result == "proceed":
+                # proceed: 다음 섹션으로 진행 (SessionManager와 동일한 로직)
+                next_chapter, next_section = self._calculate_next_progress(current_chapter, current_section)
+            else:  # retry
+                # retry: 현재 섹션 유지
+                next_chapter = current_chapter
+                next_section = current_section
+            
             return {
                 **workflow_response,
                 "ui_mode": "chat",
                 "session_completion": {
-                    "completed_chapter": state.get("current_chapter"),
-                    "completed_section": state.get("current_section"),
-                    "next_chapter": state.get("current_chapter"),
-                    "next_section": state.get("current_section") + 1,
-                    "session_summary": f"{state.get('current_chapter')}챕터 {state.get('current_section')}섹션을 완료했습니다.",
+                    "completed_chapter": current_chapter,
+                    "completed_section": current_section,
+                    "next_chapter": next_chapter,
+                    "next_section": next_section,
+                    "session_summary": f"{current_chapter}챕터 {current_section}섹션을 완료했습니다.",
                     "study_time_minutes": self._calculate_study_time(state)
                 }
             }
@@ -490,6 +516,111 @@ class SessionService:
                     "content": "처리 중입니다..."
                 }
             }
+    
+    def _calculate_next_progress(self, current_chapter: int, current_section: int) -> tuple:
+        """
+        다음 챕터/섹션 계산 (v2.4 신규 - SessionManager와 동일한 로직)
+        
+        Args:
+            current_chapter: 현재 챕터
+            current_section: 현재 섹션
+            
+        Returns:
+            (next_chapter, next_section) 튜플
+        """
+        try:
+            # 현재 챕터의 최대 섹션 수 조회
+            max_sections = self._get_max_sections_for_chapter(current_chapter)
+            
+            if current_section < max_sections:
+                # 같은 챕터 내 다음 섹션으로 진행
+                next_chapter = current_chapter
+                next_section = current_section + 1
+            else:
+                # 다음 챕터의 첫 번째 섹션으로 진행
+                next_chapter = current_chapter + 1
+                next_section = 1
+            
+            # 최대 챕터 수 확인 (총 8챕터)
+            total_chapters = self._get_total_chapters()
+            if next_chapter > total_chapters:
+                # 모든 학습 완료
+                return current_chapter, current_section
+            
+            return next_chapter, next_section
+            
+        except Exception as e:
+            # 오류 시 현재 상태 유지
+            return current_chapter, current_section
+    
+    def _get_max_sections_for_chapter(self, chapter_number: int) -> int:
+        """
+        chapters_metadata.json 파일에서 챕터의 최대 섹션 수 조회 (v2.4 신규)
+        
+        Args:
+            chapter_number: 챕터 번호
+            
+        Returns:
+            해당 챕터의 최대 섹션 수
+        """
+        try:
+            metadata = self._load_chapters_metadata()
+            
+            if metadata and "chapters" in metadata:
+                for chapter in metadata["chapters"]:
+                    if chapter["chapter_number"] == chapter_number:
+                        return chapter["total_sections"]
+            
+            # 메타데이터를 찾을 수 없으면 기본값 반환
+            return 4
+            
+        except Exception as e:
+            return 4
+    
+    def _get_total_chapters(self) -> int:
+        """
+        총 챕터 수 조회 (v2.4 신규)
+        
+        Returns:
+            총 챕터 수
+        """
+        try:
+            metadata = self._load_chapters_metadata()
+            
+            if metadata and "metadata" in metadata:
+                return metadata["metadata"]["total_chapters"]
+            
+            # 메타데이터를 찾을 수 없으면 기본값 반환
+            return 8
+            
+        except Exception as e:
+            return 8
+    
+    def _load_chapters_metadata(self) -> Dict[str, Any]:
+        """
+        chapters_metadata.json 파일 로드 (캐싱 적용) (v2.4 신규)
+        
+        Returns:
+            챕터 메타데이터 딕셔너리
+        """
+        # 캐시된 데이터가 있으면 반환
+        if self._chapters_metadata is not None:
+            return self._chapters_metadata
+        
+        try:
+            # backend/data/chapters/chapters_metadata.json 경로
+            base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+            metadata_file = os.path.join(base_dir, "data", "chapters", "chapters_metadata.json")
+            
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r', encoding='utf-8') as f:
+                    self._chapters_metadata = json.load(f)
+                    return self._chapters_metadata
+            else:
+                return {}
+                
+        except Exception as e:
+            return {}
     
     # ==========================================
     # 권한 검증 및 유틸리티 메서드
@@ -599,7 +730,7 @@ class SessionService:
                 "message": f"접근 권한 확인 중 오류 발생: {str(e)}"
             }
     
-    def _load_chapters_metadata(self) -> Optional[Dict[str, Any]]:
+    def _load_chapters_metadata_fallback(self) -> Optional[Dict[str, Any]]:
         """
         챕터 메타데이터 로드 (요청 시마다 파일 읽기)
         """

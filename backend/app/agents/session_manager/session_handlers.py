@@ -1,18 +1,17 @@
 # backend/app/agents/session_manager/session_handlers.py
 
 """
-SessionHandlers v2.0 - 세션 데이터 DB 저장 핸들러
+SessionHandlers v2.3 - 세션 데이터 DB 저장 핸들러
 
-주요 v2.0 변경사항:
-- AUTO_INCREMENT 세션 ID 반환 (save_session_info 메서드)
-- 객관식/주관식 분리된 통계 계산 (_recalculate_average_accuracy)
-- retry_decision_result 필드명 변경
-- section_number 필드 추가로 섹션별 진행 관리
-- 분리된 퀴즈 통계 (multiple_choice_accuracy, subjective_average_score)
+주요 v2.3 변경사항:
+- 진행 상태 데이터 분리: session_data와 progress_data 구분
+- save_session_info() 메서드 시그니처 변경
+- learning_sessions 테이블에는 현재 세션 정보만 저장
+- user_progress 테이블에는 다음 진행 상태 저장
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from app.utils.database.query_builder import insert_record, update_record, count_records
@@ -35,28 +34,34 @@ class SessionHandlers:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
     
-    def save_session_info(self, session_data: Dict[str, Any]) -> int:
+    def save_session_info(self, session_data: Dict[str, Any], progress_data: Optional[Dict[str, Any]] = None) -> int:
         """
-        learning_sessions 테이블에 세션 기본 정보 저장 (v2.0: AUTO_INCREMENT 세션 ID 반환)
+        learning_sessions 테이블에 세션 기본 정보 저장 (v2.3: 진행 상태 분리)
         
         Args:
-            session_data: 세션 정보 딕셔너리 (session_id 필드 제외)
+            session_data: 세션 정보 딕셔너리 (learning_sessions 테이블용)
+            progress_data: 진행 상태 딕셔너리 (user_progress 테이블용, 선택적)
             
         Returns:
             생성된 세션 ID (AUTO_INCREMENT), 실패 시 None
         """
         try:
-            # v2.0: AUTO_INCREMENT 세션 ID 사용
+            # learning_sessions 테이블에 현재 세션 정보만 저장
             session_id = insert_record('learning_sessions', session_data, return_id=True)
             
             if session_id:
                 self.logger.info(f"세션 정보 저장 완료: session_id={session_id}")
                 
                 # user_progress 및 user_statistics 업데이트
-                session_data_with_id = session_data.copy()
-                session_data_with_id['session_id'] = session_id
-                self._update_user_progress(session_data_with_id)
-                self._update_user_statistics(session_data_with_id)
+                combined_data = session_data.copy()
+                combined_data['session_id'] = session_id
+                
+                # 진행 상태 데이터 병합 (있는 경우)
+                if progress_data:
+                    combined_data.update(progress_data)
+                
+                self._update_user_progress(combined_data)
+                self._update_user_statistics(combined_data)
                 
                 return session_id
             else:
@@ -162,28 +167,36 @@ class SessionHandlers:
             self.logger.error(f"퀴즈 정보 저장 중 예상치 못한 오류: {str(e)}")
             return False
     
-    def _update_user_progress(self, session_data: Dict[str, Any]) -> bool:
+    def _update_user_progress(self, combined_data: Dict[str, Any]) -> bool:
         """
-        user_progress 테이블 업데이트
+        user_progress 테이블 업데이트 (v2.3: combined_data 사용)
         
         Args:
-            session_data: 세션 정보
+            combined_data: 세션 정보 + 진행 상태 정보
             
         Returns:
             업데이트 성공 여부
         """
         try:
-            # proceed인 경우에만 진행 상태 업데이트 (v2.0: 필드명 변경)
-            if session_data.get('retry_decision_result') == 'proceed':
+            # proceed인 경우에만 진행 상태 업데이트
+            if combined_data.get('retry_decision_result') == 'proceed':
+                # v2.3: 계산된 다음 진행 상태 사용
+                next_chapter = combined_data.get('next_chapter')
+                next_section = combined_data.get('next_section')
+                
+                if next_chapter is None or next_section is None:
+                    self.logger.warning("다음 진행 상태 정보가 없습니다. 현재 상태를 유지합니다.")
+                    return True
+                
                 update_data = {
-                    'current_chapter': session_data['chapter_number'],
-                    'current_section': session_data['section_number'],  # v2.0: 섹션 정보 추가
+                    'current_chapter': next_chapter,     # v2.3: 계산된 다음 챕터
+                    'current_section': next_section,     # v2.3: 계산된 다음 섹션
                     'last_study_date': datetime.now().date(),
                     'updated_at': datetime.now()
                 }
                 
                 where_clause = "user_id = %s"
-                where_params = [session_data['user_id']]
+                where_params = [combined_data['user_id']]
                 
                 result = update_record(
                     'user_progress', 
@@ -193,40 +206,48 @@ class SessionHandlers:
                 )
                 
                 if result > 0:
-                    self.logger.info(f"사용자 진행 상태 업데이트 완료: user_id={session_data['user_id']}")
+                    current_chapter = combined_data['chapter_number']
+                    current_section = combined_data['section_number']
+                    self.logger.info(f"사용자 진행 상태 업데이트 완료: user_id={combined_data['user_id']}, {current_chapter}챕터 {current_section}섹션 → {next_chapter}챕터 {next_section}섹션")
                     return True
-            
-            return True
+                else:
+                    self.logger.error("사용자 진행 상태 업데이트 실패")
+                    return False
+            else:
+                # retry인 경우 진행 상태 유지
+                self.logger.info(f"재학습으로 진행 상태 유지: user_id={combined_data['user_id']}")
+                return True
             
         except Exception as e:
             self.logger.error(f"사용자 진행 상태 업데이트 중 오류: {str(e)}")
             return False
     
-    def _update_user_statistics(self, session_data: Dict[str, Any]) -> bool:
+    def _update_user_statistics(self, combined_data: Dict[str, Any]) -> bool:
         """
-        user_statistics 테이블 업데이트
+        user_statistics 테이블 업데이트 (v2.1: 컬럼명 변경 반영)
         
         Args:
-            session_data: 세션 정보
+            combined_data: 세션 정보
             
         Returns:
             업데이트 성공 여부
         """
         try:
-            # 통계 업데이트 데이터 준비
+            # 통계 업데이트 데이터 준비 (v2.1: total_study_time_seconds로 변경)
             query = """
             UPDATE user_statistics 
             SET total_study_sessions = total_study_sessions + 1,
                 total_completed_sessions = total_completed_sessions + 1,
-                total_study_time_minutes = total_study_time_minutes + %s,
+                total_study_time_seconds = total_study_time_seconds + %s,
                 last_study_date = CURDATE(),
                 updated_at = NOW()
             WHERE user_id = %s
             """
             
+            # v2.1: study_duration_seconds로 변경된 키 사용
             params = [
-                session_data.get('study_duration_minutes', 0),
-                session_data['user_id']
+                combined_data.get('study_duration_seconds', 0),
+                combined_data['user_id']
             ]
             
             # 직접 쿼리 실행 (복잡한 계산이 포함된 업데이트)
@@ -235,8 +256,8 @@ class SessionHandlers:
             
             if result > 0:
                 # 평균 정확도 재계산
-                self._recalculate_average_accuracy(session_data['user_id'])
-                self.logger.info(f"사용자 통계 업데이트 완료: user_id={session_data['user_id']}")
+                self._recalculate_average_accuracy(combined_data['user_id'])
+                self.logger.info(f"사용자 통계 업데이트 완료: user_id={combined_data['user_id']}")
                 return True
             else:
                 self.logger.error("사용자 통계 업데이트 실패")
@@ -347,7 +368,7 @@ class SessionHandlers:
     
     def get_session_history(self, user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        사용자의 세션 기록 조회 (선택적 기능) - v2.0 필드명 업데이트
+        사용자의 세션 기록 조회 (선택적 기능) - v2.1 컬럼명 업데이트
         
         Args:
             user_id: 사용자 ID
@@ -357,10 +378,11 @@ class SessionHandlers:
             세션 기록 리스트
         """
         try:
+            # v2.1: study_duration_seconds로 컬럼명 변경
             query = """
             SELECT 
                 session_id, chapter_number, section_number,
-                session_start_time, session_end_time, study_duration_minutes,
+                session_start_time, session_end_time, study_duration_seconds,
                 retry_decision_result, created_at
             FROM learning_sessions
             WHERE user_id = %s
