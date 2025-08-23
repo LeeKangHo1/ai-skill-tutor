@@ -249,28 +249,26 @@ class SessionHandlers:
             업데이트 성공 여부
         """
         try:
-            # 통계 업데이트 데이터 준비 (v2.1: total_study_time_seconds로 변경)
+            # 실제 DB 스키마에 맞춰 study_duration_seconds 사용
+            study_duration_seconds = combined_data.get('study_duration_seconds', 0)
+            
+            # 디버깅: 전달받은 데이터 확인
+            self.logger.info(f"통계 업데이트 디버깅 - user_id: {combined_data['user_id']}")
+            self.logger.info(f"study_duration_seconds 값: {study_duration_seconds}")
+            
+            # COALESCE를 사용하여 NULL 값 처리
             query = """
             UPDATE user_statistics 
             SET total_study_sessions = total_study_sessions + 1,
                 total_completed_sessions = total_completed_sessions + 1,
-                total_study_time_seconds = total_study_time_seconds + %s,
+                total_study_time_seconds = COALESCE(total_study_time_seconds, 0) + %s,
                 last_study_date = CURDATE(),
                 updated_at = NOW()
             WHERE user_id = %s
             """
             
-            # v2.1: study_duration_seconds를 분 단위로 변환하여 사용
-            study_duration_seconds = combined_data.get('study_duration_seconds', 0)
-            study_duration_minutes = study_duration_seconds / 60 if study_duration_seconds > 0 else 0
-            
-            # 디버깅: 전달받은 데이터 확인
-            self.logger.info(f"통계 업데이트 디버깅 - user_id: {combined_data['user_id']}")
-            self.logger.info(f"combined_data 키들: {list(combined_data.keys())}")
-            self.logger.info(f"study_duration_seconds 값: {study_duration_seconds}")
-            
             params = [
-                study_duration_seconds,  # user_statistics는 초 단위 사용
+                study_duration_seconds,  # 초 단위로 저장
                 combined_data['user_id']
             ]
             
@@ -278,8 +276,7 @@ class SessionHandlers:
             result = execute_query(query, params)
             
             if result > 0:
-                # v2.4: 퀴즈 통계 재계산은 제외 (나중에 별도 호출)
-                self.logger.info(f"사용자 통계 업데이트 완료: user_id={combined_data['user_id']}")
+                self.logger.info(f"사용자 통계 업데이트 완료: user_id={combined_data['user_id']}, 학습시간 +{study_duration_seconds}초")
                 return True
             else:
                 self.logger.error("사용자 통계 업데이트 실패")
