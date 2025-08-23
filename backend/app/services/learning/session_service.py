@@ -295,12 +295,13 @@ class SessionService:
             # 워크플로우 실행 (SessionManager가 호출되어 DB 저장)
             final_state = execute_tutor_workflow_sync(updated_state)
             
+            # **State 초기화 전에 워크플로우 응답 먼저 추출**
+            workflow_response = self._extract_workflow_response(final_state)
+            
             # SessionManager에서 DB 저장이 완료되면 State 초기화
             self._clear_user_state(user_id)
             
-            # 워크플로우 응답 반환
-            workflow_response = final_state.get("workflow_response", {})
-            
+            # 미리 추출한 워크플로우 응답 반환
             return {
                 "success": True,
                 "data": {
