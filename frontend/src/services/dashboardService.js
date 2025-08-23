@@ -105,8 +105,8 @@ class DashboardService {
 
     return {
       ...statistics,
-      // 학습 시간을 시간:분 형식으로 변환
-      formatted_study_time: this.formatStudyTime(statistics.total_study_time_minutes),
+      // 학습 시간을 시간:분 형식으로 변환 (초 단위를 분으로 변환)
+      formatted_study_time: this.formatStudyTime(statistics.total_study_time_seconds),
       // 정확도 포맷팅
       formatted_multiple_choice_accuracy: this.formatPercentage(statistics.multiple_choice_accuracy),
       formatted_subjective_average_score: this.formatScore(statistics.subjective_average_score),
@@ -116,13 +116,14 @@ class DashboardService {
   }
 
   /**
-   * 학습 시간 포맷팅 (분 → 시간:분)
+   * 학습 시간 포맷팅 (초 → 시간:분)
    */
-  formatStudyTime(minutes) {
-    if (!minutes || minutes === 0) return '0분'
+  formatStudyTime(seconds) {
+    if (!seconds || seconds === 0) return '0분'
     
-    const hours = Math.floor(minutes / 60)
-    const remainingMinutes = minutes % 60
+    const totalMinutes = Math.floor(seconds / 60)
+    const hours = Math.floor(totalMinutes / 60)
+    const remainingMinutes = totalMinutes % 60
     
     if (hours === 0) {
       return `${remainingMinutes}분`

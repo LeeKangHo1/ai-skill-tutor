@@ -91,7 +91,7 @@ CREATE TABLE user_progress (
 CREATE TABLE user_statistics (
     stats_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL UNIQUE,
-    total_study_time_minutes INT DEFAULT 0 COMMENT '총 학습 시간 (분)',
+    total_study_time_seconds INT DEFAULT 0 COMMENT '총 학습 시간 (초)',
     total_study_sessions INT DEFAULT 0 COMMENT '총 학습 횟수',
     total_completed_sessions INT DEFAULT 0 COMMENT '완료한 학습 세션 수',
     
@@ -127,7 +127,7 @@ CREATE TABLE learning_sessions (
     section_number INT NOT NULL COMMENT '챕터 내 섹션 번호',
     session_start_time TIMESTAMP NOT NULL,
     session_end_time TIMESTAMP NOT NULL,
-    study_duration_minutes INT COMMENT '해당 세션 학습 소요 시간 (분)',
+    study_duration_seconds INT COMMENT '해당 세션 학습 소요 시간 (초)',
     retry_decision_result VARCHAR(20) COMMENT 'proceed: 다음 단계 진행, retry: 재학습',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -276,7 +276,7 @@ VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY));
 -- 1. 세션 기본 정보 저장 (AUTO_INCREMENT로 session_id 생성)
 INSERT INTO learning_sessions (
     user_id, chapter_number, section_number, session_start_time, 
-    session_end_time, study_duration_minutes, retry_decision_result
+    session_end_time, study_duration_seconds, retry_decision_result
 ) VALUES (?, ?, ?, ?, ?, ?, ?);
 
 SET @session_id = LAST_INSERT_ID();
@@ -325,7 +325,7 @@ SET
     total_multiple_choice_count = total_multiple_choice_count + 1,
     total_multiple_choice_correct = total_multiple_choice_correct + CASE WHEN ? = TRUE THEN 1 ELSE 0 END,
     multiple_choice_accuracy = (total_multiple_choice_correct * 100.0) / total_multiple_choice_count,
-    total_study_time_minutes = total_study_time_minutes + ?,
+    total_study_time_seconds = total_study_time_seconds + ?,
     last_study_date = CURDATE()
 WHERE user_id = ?;
 
@@ -337,7 +337,7 @@ SET
     total_subjective_count = total_subjective_count + 1,
     total_subjective_score = total_subjective_score + ?,
     subjective_average_score = total_subjective_score / total_subjective_count,
-    total_study_time_minutes = total_study_time_minutes + ?,
+    total_study_time_seconds = total_study_time_seconds + ?,
     last_study_date = CURDATE()
 WHERE user_id = ?;
 ```

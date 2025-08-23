@@ -255,7 +255,7 @@ Authorization: Bearer {access_token}
       "completion_percentage": 25.0
     },
     "learning_statistics": {
-      "total_study_time_minutes": 150,
+      "total_study_time_seconds": 9000,
       "total_study_sessions": 8,
       "multiple_choice_accuracy": 85.5,
       "subjective_average_score": 78.2,
@@ -451,7 +451,7 @@ Authorization: Bearer {access_token}
         "next_chapter": 2,
         "next_section": 2,
         "session_summary": "2챕터 1섹션을 성공적으로 완료했습니다.",
-        "study_time_minutes": 15
+        "study_time_seconds": 900
       }
     }
   },

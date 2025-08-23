@@ -70,7 +70,7 @@ class DashboardService:
                     )
                 },
                 "learning_statistics": {
-                    "total_study_time_minutes": learning_statistics["total_study_time_minutes"],
+                    "total_study_time_seconds": learning_statistics["total_study_time_seconds"],
                     "total_study_sessions": learning_statistics["total_study_sessions"],
                     "multiple_choice_accuracy": float(learning_statistics["multiple_choice_accuracy"]),
                     "subjective_average_score": float(learning_statistics["subjective_average_score"]),
@@ -133,7 +133,7 @@ class DashboardService:
         query_builder = QueryBuilder()
         query, params = (query_builder
                         .select([
-                            'total_study_time_minutes',
+                            'total_study_time_seconds',
                             'total_study_sessions',
                             'multiple_choice_accuracy',
                             'subjective_average_score',

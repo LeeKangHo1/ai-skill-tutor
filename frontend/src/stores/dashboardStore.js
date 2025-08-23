@@ -22,7 +22,7 @@ export const useDashboardStore = defineStore('dashboard', {
 
     // 학습 통계
     learningStatistics: {
-      total_study_time_minutes: 0,
+      total_study_time_seconds: 0,
       total_study_sessions: 0,
       multiple_choice_accuracy: 0,
       subjective_average_score: 0,
@@ -258,7 +258,7 @@ export const useDashboardStore = defineStore('dashboard', {
         formatted_completion_percentage: '0%'
       }
       this.learningStatistics = {
-        total_study_time_minutes: 0,
+        total_study_time_seconds: 0,
         total_study_sessions: 0,
         multiple_choice_accuracy: 0,
         subjective_average_score: 0,

@@ -1,5 +1,27 @@
 # 구현 로그 (Implementation Log)
 
+## 📅 2025-08-23: DB 컬럼명 변경 (시간 단위 통일) ✅
+
+### 변경된 컬럼
+- `learning_sessions.study_duration_minutes` → `study_duration_seconds`
+- `user_statistics.total_study_time_minutes` → `total_study_time_seconds`
+
+### 수정 완료된 부분
+- ✅ DB 설계 문서 (`docs/my_docs/db_design_v2_0.md`)
+- ✅ 실제 데이터베이스 구조 (마이그레이션 스크립트 실행)
+
+### 추가 수정 필요한 부분
+- 🔄 **백엔드 코드**: 시간 관련 컬럼명 사용하는 모든 파일
+  - `app/services/learning/` 폴더의 세션 관련 서비스
+  - `app/models/` 폴더의 모델 클래스들
+  - `app/routes/learning/` 폴더의 API 라우트들
+- 🔄 **프론트엔드 코드**: API 응답에서 시간 데이터 처리하는 부분
+  - 대시보드 컴포넌트의 학습 시간 표시
+  - 세션 완료 후 시간 데이터 처리
+- 🔄 **테스트 코드**: 시간 관련 테스트 케이스들
+
+---
+
 ## 🔧 구현 상세
 
 ### Phase 1: DashboardService 구현 ✅

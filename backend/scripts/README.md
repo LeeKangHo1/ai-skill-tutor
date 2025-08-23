@@ -13,6 +13,14 @@
 - 실행 전 반드시 데이터 백업을 권장합니다.
 - 개발 환경에서만 사용하세요.
 
+### 2. migrate_duration_to_seconds.py
+시간 관련 컬럼을 분(minutes)에서 초(seconds)로 변경하는 마이그레이션 스크립트입니다.
+
+**⚠️ 주의사항:**
+- 이 스크립트는 **데이터베이스 구조를 변경**합니다.
+- 기존 데이터는 자동으로 변환됩니다 (분 × 60 = 초).
+- 실행 전 반드시 데이터 백업을 권장합니다.
+
 ## 🚀 사용법
 
 ### 사전 준비
@@ -56,6 +64,35 @@ python backend/scripts/clear_all_tables.py --force
 **⚠️ --force 옵션 주의사항:**
 - 사용자 확인 없이 즉시 모든 데이터를 삭제합니다.
 - CI/CD 파이프라인이나 자동화된 테스트 환경에서만 사용하세요.
+
+### migrate_duration_to_seconds.py 사용법
+
+#### 기본 사용법 (대화형 모드)
+```bash
+# 프로젝트 루트에서 실행
+python backend/scripts/migrate_duration_to_seconds.py
+```
+
+실행하면 다음과 같은 과정을 거칩니다:
+1. 현재 마이그레이션 상태 확인
+2. 변경될 테이블과 컬럼 정보 표시
+3. 사용자 확인 요청 (`yes`/`no` 입력)
+4. 확인 후 마이그레이션 실행
+5. 마이그레이션 결과 및 후 상태 표시
+
+#### 강제 실행 모드 (확인 없이 실행)
+```bash
+# 확인 없이 바로 실행 (자동화 스크립트용)
+python backend/scripts/migrate_duration_to_seconds.py --force
+```
+
+**변경되는 컬럼:**
+- `learning_sessions.study_duration_minutes` → `study_duration_seconds`
+- `user_statistics.total_study_time_minutes` → `total_study_time_seconds`
+
+**데이터 변환:**
+- 기존 분(minutes) 데이터에 60을 곱해서 초(seconds)로 변환
+- 예: 5분 → 300초
 
 ## 📊 실행 결과 예시
 
