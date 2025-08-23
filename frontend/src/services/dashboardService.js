@@ -117,6 +117,7 @@ class DashboardService {
 
   /**
    * 학습 시간 포맷팅 (초 → 시간:분)
+   * 1분 미만(60초 미만)일 경우 1분으로 표시
    */
   formatStudyTime(seconds) {
     if (!seconds || seconds === 0) return '0분'
@@ -124,6 +125,11 @@ class DashboardService {
     const totalMinutes = Math.floor(seconds / 60)
     const hours = Math.floor(totalMinutes / 60)
     const remainingMinutes = totalMinutes % 60
+    
+    // 1분 미만(60초 미만)일 경우 1분으로 표시
+    if (totalMinutes === 0 && seconds > 0) {
+      return '1분'
+    }
     
     if (hours === 0) {
       return `${remainingMinutes}분`
