@@ -104,10 +104,14 @@
 import { ref, computed, nextTick, watch, onMounted, defineProps, defineEmits } from 'vue'
 import { useLearningStore } from '../../stores/learningStore.js'
 import { useTutorStore } from '../../stores/tutorStore.js'
+import { useErrorHandler } from '../../composables/useErrorHandler.js'
 
 // Store 인스턴스
 const learningStore = useLearningStore()
 const tutorStore = useTutorStore()
+
+// 에러 핸들러 컴포저블
+const { executeWithErrorHandling } = useErrorHandler()
 
 // Props 정의
 const props = defineProps({
@@ -243,56 +247,49 @@ const isApiLoading = computed(() => {
   return props.isLoading || learningStore.isLoading
 })
 
-// 메시지 전송 처리 (learningStore API 연동)
+// 메시지 전송 처리 (에러 핸들링 통합)
 const sendMessage = async () => {
   const message = currentMessage.value.trim()
   if (!message || isApiLoading.value) return
   
   console.log('ChatInteraction: 메시지 전송 시작:', message)
   
-  try {
-    // 사용자 메시지를 즉시 채팅 히스토리에 추가
-    tutorStore.addChatMessage({
-      sender: '사용자',
-      message: message,
-      type: 'user',
-      timestamp: new Date()
-    })
+  // 사용자 메시지를 즉시 채팅 히스토리에 추가
+  tutorStore.addChatMessage({
+    sender: '사용자',
+    message: message,
+    type: 'user',
+    timestamp: new Date()
+  })
+  
+  // 입력창 초기화 (사용자 경험 개선)
+  const originalMessage = message
+  currentMessage.value = ''
+  
+  // 에러 핸들링이 통합된 API 호출
+  const result = await executeWithErrorHandling(
+    learningStore.sendMessage,
+    'sendMessage',
+    originalMessage,
+    'user'
+  )
+  
+  if (result.success) {
+    console.log('ChatInteraction: 메시지 전송 성공:', result.data)
     
-    // 입력창 초기화 (사용자 경험 개선)
-    currentMessage.value = ''
+    // API 응답의 workflow_response는 learningStore에서 자동으로 처리되고
+    // tutorStore의 watch를 통해 UI가 업데이트됨
     
-    // learningStore를 통한 API 호출
-    const result = await learningStore.sendMessage(message, 'user')
+    // 하위 호환성을 위해 부모 컴포넌트에도 이벤트 전송
+    emit('send-message', originalMessage)
     
-    if (result.success) {
-      console.log('ChatInteraction: 메시지 전송 성공:', result.data)
-      
-      // API 응답의 workflow_response는 learningStore에서 자동으로 처리되고
-      // tutorStore의 watch를 통해 UI가 업데이트됨
-      
-      // 하위 호환성을 위해 부모 컴포넌트에도 이벤트 전송
-      emit('send-message', message)
-      
-    } else {
-      console.error('ChatInteraction: 메시지 전송 실패:', result.error)
-      
-      // 에러 메시지를 채팅에 추가
-      tutorStore.addChatMessage({
-        sender: '시스템',
-        message: `메시지 전송에 실패했습니다: ${result.error}`,
-        type: 'system',
-        timestamp: new Date()
-      })
-    }
+  } else {
+    console.error('ChatInteraction: 메시지 전송 실패:', result.error)
     
-  } catch (error) {
-    console.error('ChatInteraction: 메시지 전송 중 예외 발생:', error)
-    
-    // 예외 상황 메시지 추가
+    // 에러는 ErrorAlert 컴포넌트에서 표시되므로 여기서는 간단한 시스템 메시지만 추가
     tutorStore.addChatMessage({
       sender: '시스템',
-      message: '메시지 전송 중 오류가 발생했습니다. 다시 시도해주세요.',
+      message: '⚠️ 메시지 전송에 실패했습니다. 상단의 에러 알림을 확인해주세요.',
       type: 'system',
       timestamp: new Date()
     })

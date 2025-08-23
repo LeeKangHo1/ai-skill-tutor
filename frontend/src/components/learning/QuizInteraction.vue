@@ -175,10 +175,14 @@
 import { ref, computed, watch, nextTick, defineProps, defineEmits } from 'vue'
 import { useLearningStore } from '../../stores/learningStore.js'
 import { useTutorStore } from '../../stores/tutorStore.js'
+import { useErrorHandler } from '../../composables/useErrorHandler.js'
 
 // Store 인스턴스
 const learningStore = useLearningStore()
 const tutorStore = useTutorStore()
+
+// 에러 핸들러 컴포저블
+const { executeWithErrorHandling } = useErrorHandler()
 
 // Props 정의
 const props = defineProps({
@@ -357,8 +361,12 @@ const submitAnswer = async () => {
   isSubmitted.value = true
   
   try {
-    // learningStore의 submitQuiz API 호출
-    const result = await learningStore.submitQuiz(answer)
+    // 에러 핸들링이 통합된 API 호출
+    const result = await executeWithErrorHandling(
+      learningStore.submitQuiz,
+      'submitQuiz',
+      answer
+    )
     
     if (result.success) {
       console.log('퀴즈 제출 성공:', result.data)
@@ -403,10 +411,10 @@ const submitAnswer = async () => {
       // 에러 발생 시 제출 상태 되돌리기
       isSubmitted.value = false
       
-      // 에러 메시지를 tutorStore를 통해 채팅에 표시
+      // 에러는 ErrorAlert 컴포넌트에서 표시되므로 여기서는 간단한 시스템 메시지만 추가
       tutorStore.addChatMessage({
         sender: '시스템',
-        message: `퀴즈 제출 중 오류가 발생했습니다: ${result.error}`,
+        message: '⚠️ 퀴즈 제출에 실패했습니다. 상단의 에러 알림을 확인해주세요.',
         type: 'error',
         timestamp: new Date()
       })
@@ -418,10 +426,10 @@ const submitAnswer = async () => {
     // 에러 발생 시 제출 상태 되돌리기
     isSubmitted.value = false
     
-    // 에러 메시지를 tutorStore를 통해 채팅에 표시
+    // 예외 상황 메시지 추가
     tutorStore.addChatMessage({
       sender: '시스템',
-      message: '퀴즈 제출 중 오류가 발생했습니다. 다시 시도해주세요.',
+      message: '⚠️ 퀴즈 제출 중 예상치 못한 오류가 발생했습니다.',
       type: 'error',
       timestamp: new Date()
     })

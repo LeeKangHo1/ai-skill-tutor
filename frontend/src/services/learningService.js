@@ -51,7 +51,14 @@ class LearningService {
       }
 
     } catch (error) {
-      return this.handleApiError(error, endpoint)
+      const errorResponse = this.handleApiError(error, endpoint)
+      
+      // 기본값 대체 로직 적용 (네트워크 에러나 서버 에러의 경우)
+      if (errorResponse.fallbackData && (errorResponse.type === 'network' || errorResponse.type === 'server')) {
+        return this.applyFallbackToErrorResponse(errorResponse)
+      }
+      
+      return errorResponse
     }
   }
 
@@ -79,10 +86,10 @@ class LearningService {
   }
 
   /**
-   * API 에러 처리 및 분류
+   * API 에러 처리 및 분류 (기본값 대체 로직 포함)
    * @param {Error} error - 발생한 에러 객체
    * @param {string} endpoint - 요청한 엔드포인트
-   * @returns {Object} 처리된 에러 응답
+   * @returns {Object} 처리된 에러 응답 (기본값 포함)
    */
   handleApiError(error, endpoint) {
     console.error(`[LearningService] Error at ${endpoint}:`, error)
@@ -94,7 +101,8 @@ class LearningService {
         error: '네트워크 연결을 확인해주세요.',
         type: 'network',
         retry: true,
-        status: 0
+        status: 0,
+        fallbackData: this.getFallbackData(endpoint)
       }
     }
 
@@ -110,7 +118,8 @@ class LearningService {
           error: '인증이 필요합니다. 다시 로그인해주세요.',
           type: 'auth',
           retry: false,
-          status
+          status,
+          fallbackData: null // 인증 에러 시 기본값 제공하지 않음
         }
       }
 
@@ -121,7 +130,8 @@ class LearningService {
           error: errorData?.error?.message || '접근 권한이 없습니다.',
           type: 'permission',
           retry: false,
-          status
+          status,
+          fallbackData: null // 권한 에러 시 기본값 제공하지 않음
         }
       }
 
@@ -132,7 +142,8 @@ class LearningService {
           error: errorData?.error?.message || '요청 데이터가 올바르지 않습니다.',
           type: 'validation',
           retry: false,
-          status
+          status,
+          fallbackData: this.getFallbackData(endpoint)
         }
       }
 
@@ -143,7 +154,8 @@ class LearningService {
           error: '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.',
           type: 'server',
           retry: true,
-          status
+          status,
+          fallbackData: this.getFallbackData(endpoint)
         }
       }
 
@@ -153,7 +165,8 @@ class LearningService {
         error: errorData?.error?.message || `HTTP ${status} 에러가 발생했습니다.`,
         type: 'http',
         retry: false,
-        status
+        status,
+        fallbackData: this.getFallbackData(endpoint)
       }
     }
 
@@ -163,7 +176,128 @@ class LearningService {
       error: error.message || '알 수 없는 오류가 발생했습니다.',
       type: 'unknown',
       retry: false,
-      status: 0
+      status: 0,
+      fallbackData: this.getFallbackData(endpoint)
+    }
+  }
+
+  /**
+   * 엔드포인트별 기본값 데이터 제공
+   * API 호출 실패 시 사용자 경험을 위한 기본 응답 데이터
+   * @param {string} endpoint - API 엔드포인트
+   * @returns {Object|null} 기본값 데이터
+   */
+  getFallbackData(endpoint) {
+    const fallbackMap = {
+      '/session/start': {
+        session_info: {
+          session_id: `fallback_session_${Date.now()}`,
+          chapter_number: 2,
+          section_number: 1,
+          chapter_title: '2장 - LLM 기초',
+          section_title: '1절 - LLM이란 무엇인가',
+          estimated_duration: '15분'
+        },
+        workflow_response: {
+          current_agent: 'theory_educator',
+          session_progress_stage: 'session_start',
+          ui_mode: 'chat',
+          content: {
+            type: 'theory',
+            title: 'LLM 기본 개념 (오프라인 모드)',
+            content: '현재 서버에 연결할 수 없어 오프라인 학습 모드로 진행합니다. 네트워크 연결을 확인한 후 다시 시도해주세요.',
+            key_points: [
+              '대규모 언어 모델의 기본 개념',
+              '자연어 처리 기술의 발전',
+              '실제 활용 사례와 한계'
+            ],
+            examples: [
+              'ChatGPT (OpenAI)',
+              'Claude (Anthropic)',
+              'Bard (Google)'
+            ]
+          }
+        }
+      },
+      
+      '/session/message': {
+        workflow_response: {
+          current_agent: 'theory_educator',
+          session_progress_stage: 'theory_completed',
+          ui_mode: 'chat',
+          content: {
+            type: 'theory',
+            title: '연결 오류',
+            content: '서버와의 연결이 원활하지 않습니다. 네트워크 상태를 확인하고 다시 시도해주세요. 오프라인 상태에서는 제한적인 학습만 가능합니다.'
+          }
+        }
+      },
+      
+      '/quiz/submit': {
+        evaluation_result: {
+          quiz_type: 'multiple_choice',
+          is_answer_correct: null,
+          score: 0,
+          feedback: '현재 서버에 연결할 수 없어 답안을 채점할 수 없습니다.',
+          explanation: '네트워크 연결을 확인한 후 다시 제출해주세요.',
+          correct_answer: null
+        },
+        workflow_response: {
+          current_agent: 'evaluation_feedback_agent',
+          session_progress_stage: 'quiz_and_feedback_completed',
+          ui_mode: 'chat',
+          content: {
+            type: 'feedback',
+            title: '채점 불가',
+            content: '서버 연결 문제로 답안을 채점할 수 없습니다. 연결이 복구되면 다시 시도해주세요.',
+            next_step_decision: 'retry'
+          }
+        }
+      },
+      
+      '/session/complete': {
+        session_completion: {
+          completed_at: new Date().toISOString(),
+          final_score: 0,
+          session_summary: {
+            chapter_number: 2,
+            section_number: 1,
+            total_duration: '알 수 없음',
+            concepts_learned: ['오프라인 모드에서 학습 시도']
+          },
+          next_chapter: null,
+          next_section: null,
+          next_chapter_title: null,
+          next_section_title: null,
+          proceed_options: {
+            can_proceed: false,
+            can_retry: true,
+            can_dashboard: true
+          }
+        }
+      }
+    }
+    
+    return fallbackMap[endpoint] || null
+  }
+
+  /**
+   * 에러 응답에 기본값 적용
+   * @param {Object} errorResponse - 에러 응답 객체
+   * @returns {Object} 기본값이 적용된 응답
+   */
+  applyFallbackToErrorResponse(errorResponse) {
+    if (!errorResponse.fallbackData) {
+      return errorResponse
+    }
+    
+    // 기본값이 있는 경우 부분적 성공으로 처리
+    return {
+      ...errorResponse,
+      success: false, // 여전히 에러 상태이지만
+      data: errorResponse.fallbackData, // 기본값 데이터 제공
+      message: `${errorResponse.error} (기본값으로 대체됨)`,
+      isFallback: true // 기본값 사용 여부 표시
     }
   }
 

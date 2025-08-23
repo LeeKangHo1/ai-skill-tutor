@@ -54,10 +54,13 @@
         :current-content-mode="currentContentMode"
         :completed-steps="completedSteps"
         @navigation-click="handleNavigationClick"
+        @proceed-to-next="handleProceedToNext"
+        @retry-session="handleRetrySession"
+        @go-to-dashboard="handleGoToDashboard"
       />
 
-      <!-- 오른쪽: 상호작용 영역 (50%) -->
-      <div class="interaction-area">
+      <!-- 오른쪽: 상호작용 영역 (50%) - 세션 완료 시 숨김 -->
+      <div v-if="!learningStore.isSessionCompleted" class="interaction-area">
         <div class="interaction-header">
           {{ uiMode === 'chat' ? '💬 채팅' : '📝 퀴즈' }}
         </div>
@@ -380,8 +383,76 @@ const handleNavigationClick = (navigationType) => {
   }
 }
 
+// ===== 세션 완료 관련 이벤트 핸들러 =====
+
+// 다음 단계로 진행 핸들러
+const handleProceedToNext = async (nextStepInfo) => {
+  try {
+    console.log('다음 단계로 진행:', nextStepInfo)
+    
+    isLoading.value = true
+    loadingMessage.value = '다음 학습 단계를 준비하고 있습니다...'
+    
+    // 세션 상태 초기화
+    learningStore.resetSessionState()
+    tutorStore.resetState?.()
+    
+    // 다음 챕터/섹션으로 라우팅
+    await router.push(`/learning/${nextStepInfo.chapter}/${nextStepInfo.section}`)
+    
+  } catch (error) {
+    console.error('다음 단계 진행 중 오류:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 세션 재시도 핸들러
+const handleRetrySession = async (sessionInfo) => {
+  try {
+    console.log('세션 재시도:', sessionInfo)
+    
+    isLoading.value = true
+    loadingMessage.value = '세션을 다시 시작하고 있습니다...'
+    
+    // 세션 상태 초기화
+    learningStore.resetSessionState()
+    tutorStore.resetState?.()
+    
+    // 현재 페이지 새로고침으로 세션 재시작
+    window.location.reload()
+    
+  } catch (error) {
+    console.error('세션 재시도 중 오류:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 대시보드로 이동 핸들러
+const handleGoToDashboard = async () => {
+  try {
+    console.log('대시보드로 이동')
+    
+    isLoading.value = true
+    loadingMessage.value = '대시보드로 이동하고 있습니다...'
+    
+    // 세션 상태 초기화
+    learningStore.resetSessionState()
+    tutorStore.resetState?.()
+    
+    // 대시보드로 라우팅
+    await router.push('/dashboard')
+    
+  } catch (error) {
+    console.error('대시보드 이동 중 오류:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const goToDashboard = () => {
-  router.push('/dashboard')
+  handleGoToDashboard()
 }
 
 // ===== 유틸리티 함수들 =====
@@ -457,6 +528,39 @@ watch(() => learningStore.hasError, (hasError) => {
 // tutorStore와 learningStore 연동 상태 감시
 watch(() => tutorStore.isConnectedToLearningStore, (isConnected) => {
   console.log('tutorStore-learningStore 연동 상태:', isConnected)
+})
+
+// 세션 완료 조건 감시 및 자동 완료 처리
+watch(() => tutorStore.isSessionReadyToComplete, async (isReady) => {
+  if (isReady && learningStore.isSessionActive && !learningStore.isSessionCompleted) {
+    console.log('세션 완료 조건 충족, 자동으로 세션 완료 처리 시작')
+    
+    try {
+      // 잠시 대기 후 세션 완료 처리 (사용자가 피드백을 읽을 시간 제공)
+      setTimeout(async () => {
+        if (tutorStore.isSessionReadyToComplete && learningStore.isSessionActive) {
+          console.log('세션 완료 처리 실행')
+          
+          // learningStore를 통해 세션 완료 (기본값: proceed)
+          const result = await learningStore.completeSession('proceed')
+          
+          if (result.success) {
+            console.log('세션 완료 성공, UI가 자동으로 완료 화면으로 전환됩니다')
+            
+            // tutorStore에 완료 상태 반영
+            if (result.data.workflow_response) {
+              tutorStore.updateFromWorkflowResponse(result.data.workflow_response)
+            }
+          } else {
+            console.error('세션 완료 실패:', result.error)
+          }
+        }
+      }, 3000) // 3초 후 자동 완료
+      
+    } catch (error) {
+      console.error('세션 완료 처리 중 오류:', error)
+    }
+  }
 })
 </script>
 
@@ -581,6 +685,16 @@ watch(() => tutorStore.isConnectedToLearningStore, (isConnected) => {
   gap: 0;
   overflow: hidden;
   min-height: 0; /* flexbox 오버플로우 활성화 */
+}
+
+/* 세션 완료 시 메인 컨텐츠가 전체 너비 차지 */
+.learning-content:has(.interaction-area:not(:first-child)) {
+  grid-template-columns: 1fr;
+}
+
+/* 상호작용 영역이 없을 때 메인 컨텐츠 전체 너비 */
+.learning-content > :only-child {
+  grid-column: 1 / -1;
 }
 
 /* 오른쪽: 상호작용 영역 (50%) */

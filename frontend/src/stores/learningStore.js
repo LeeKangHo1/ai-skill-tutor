@@ -18,7 +18,12 @@ export const useLearningStore = defineStore('learning', () => {
     section_number: null,
     chapter_title: '',
     section_title: '',
-    estimated_duration: ''
+    estimated_duration: '',
+    // 세션 완료 관련 필드
+    completed_at: null,
+    final_score: null,
+    next_chapter: null,
+    next_section: null
   })
   
   // ===== API 호출 상태 =====
@@ -76,7 +81,7 @@ export const useLearningStore = defineStore('learning', () => {
   
   // 현재 세션 정보 요약
   const sessionSummary = computed(() => {
-    if (!isSessionActive.value) return null
+    if (!sessionState.value.session_id) return null
     
     return {
       session_id: sessionState.value.session_id,
@@ -84,7 +89,26 @@ export const useLearningStore = defineStore('learning', () => {
       section: `${sessionState.value.section_number}절 - ${sessionState.value.section_title}`,
       duration: sessionState.value.estimated_duration,
       current_agent: workflowState.value.current_agent,
-      progress_stage: workflowState.value.session_progress_stage
+      progress_stage: workflowState.value.session_progress_stage,
+      is_active: sessionState.value.is_active,
+      is_completed: !sessionState.value.is_active && sessionState.value.completed_at
+    }
+  })
+  
+  // 세션 완료 상태 확인
+  const isSessionCompleted = computed(() => {
+    return !sessionState.value.is_active && sessionState.value.completed_at !== null
+  })
+  
+  // 다음 단계 정보
+  const nextStepInfo = computed(() => {
+    if (!isSessionCompleted.value) return null
+    
+    return {
+      has_next_step: sessionState.value.next_chapter !== null && sessionState.value.next_section !== null,
+      next_chapter: sessionState.value.next_chapter,
+      next_section: sessionState.value.next_section,
+      completion_data: workflowState.value.content?.completion_data || null
     }
   })
   
@@ -113,12 +137,11 @@ export const useLearningStore = defineStore('learning', () => {
         user_message: userMessage
       }
       
-      // learningService를 통한 API 호출 (실제 구현 시 수정 필요)
-      // 현재는 더미 응답으로 구현, 실제 API 연동 시 수정
-      const response = await simulateApiCall('/learning/session/start', requestData)
+      // learningService를 통한 실제 API 호출
+      const response = await learningService.startLearningSession(chapterNumber, sectionNumber, userMessage)
       
-      if (response.success) {
-        // 세션 상태 업데이트
+      if (response.success || response.isFallback) {
+        // 세션 상태 업데이트 (기본값 포함)
         updateSessionState({
           session_id: response.data.session_info.session_id || `session_${Date.now()}`,
           is_active: true,
@@ -133,10 +156,20 @@ export const useLearningStore = defineStore('learning', () => {
         // 워크플로우 응답 업데이트
         updateWorkflowState(response.data.workflow_response)
         
-        console.log('세션 시작 성공:', sessionState.value)
+        // 기본값 사용 시 사용자에게 알림
+        if (response.isFallback) {
+          console.warn('세션 시작 - 기본값 모드:', sessionState.value)
+          // 기본값 사용 상태를 별도로 저장할 수 있음
+          workflowState.value.metadata.isFallbackMode = true
+        } else {
+          console.log('세션 시작 성공:', sessionState.value)
+        }
+        
         return response
       } else {
-        throw new Error(response.error || '세션 시작에 실패했습니다')
+        // learningService에서 반환한 에러 응답 처리
+        handleApiError(response, 'startSession')
+        return response
       }
       
     } catch (error) {
@@ -177,17 +210,25 @@ export const useLearningStore = defineStore('learning', () => {
         message_type: messageType
       }
       
-      // 실제 API 호출 (현재는 시뮬레이션)
-      const response = await simulateApiCall('/learning/session/message', requestData)
+      // learningService를 통한 실제 API 호출
+      const response = await learningService.sendSessionMessage(userMessage, messageType)
       
-      if (response.success) {
+      if (response.success || response.isFallback) {
         // 워크플로우 응답 업데이트
         updateWorkflowState(response.data.workflow_response)
         
-        console.log('메시지 전송 성공:', response.data)
+        if (response.isFallback) {
+          console.warn('메시지 전송 - 기본값 모드:', response.data)
+          workflowState.value.metadata.isFallbackMode = true
+        } else {
+          console.log('메시지 전송 성공:', response.data)
+        }
+        
         return response
       } else {
-        throw new Error(response.error || '메시지 전송에 실패했습니다')
+        // learningService에서 반환한 에러 응답 처리
+        handleApiError(response, 'sendMessage')
+        return response
       }
       
     } catch (error) {
@@ -226,10 +267,10 @@ export const useLearningStore = defineStore('learning', () => {
         user_answer: userAnswer
       }
       
-      // 실제 API 호출 (현재는 시뮬레이션)
-      const response = await simulateApiCall('/learning/quiz/submit', requestData)
+      // learningService를 통한 실제 API 호출
+      const response = await learningService.submitQuizAnswer(userAnswer)
       
-      if (response.success) {
+      if (response.success || response.isFallback) {
         // 워크플로우 응답 및 평가 결과 업데이트
         updateWorkflowState(response.data.workflow_response)
         
@@ -237,10 +278,18 @@ export const useLearningStore = defineStore('learning', () => {
           workflowState.value.evaluation_result = response.data.evaluation_result
         }
         
-        console.log('퀴즈 제출 성공:', response.data)
+        if (response.isFallback) {
+          console.warn('퀴즈 제출 - 기본값 모드:', response.data)
+          workflowState.value.metadata.isFallbackMode = true
+        } else {
+          console.log('퀴즈 제출 성공:', response.data)
+        }
+        
         return response
       } else {
-        throw new Error(response.error || '퀴즈 제출에 실패했습니다')
+        // learningService에서 반환한 에러 응답 처리
+        handleApiError(response, 'submitQuiz')
+        return response
       }
       
     } catch (error) {
@@ -279,17 +328,56 @@ export const useLearningStore = defineStore('learning', () => {
         proceed_decision: proceedDecision
       }
       
-      // 실제 API 호출 (현재는 시뮬레이션)
-      const response = await simulateApiCall('/learning/session/complete', requestData)
+      // learningService를 통한 실제 API 호출
+      const response = await learningService.completeSession(proceedDecision)
       
-      if (response.success) {
+      if (response.success || response.isFallback) {
         // 세션 완료 처리
-        sessionState.value.is_active = false
+        const completionData = response.data.session_completion
         
-        console.log('세션 완료 성공:', response.data)
+        // 세션 상태 업데이트
+        sessionState.value.is_active = false
+        sessionState.value.completed_at = completionData.completed_at
+        sessionState.value.final_score = completionData.final_score
+        
+        // 다음 단계 정보 저장
+        sessionState.value.next_chapter = completionData.next_chapter
+        sessionState.value.next_section = completionData.next_section
+        
+        // 워크플로우 상태를 완료 상태로 업데이트
+        workflowState.value.session_progress_stage = 'session_completed'
+        workflowState.value.ui_mode = 'completion'
+        workflowState.value.content = {
+          type: 'completion',
+          title: response.isFallback ? '세션 완료 (오프라인 모드)' : '세션 완료',
+          completion_data: completionData,
+          proceed_decision: proceedDecision
+        }
+        
+        if (response.isFallback) {
+          console.warn('세션 완료 - 기본값 모드:', {
+            completion_data: completionData,
+            next_step: {
+              chapter: completionData.next_chapter,
+              section: completionData.next_section
+            }
+          })
+          workflowState.value.metadata.isFallbackMode = true
+        } else {
+          console.log('세션 완료 성공:', {
+            completion_data: completionData,
+            next_step: {
+              chapter: completionData.next_chapter,
+              section: completionData.next_section
+            }
+          })
+        }
+        
         return response
       } else {
-        throw new Error(response.error || '세션 완료에 실패했습니다')
+        // learningService에서 반환한 에러 응답 처리
+        handleApiError(response, 'completeSession')
+        return response
       }
       
     } catch (error) {
@@ -308,38 +396,82 @@ export const useLearningStore = defineStore('learning', () => {
   // ===== 에러 처리 메서드 =====
   
   /**
-   * API 에러 처리
-   * @param {Error} error - 발생한 에러
+   * API 에러 처리 (learningService 응답 구조에 맞게 개선)
+   * @param {Error|Object} error - 발생한 에러 또는 learningService 에러 응답
    * @param {string} context - 에러 발생 컨텍스트
    */
   const handleApiError = (error, context = '') => {
     console.error(`API 에러 [${context}]:`, error)
     
-    // 에러 타입 분류
-    if (error.code === 'NETWORK_ERROR' || error.message.includes('network')) {
-      errorState.value.network_error = true
-      errorState.value.error_message = '네트워크 연결을 확인해주세요.'
-      errorState.value.can_retry = true
-    } else if (error.status === 401 || error.message.includes('auth')) {
-      errorState.value.auth_error = true
-      errorState.value.error_message = '인증이 필요합니다. 다시 로그인해주세요.'
-      errorState.value.can_retry = false
-    } else if (error.status >= 500) {
-      errorState.value.server_error = true
-      errorState.value.error_message = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
-      errorState.value.can_retry = true
-    } else if (error.status >= 400 && error.status < 500) {
-      errorState.value.validation_error = true
-      errorState.value.error_message = error.message || '요청 데이터를 확인해주세요.'
-      errorState.value.can_retry = false
+    // learningService에서 반환하는 에러 응답 구조 처리
+    if (error && typeof error === 'object' && error.hasOwnProperty('success') && !error.success) {
+      const errorType = error.type || 'unknown'
+      const errorMessage = error.error || '알 수 없는 오류가 발생했습니다.'
+      const canRetry = error.retry || false
+      
+      // 에러 타입별 상태 설정
+      switch (errorType) {
+        case 'network':
+          errorState.value.network_error = true
+          errorState.value.error_message = errorMessage
+          errorState.value.can_retry = canRetry
+          break
+          
+        case 'auth':
+          errorState.value.auth_error = true
+          errorState.value.error_message = errorMessage
+          errorState.value.can_retry = canRetry
+          break
+          
+        case 'server':
+          errorState.value.server_error = true
+          errorState.value.error_message = errorMessage
+          errorState.value.can_retry = canRetry
+          break
+          
+        case 'validation':
+        case 'permission':
+          errorState.value.validation_error = true
+          errorState.value.error_message = errorMessage
+          errorState.value.can_retry = canRetry
+          break
+          
+        default:
+          errorState.value.server_error = true
+          errorState.value.error_message = errorMessage
+          errorState.value.can_retry = canRetry
+      }
+      
+      errorState.value.error_code = error.status || null
+      apiState.value.error = errorMessage
+      
     } else {
-      errorState.value.server_error = true
-      errorState.value.error_message = error.message || '알 수 없는 오류가 발생했습니다.'
-      errorState.value.can_retry = true
+      // 일반 Error 객체 처리 (기존 로직 유지)
+      if (error.code === 'NETWORK_ERROR' || error.message.includes('network')) {
+        errorState.value.network_error = true
+        errorState.value.error_message = '네트워크 연결을 확인해주세요.'
+        errorState.value.can_retry = true
+      } else if (error.status === 401 || error.message.includes('auth')) {
+        errorState.value.auth_error = true
+        errorState.value.error_message = '인증이 필요합니다. 다시 로그인해주세요.'
+        errorState.value.can_retry = false
+      } else if (error.status >= 500) {
+        errorState.value.server_error = true
+        errorState.value.error_message = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.'
+        errorState.value.can_retry = true
+      } else if (error.status >= 400 && error.status < 500) {
+        errorState.value.validation_error = true
+        errorState.value.error_message = error.message || '요청 데이터를 확인해주세요.'
+        errorState.value.can_retry = false
+      } else {
+        errorState.value.server_error = true
+        errorState.value.error_message = error.message || '알 수 없는 오류가 발생했습니다.'
+        errorState.value.can_retry = true
+      }
+      
+      errorState.value.error_code = error.status || error.code
+      apiState.value.error = error.message
     }
-    
-    errorState.value.error_code = error.status || error.code
-    apiState.value.error = error.message
   }
   
   /**
@@ -410,7 +542,12 @@ export const useLearningStore = defineStore('learning', () => {
       section_number: null,
       chapter_title: '',
       section_title: '',
-      estimated_duration: ''
+      estimated_duration: '',
+      // 세션 완료 관련 필드 초기화
+      completed_at: null,
+      final_score: null,
+      next_chapter: null,
+      next_section: null
     }
     
     workflowState.value = {
@@ -546,14 +683,32 @@ export const useLearningStore = defineStore('learning', () => {
         }
       
       case '/learning/session/complete':
+        const currentChapter = sessionState.value.chapter_number || 2
+        const currentSection = sessionState.value.section_number || 1
+        
         return {
           success: true,
           data: {
             session_completion: {
               completed_at: new Date().toISOString(),
               final_score: 100,
-              next_chapter: data.proceed_decision === 'proceed' ? 3 : null,
-              next_section: data.proceed_decision === 'proceed' ? 1 : null
+              session_summary: {
+                chapter_number: currentChapter,
+                section_number: currentSection,
+                total_duration: '12분',
+                concepts_learned: ['LLM 기본 개념', '언어 모델의 특징', '실제 활용 사례']
+              },
+              next_chapter: data.proceed_decision === 'proceed' ? (currentSection >= 3 ? currentChapter + 1 : currentChapter) : null,
+              next_section: data.proceed_decision === 'proceed' ? (currentSection >= 3 ? 1 : currentSection + 1) : null,
+              next_chapter_title: data.proceed_decision === 'proceed' ? 
+                (currentSection >= 3 ? `${currentChapter + 1}장 - 프롬프트 엔지니어링` : `${currentChapter}장 - LLM 기초`) : null,
+              next_section_title: data.proceed_decision === 'proceed' ? 
+                (currentSection >= 3 ? '1절 - 프롬프트 기본 원리' : `${currentSection + 1}절 - LLM 활용 방법`) : null,
+              proceed_options: {
+                can_proceed: data.proceed_decision === 'proceed',
+                can_retry: true,
+                can_dashboard: true
+              }
             }
           }
         }
@@ -578,6 +733,8 @@ export const useLearningStore = defineStore('learning', () => {
     hasError,
     canRetry,
     sessionSummary,
+    isSessionCompleted,
+    nextStepInfo,
     
     // 핵심 액션
     startSession,

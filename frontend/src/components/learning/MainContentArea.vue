@@ -1,6 +1,21 @@
 <!-- frontend/src/components/learning/MainContentArea.vue -->
 <template>
   <div class="main-content-area" :class="agentThemeClass">
+    <!-- 에러 알림 -->
+    <ErrorAlert
+      v-if="showErrorAlert && errorInfo"
+      :show="showErrorAlert"
+      :error-type="errorInfo.type"
+      :error-message="friendlyErrorMessage"
+      :error-code="errorInfo.code"
+      :can-retry="errorInfo.canRetry"
+      :show-help-button="true"
+      :is-fallback-mode="learningStore.workflowState.metadata?.isFallbackMode || false"
+      @close="hideError"
+      @retry="handleErrorRetry"
+      @help="handleErrorHelp"
+    />
+    
     <!-- 진행률 표시기 -->
     <div class="progress-indicator">
       <div class="progress-header">
@@ -118,6 +133,21 @@
           <p>{{ qnaContent.relatedInfo }}</p>
         </div>
       </div>
+
+      <!-- 세션 완료 컨텐츠 -->
+      <div 
+        v-if="shouldShowContent('completion')"
+        class="completion-content"
+        :class="{ 'content-active': isContentVisible('completion'), 'content-hidden': !isContentVisible('completion') }"
+      >
+        <SessionCompletion
+          :completion-data="completionData"
+          :session-info="sessionInfo"
+          @proceed-to-next="handleProceedToNext"
+          @retry-session="handleRetrySession"
+          @go-to-dashboard="handleGoToDashboard"
+        />
+      </div>
     </div>
 
     <!-- 이전 컨텐츠 접근 버튼 -->
@@ -151,10 +181,23 @@
 import { computed, defineProps, defineEmits, watch } from 'vue'
 import { useLearningStore } from '../../stores/learningStore.js'
 import { useTutorStore } from '../../stores/tutorStore.js'
+import { useErrorHandler } from '../../composables/useErrorHandler.js'
+import SessionCompletion from './SessionCompletion.vue'
+import ErrorAlert from '../common/ErrorAlert.vue'
 
 // Store 인스턴스
 const learningStore = useLearningStore()
 const tutorStore = useTutorStore()
+
+// 에러 핸들러 컴포저블
+const {
+  showErrorAlert,
+  errorInfo,
+  friendlyErrorMessage,
+  helpInfo,
+  hideError,
+  retryLastAction
+} = useErrorHandler()
 
 // Props 정의 (기존 호환성 유지)
 const props = defineProps({
@@ -183,7 +226,10 @@ const emit = defineEmits([
   'navigation-click',
   'ui-mode-changed',
   'agent-changed', 
-  'progress-stage-changed'
+  'progress-stage-changed',
+  'proceed-to-next',
+  'retry-session',
+  'go-to-dashboard'
 ])
 
 // ===== Store 상태 기반 실시간 컴퓨티드 속성 =====
@@ -345,7 +391,8 @@ const agentContentMap = {
   theory_educator: 'theory',
   quiz_generator: 'quiz',
   evaluation_feedback_agent: 'feedback',
-  qna_resolver: 'qna'
+  qna_resolver: 'qna',
+  session_completion: 'completion'
 }
 
 // 이론 컨텐츠 데이터
@@ -382,10 +429,37 @@ const qnaContent = computed(() => ({
   relatedInfo: '3챕터에서 AI의 역사와 발전 과정을 더 자세히 다룹니다.'
 }))
 
+// 세션 완료 데이터
+const completionData = computed(() => {
+  const workflowContent = learningStore.workflowState.content
+  if (workflowContent?.type === 'completion') {
+    return workflowContent.completion_data || {}
+  }
+  return {}
+})
+
+// 세션 정보 (SessionCompletion 컴포넌트용)
+const sessionInfo = computed(() => ({
+  chapter: learningStore.sessionState.chapter_number || tutorStore.sessionInfo.chapter_number || 2,
+  section: learningStore.sessionState.section_number || tutorStore.sessionInfo.section_number || 1,
+  chapter_title: learningStore.sessionState.chapter_title || tutorStore.sessionInfo.chapter_title || 'LLM 기초',
+  section_title: learningStore.sessionState.section_title || tutorStore.sessionInfo.section_title || 'LLM이란 무엇인가'
+}))
+
 // ===== 컨텐츠 표시/숨김 로직 (실시간 상태 기반) =====
 
 // 컨텐츠 표시/숨김 로직 (실시간 상태 기반)
 const shouldShowContent = (contentType) => {
+  // 세션 완료 상태 확인
+  if (learningStore.isSessionCompleted && contentType === 'completion') {
+    return true
+  }
+  
+  // 세션 완료 상태에서는 completion만 표시
+  if (learningStore.isSessionCompleted && contentType !== 'completion') {
+    return false
+  }
+  
   // 현재 에이전트의 컨텐츠 타입 결정
   const currentContentType = agentContentMap[currentAgent.value]
   
@@ -526,6 +600,97 @@ const handleNavigationClick = (navigationType) => {
   }
   
   emit('navigation-click', navigationType)
+}
+
+// ===== 세션 완료 관련 이벤트 핸들러 =====
+
+// 다음 단계로 진행
+const handleProceedToNext = (nextStepInfo) => {
+  console.log('MainContentArea: 다음 단계로 진행:', nextStepInfo)
+  emit('proceed-to-next', nextStepInfo)
+}
+
+// 세션 재시도
+const handleRetrySession = (sessionInfo) => {
+  console.log('MainContentArea: 세션 재시도:', sessionInfo)
+  emit('retry-session', sessionInfo)
+}
+
+// 대시보드로 이동
+const handleGoToDashboard = () => {
+  console.log('MainContentArea: 대시보드로 이동')
+  emit('go-to-dashboard')
+}
+
+// ===== 에러 처리 관련 이벤트 핸들러 =====
+
+// 에러 재시도 핸들러
+const handleErrorRetry = async () => {
+  if (!errorInfo.value) return
+  
+  console.log('MainContentArea: 에러 재시도 시도:', errorInfo.value.context)
+  
+  try {
+    // 컨텍스트에 따른 재시도 로직
+    const context = errorInfo.value.context
+    let result = null
+    
+    switch (context) {
+      case 'startSession':
+        // 세션 시작 재시도 - 기본 파라미터로 재시도
+        result = await learningStore.startSession(
+          learningStore.sessionState.chapter_number || 2,
+          learningStore.sessionState.section_number || 1,
+          '학습을 다시 시작합니다'
+        )
+        break
+        
+      case 'sendMessage':
+        // 메시지 전송 재시도 - 마지막 메시지 재전송은 복잡하므로 사용자에게 다시 입력 요청
+        console.log('메시지 재전송은 사용자가 직접 다시 입력해야 합니다.')
+        hideError()
+        return
+        
+      case 'submitQuiz':
+        // 퀴즈 제출 재시도 - 마지막 답안 재제출은 복잡하므로 사용자에게 다시 선택 요청
+        console.log('퀴즈 답안 재제출은 사용자가 직접 다시 선택해야 합니다.')
+        hideError()
+        return
+        
+      case 'completeSession':
+        // 세션 완료 재시도
+        result = await learningStore.completeSession('proceed')
+        break
+        
+      default:
+        console.warn('알 수 없는 에러 컨텍스트:', context)
+        hideError()
+        return
+    }
+    
+    if (result && result.success) {
+      console.log('에러 재시도 성공:', result)
+      hideError()
+    } else {
+      console.error('에러 재시도 실패:', result)
+      // 에러 상태는 learningStore에서 자동으로 업데이트됨
+    }
+    
+  } catch (error) {
+    console.error('에러 재시도 중 예외 발생:', error)
+    learningStore.handleApiError(error, 'retry_error')
+  }
+}
+
+// 에러 도움말 핸들러
+const handleErrorHelp = () => {
+  if (!helpInfo.value) return
+  
+  console.log('MainContentArea: 에러 도움말 표시:', helpInfo.value)
+  
+  // 도움말 모달이나 별도 컴포넌트를 표시하는 로직
+  // 현재는 콘솔에 도움말 정보를 출력
+  alert(`${helpInfo.value.title}\n\n${helpInfo.value.content.join('\n')}`)
 }
 </script>
 
@@ -954,6 +1119,21 @@ const handleNavigationClick = (navigationType) => {
 
 .qna-related p:last-child {
   margin-bottom: 0;
+}
+
+.completion-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0.75rem;
+  padding: 0;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.theme-feedback .completion-content {
+  background: rgba(76, 175, 80, 0.02);
+  border: 2px solid rgba(76, 175, 80, 0.2);
 }
 
 /* 컨텐츠 표시/숨김 */

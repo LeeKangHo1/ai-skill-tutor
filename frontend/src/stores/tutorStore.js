@@ -160,6 +160,15 @@ export const useTutorStore = defineStore('tutor', () => {
     return ['theory_completed', 'quiz_and_feedback_completed'].includes(sessionProgressStage.value)
   })
   
+  // 세션 완료 조건 확인
+  const isSessionReadyToComplete = computed(() => {
+    // 모든 단계가 완료되었고, 피드백 단계까지 도달한 경우
+    return completedSteps.value.theory && 
+           completedSteps.value.quiz && 
+           completedSteps.value.feedback &&
+           sessionProgressStage.value === 'quiz_and_feedback_completed'
+  })
+  
   // learningStore 연동 상태 확인
   const isConnectedToLearningStore = computed(() => {
     return learningStore.isSessionActive && learningStore.workflowState.current_agent !== null
@@ -621,6 +630,7 @@ export const useTutorStore = defineStore('tutor', () => {
     isQuizAndFeedbackCompleted,
     canAskQuestion,
     canProceedNext,
+    isSessionReadyToComplete,
     sessionSteps,
     
     // learningStore 연동 컴퓨티드
