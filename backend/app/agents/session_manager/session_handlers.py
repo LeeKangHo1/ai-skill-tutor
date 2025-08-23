@@ -260,9 +260,17 @@ class SessionHandlers:
             WHERE user_id = %s
             """
             
-            # v2.1: study_duration_seconds로 변경된 키 사용
+            # v2.1: study_duration_seconds를 분 단위로 변환하여 사용
+            study_duration_seconds = combined_data.get('study_duration_seconds', 0)
+            study_duration_minutes = study_duration_seconds / 60 if study_duration_seconds > 0 else 0
+            
+            # 디버깅: 전달받은 데이터 확인
+            self.logger.info(f"통계 업데이트 디버깅 - user_id: {combined_data['user_id']}")
+            self.logger.info(f"combined_data 키들: {list(combined_data.keys())}")
+            self.logger.info(f"study_duration_seconds 값: {study_duration_seconds}")
+            
             params = [
-                combined_data.get('study_duration_seconds', 0),
+                study_duration_seconds,  # user_statistics는 초 단위 사용
                 combined_data['user_id']
             ]
             

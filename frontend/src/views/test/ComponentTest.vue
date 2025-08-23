@@ -622,7 +622,7 @@ const performanceMetrics = reactive({
 
 // MainContentArea 테스트 데이터
 const testAgent = ref('theory_educator')
-const testContentMode = ref('current')
+const testContentModeValue = ref('current')
 const testCompletedSteps = ref({ theory: true, quiz: false, feedback: false })
 const testContentData = ref({
   title: 'LLM(Large Language Model)이란?',
@@ -1304,7 +1304,7 @@ const handleProgressStageChanged = (data) => {
 
 const handleNavigationClick = (navigationType) => {
   addLog(`네비게이션 클릭: ${navigationType}`, 'event')
-  testContentMode.value = navigationType === 'current' ? 'current' : `review_${navigationType}`
+  testContentModeValue.value = navigationType === 'current' ? 'current' : `review_${navigationType}`
 }
 
 // ChatInteraction 테스트 함수들
