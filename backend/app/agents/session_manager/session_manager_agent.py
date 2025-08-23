@@ -280,6 +280,9 @@ class SessionManager:
                 success = self.session_handlers.save_session_quiz(quiz_data)
                 if not success:
                     self.logger.warning(f"퀴즈 정보 저장 실패: session_id={session_id}")
+
+            # 5. 모든 저장 완료 후 퀴즈 통계 재계산 (v2.4 추가)
+            self.session_handlers.finalize_session_statistics(session_data["user_id"])
             
             self.logger.info(f"세션 데이터 DB 저장 완료: session_id={session_id}")
             return session_id

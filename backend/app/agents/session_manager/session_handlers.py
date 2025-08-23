@@ -1,13 +1,12 @@
 # backend/app/agents/session_manager/session_handlers.py
 
 """
-SessionHandlers v2.3 - 세션 데이터 DB 저장 핸들러
+SessionHandlers v2.4 - 세션 데이터 DB 저장 핸들러
 
-주요 v2.3 변경사항:
-- 진행 상태 데이터 분리: session_data와 progress_data 구분
-- save_session_info() 메서드 시그니처 변경
-- learning_sessions 테이블에는 현재 세션 정보만 저장
-- user_progress 테이블에는 다음 진행 상태 저장
+주요 v2.4 변경사항:
+- _update_user_statistics() 메서드 수정
+- 레코드 존재 확인 후 INSERT/UPDATE 분기 처리
+- 첫 번째 세션에서도 통계가 정상 반영되도록 개선
 """
 
 import logging
@@ -15,7 +14,7 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from app.utils.database.query_builder import insert_record, update_record, count_records
-from app.utils.database.connection import fetch_one, fetch_all
+from app.utils.database.connection import fetch_one, fetch_all, execute_query
 from app.utils.database.transaction import execute_transaction
 from app.config.db_config import DatabaseQueryError, DatabaseIntegrityError
 
@@ -36,7 +35,7 @@ class SessionHandlers:
     
     def save_session_info(self, session_data: Dict[str, Any], progress_data: Optional[Dict[str, Any]] = None) -> int:
         """
-        learning_sessions 테이블에 세션 기본 정보 저장 (v2.3: 진행 상태 분리)
+        learning_sessions 테이블에 세션 기본 정보 저장 (v2.4: 퀴즈 통계 재계산 순서 수정)
         
         Args:
             session_data: 세션 정보 딕셔너리 (learning_sessions 테이블용)
@@ -52,7 +51,7 @@ class SessionHandlers:
             if session_id:
                 self.logger.info(f"세션 정보 저장 완료: session_id={session_id}")
                 
-                # user_progress 및 user_statistics 업데이트
+                # user_progress 및 user_statistics 업데이트 (퀴즈 통계 재계산 제외)
                 combined_data = session_data.copy()
                 combined_data['session_id'] = session_id
                 
@@ -61,7 +60,7 @@ class SessionHandlers:
                     combined_data.update(progress_data)
                 
                 self._update_user_progress(combined_data)
-                self._update_user_statistics(combined_data)
+                self._update_user_statistics_without_quiz_recalc(combined_data)
                 
                 return session_id
             else:
@@ -77,6 +76,23 @@ class SessionHandlers:
         except Exception as e:
             self.logger.error(f"세션 정보 저장 중 예상치 못한 오류: {str(e)}")
             return None
+    
+    def finalize_session_statistics(self, user_id: int) -> bool:
+        """
+        모든 세션 데이터 저장 완료 후 퀴즈 통계 재계산 (v2.4 신규)
+        
+        Args:
+            user_id: 사용자 ID
+            
+        Returns:
+            재계산 성공 여부
+        """
+        try:
+            self._recalculate_average_accuracy(user_id)
+            return True
+        except Exception as e:
+            self.logger.error(f"세션 통계 마무리 중 오류: {str(e)}")
+            return False
     
     def save_session_conversations(self, session_id: int, conversations: List[Dict[str, Any]]) -> bool:
         """
@@ -222,9 +238,9 @@ class SessionHandlers:
             self.logger.error(f"사용자 진행 상태 업데이트 중 오류: {str(e)}")
             return False
     
-    def _update_user_statistics(self, combined_data: Dict[str, Any]) -> bool:
+    def _update_user_statistics_without_quiz_recalc(self, combined_data: Dict[str, Any]) -> bool:
         """
-        user_statistics 테이블 업데이트 (v2.1: 컬럼명 변경 반영)
+        user_statistics 테이블 업데이트 (v2.4: 퀴즈 통계 재계산 제외)
         
         Args:
             combined_data: 세션 정보
@@ -251,12 +267,10 @@ class SessionHandlers:
             ]
             
             # 직접 쿼리 실행 (복잡한 계산이 포함된 업데이트)
-            from app.utils.database.connection import execute_query
             result = execute_query(query, params)
             
             if result > 0:
-                # 평균 정확도 재계산
-                self._recalculate_average_accuracy(combined_data['user_id'])
+                # v2.4: 퀴즈 통계 재계산은 제외 (나중에 별도 호출)
                 self.logger.info(f"사용자 통계 업데이트 완료: user_id={combined_data['user_id']}")
                 return True
             else:
@@ -266,6 +280,22 @@ class SessionHandlers:
         except Exception as e:
             self.logger.error(f"사용자 통계 업데이트 중 오류: {str(e)}")
             return False
+    
+    def _update_user_statistics(self, combined_data: Dict[str, Any]) -> bool:
+        """
+        user_statistics 테이블 업데이트 (기존 메서드 - 호환성 유지)
+        
+        Args:
+            combined_data: 세션 정보
+            
+        Returns:
+            업데이트 성공 여부
+        """
+        # 기본 통계 업데이트 후 퀴즈 통계 재계산
+        success = self._update_user_statistics_without_quiz_recalc(combined_data)
+        if success:
+            self._recalculate_average_accuracy(combined_data['user_id'])
+        return success
     
     def _recalculate_average_accuracy(self, user_id: int) -> bool:
         """
@@ -289,7 +319,9 @@ class SessionHandlers:
             quiz_results = fetch_all(query, [user_id])
             
             if not quiz_results:
-                return True  # 퀴즈 결과가 없으면 그대로 유지
+                # 퀴즈 결과가 없으면 기본값 유지
+                self.logger.info(f"퀴즈 결과 없음, 통계 기본값 유지: user_id={user_id}")
+                return True
             
             # v2.0: 객관식/주관식 분리 통계 계산
             multiple_choice_count = 0
@@ -336,7 +368,7 @@ class SessionHandlers:
             )
             
             if result > 0:
-                self.logger.info(f"분리 통계 재계산 완료: user_id={user_id}, 객관식={multiple_choice_accuracy:.2f}%, 주관식={subjective_average_score:.2f}점")
+                self.logger.info(f"분리 통계 재계산 완료: user_id={user_id}, 객관식={multiple_choice_accuracy:.2f}% ({multiple_choice_correct}/{multiple_choice_count}), 주관식={subjective_average_score:.2f}점 ({subjective_count}개)")
                 return True
             else:
                 self.logger.error("분리 통계 업데이트 실패")

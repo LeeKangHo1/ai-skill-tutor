@@ -21,6 +21,33 @@
 
     <!-- 전체 통합 테스트 -->
     <div v-if="currentTestComponent === 'all'" class="test-container full-test">
+      <div class="integration-test-header">
+        <h3>🔄 전체 워크플로우 통합 테스트</h3>
+        <div class="workflow-status">
+          <div class="status-item" :class="{ active: workflowTestStatus.sessionStarted }">
+            <span class="status-icon">{{ workflowTestStatus.sessionStarted ? '✅' : '⏳' }}</span>
+            <span>세션 시작</span>
+          </div>
+          <div class="status-item" :class="{ active: workflowTestStatus.theoryCompleted }">
+            <span class="status-icon">{{ workflowTestStatus.theoryCompleted ? '✅' : '⏳' }}</span>
+            <span>이론 학습</span>
+          </div>
+          <div class="status-item" :class="{ active: workflowTestStatus.quizCompleted }">
+            <span class="status-icon">{{ workflowTestStatus.quizCompleted ? '✅' : '⏳' }}</span>
+            <span>퀴즈 완료</span>
+          </div>
+          <div class="status-item" :class="{ active: workflowTestStatus.sessionCompleted }">
+            <span class="status-icon">{{ workflowTestStatus.sessionCompleted ? '✅' : '⏳' }}</span>
+            <span>세션 완료</span>
+          </div>
+        </div>
+        <div class="integration-controls">
+          <button @click="startIntegrationTest" :disabled="isRunningIntegrationTest" class="integration-btn">
+            {{ isRunningIntegrationTest ? '⏳ 통합 테스트 실행중...' : '🚀 통합 테스트 시작' }}
+          </button>
+          <button @click="resetIntegrationTest" class="integration-btn reset">🔄 테스트 리셋</button>
+        </div>
+      </div>
       <div class="test-wrapper">
         <LearningPage />
       </div>
@@ -484,6 +511,15 @@ const currentTestComponent = ref('api-test') // 기본값을 API 테스트로 �
 const testLogs = ref([])
 const currentWorkflowAgent = ref('theory_educator')
 const useRealApi = ref(true) // 실제 API 사용 여부
+
+// ===== 통합 테스트 상태 =====
+const isRunningIntegrationTest = ref(false)
+const workflowTestStatus = reactive({
+  sessionStarted: false,
+  theoryCompleted: false,
+  quizCompleted: false,
+  sessionCompleted: false
+})
 
 // ===== API 테스트 상태 =====
 const apiConnectionStatus = ref('disconnected') // connected, loading, disconnected
@@ -1521,6 +1557,218 @@ watch(
     }
   }
 )
+
+// ===== 통합 테스트 메서드들 =====
+
+/**
+ * 전체 워크플로우 통합 테스트 시작
+ * 세션 시작부터 완료까지 전체 플로우를 자동으로 실행하고 검증
+ */
+const startIntegrationTest = async () => {
+  if (isRunningIntegrationTest.value) return
+
+  addLog('🚀 전체 워크플로우 통합 테스트 시작', 'event')
+  isRunningIntegrationTest.value = true
+  
+  // 테스트 상태 초기화
+  Object.keys(workflowTestStatus).forEach(key => {
+    workflowTestStatus[key] = false
+  })
+
+  try {
+    // 1단계: 세션 시작 테스트
+    addLog('📋 1단계: 세션 시작 테스트 실행', 'info')
+    await testSessionStartIntegration()
+    workflowTestStatus.sessionStarted = true
+    await waitForDelay(1000)
+
+    // 2단계: 이론 학습 완료 테스트
+    addLog('📚 2단계: 이론 학습 및 다음 단계 진행 테스트', 'info')
+    await testTheoryToQuizTransition()
+    workflowTestStatus.theoryCompleted = true
+    await waitForDelay(1000)
+
+    // 3단계: 퀴즈 완료 테스트
+    addLog('📝 3단계: 퀴즈 제출 및 피드백 테스트', 'info')
+    await testQuizSubmissionIntegration()
+    workflowTestStatus.quizCompleted = true
+    await waitForDelay(1000)
+
+    // 4단계: 세션 완료 테스트
+    addLog('✅ 4단계: 세션 완료 테스트', 'info')
+    await testSessionCompletionIntegration()
+    workflowTestStatus.sessionCompleted = true
+
+    addLog('🎉 전체 워크플로우 통합 테스트 완료! 모든 단계가 성공적으로 실행되었습니다.', 'success')
+
+  } catch (error) {
+    addLog(`❌ 통합 테스트 실패: ${error.message}`, 'error')
+    console.error('통합 테스트 에러:', error)
+  } finally {
+    isRunningIntegrationTest.value = false
+  }
+}
+
+/**
+ * 세션 시작 통합 테스트
+ */
+const testSessionStartIntegration = async () => {
+  const result = await learningStore.startSession(2, 1, '통합 테스트 세션 시작')
+  
+  if (!result.success && !result.isFallback) {
+    throw new Error(`세션 시작 실패: ${result.error}`)
+  }
+
+  // 상태 검증
+  if (!learningStore.isSessionActive) {
+    throw new Error('세션이 활성화되지 않았습니다')
+  }
+
+  if (tutorStore.currentAgent !== 'theory_educator') {
+    throw new Error(`예상 에이전트: theory_educator, 실제: ${tutorStore.currentAgent}`)
+  }
+
+  if (tutorStore.currentUIMode !== 'chat') {
+    throw new Error(`예상 UI 모드: chat, 실제: ${tutorStore.currentUIMode}`)
+  }
+
+  addLog('✅ 세션 시작 검증 완료: 에이전트, UI 모드, 세션 상태 모두 정상', 'success')
+}
+
+/**
+ * 이론 → 퀴즈 전환 테스트
+ */
+const testTheoryToQuizTransition = async () => {
+  const result = await learningStore.sendMessage('다음 단계로 넘어가주세요')
+  
+  if (!result.success && !result.isFallback) {
+    throw new Error(`메시지 전송 실패: ${result.error}`)
+  }
+
+  // 에이전트 전환 검증
+  if (tutorStore.currentAgent !== 'quiz_generator') {
+    throw new Error(`예상 에이전트: quiz_generator, 실제: ${tutorStore.currentAgent}`)
+  }
+
+  // UI 모드 전환 검증
+  if (tutorStore.currentUIMode !== 'quiz') {
+    throw new Error(`예상 UI 모드: quiz, 실제: ${tutorStore.currentUIMode}`)
+  }
+
+  // 진행 단계 검증
+  if (tutorStore.sessionProgressStage !== 'theory_completed') {
+    throw new Error(`예상 진행 단계: theory_completed, 실제: ${tutorStore.sessionProgressStage}`)
+  }
+
+  // 완료 단계 검증
+  if (!tutorStore.completedSteps.theory) {
+    throw new Error('이론 단계가 완료로 표시되지 않았습니다')
+  }
+
+  addLog('✅ 이론 → 퀴즈 전환 검증 완료: 에이전트, UI 모드, 진행 단계 모두 정상', 'success')
+}
+
+/**
+ * 퀴즈 제출 통합 테스트
+ */
+const testQuizSubmissionIntegration = async () => {
+  const result = await learningStore.submitQuiz('대규모 언어 모델')
+  
+  if (!result.success && !result.isFallback) {
+    throw new Error(`퀴즈 제출 실패: ${result.error}`)
+  }
+
+  // 에이전트 전환 검증
+  if (tutorStore.currentAgent !== 'evaluation_feedback_agent') {
+    throw new Error(`예상 에이전트: evaluation_feedback_agent, 실제: ${tutorStore.currentAgent}`)
+  }
+
+  // UI 모드 전환 검증
+  if (tutorStore.currentUIMode !== 'chat') {
+    throw new Error(`예상 UI 모드: chat, 실제: ${tutorStore.currentUIMode}`)
+  }
+
+  // 진행 단계 검증
+  if (tutorStore.sessionProgressStage !== 'quiz_and_feedback_completed') {
+    throw new Error(`예상 진행 단계: quiz_and_feedback_completed, 실제: ${tutorStore.sessionProgressStage}`)
+  }
+
+  // 완료 단계 검증
+  if (!tutorStore.completedSteps.quiz || !tutorStore.completedSteps.feedback) {
+    throw new Error('퀴즈 또는 피드백 단계가 완료로 표시되지 않았습니다')
+  }
+
+  // 평가 결과 검증
+  if (!learningStore.workflowState.evaluation_result) {
+    throw new Error('평가 결과가 설정되지 않았습니다')
+  }
+
+  addLog('✅ 퀴즈 제출 검증 완료: 에이전트, UI 모드, 진행 단계, 평가 결과 모두 정상', 'success')
+}
+
+/**
+ * 세션 완료 통합 테스트
+ */
+const testSessionCompletionIntegration = async () => {
+  const result = await learningStore.completeSession('proceed')
+  
+  if (!result.success && !result.isFallback) {
+    throw new Error(`세션 완료 실패: ${result.error}`)
+  }
+
+  // 세션 상태 검증
+  if (learningStore.sessionState.is_active) {
+    throw new Error('세션이 여전히 활성 상태입니다')
+  }
+
+  if (!learningStore.isSessionCompleted) {
+    throw new Error('세션 완료 상태가 설정되지 않았습니다')
+  }
+
+  // 완료 데이터 검증
+  if (!learningStore.sessionState.completed_at) {
+    throw new Error('완료 시간이 설정되지 않았습니다')
+  }
+
+  if (learningStore.sessionState.final_score === null) {
+    throw new Error('최종 점수가 설정되지 않았습니다')
+  }
+
+  // 다음 단계 정보 검증
+  const nextStepInfo = learningStore.nextStepInfo
+  if (!nextStepInfo || !nextStepInfo.has_next_step) {
+    addLog('⚠️ 다음 단계 정보가 없습니다 (정상적일 수 있음)', 'warning')
+  }
+
+  addLog('✅ 세션 완료 검증 완료: 세션 상태, 완료 데이터, 다음 단계 정보 모두 정상', 'success')
+}
+
+/**
+ * 통합 테스트 리셋
+ */
+const resetIntegrationTest = () => {
+  isRunningIntegrationTest.value = false
+  
+  Object.keys(workflowTestStatus).forEach(key => {
+    workflowTestStatus[key] = false
+  })
+
+  // Store 상태 리셋
+  learningStore.resetSessionState()
+  tutorStore.resetSession()
+
+  addLog('🔄 통합 테스트가 리셋되었습니다', 'info')
+}
+
+/**
+ * 지연 시간 유틸리티
+ */
+const waitForDelay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+// 컴포넌트 마운트 시 실시간 모니터링 시작
+onMounted(() => {
+  addLog('🔧 ComponentTest 초기화 완료 - 실시간 모니터링 시작', 'info')
+})
 </script>
 
 <style scoped>
@@ -2257,6 +2505,85 @@ watch(
 .metric-trend {
   font-size: 0.75rem;
   color: #6c757d;
+}
+
+/* 통합 테스트 스타일 */
+.integration-test-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.integration-test-header h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+}
+
+.workflow-status {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.status-item.active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.status-icon {
+  font-size: 1rem;
+}
+
+.integration-controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.integration-btn {
+  padding: 0.5rem 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.integration-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.integration-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.integration-btn.reset {
+  background: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.5);
+}
+
+.integration-btn.reset:hover:not(:disabled) {
+  background: rgba(220, 53, 69, 0.3);
 }
 
 @media (max-width: 768px) {
