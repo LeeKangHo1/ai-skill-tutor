@@ -11,7 +11,7 @@
       >
         <div class="message-content">
           <strong class="message-sender">{{ message.sender }}:</strong>
-          <div class="message-text" v-html="formatMessageContent(message)"></div>
+          <span class="message-text">{{ message.message }}</span>
         </div>
         <div class="message-timestamp">
           {{ formatTimestamp(message.timestamp) }}
@@ -19,7 +19,7 @@
       </div>
       
       <!-- 로딩 메시지 -->
-      <div v-if="isApiLoading" class="chat-message system-message loading-message">
+      <div v-if="isLoading" class="chat-message system-message loading-message">
         <div class="message-content">
           <strong class="message-sender">튜터:</strong>
           <span class="typing-indicator">
@@ -37,14 +37,14 @@
         <button 
           class="quick-action-btn"
           @click="sendQuickMessage('다음으로 넘어가주세요')"
-          :disabled="isApiLoading"
+          :disabled="isLoading"
         >
           ➡️ 다음 단계
         </button>
         <button 
           class="quick-action-btn"
           @click="sendQuickMessage('AI와 머신러닝의 차이가 뭐예요?')"
-          :disabled="isApiLoading"
+          :disabled="isLoading"
         >
           ❓ 질문하기
         </button>
@@ -58,37 +58,22 @@
           placeholder="메시지를 입력하세요... (예: 다음으로 넘어가주세요, AI와 머신러닝 차이는?)"
           @keypress="handleKeyPress"
           @input="handleInput"
-          :disabled="isApiLoading"
+          :disabled="isLoading"
           class="message-input"
         />
         <button 
           @click="sendMessage"
-          :disabled="isApiLoading || !currentMessage.trim()"
+          :disabled="isLoading || !currentMessage.trim()"
           class="send-button"
-          :class="{ 'btn-disabled': isApiLoading || !currentMessage.trim() }"
+          :class="{ 'btn-disabled': isLoading || !currentMessage.trim() }"
         >
-          <span v-if="isApiLoading" class="button-spinner"></span>
+          <span v-if="isLoading" class="button-spinner"></span>
           <span v-else>전송</span>
         </button>
       </div>
       
-      <!-- 에러 상태 및 재시도 -->
-      <div v-if="learningStore.hasError" class="error-container">
-        <div class="error-message">
-          ⚠️ {{ learningStore.errorState.error_message }}
-        </div>
-        <button 
-          v-if="learningStore.canRetry"
-          @click="retryLastMessage"
-          class="retry-button"
-          :disabled="isApiLoading"
-        >
-          🔄 다시 시도
-        </button>
-      </div>
-      
       <!-- 입력 힌트 -->
-      <div class="input-hints" v-if="showInputHints && !learningStore.hasError">
+      <div class="input-hints" v-if="showInputHints">
         <div class="hint-item">
           💡 <strong>팁:</strong> "다음으로 넘어가주세요"라고 입력하면 퀴즈로 이동합니다.
         </div>
@@ -102,16 +87,6 @@
 
 <script setup>
 import { ref, computed, nextTick, watch, onMounted, defineProps, defineEmits } from 'vue'
-import { useLearningStore } from '../../stores/learningStore.js'
-import { useTutorStore } from '../../stores/tutorStore.js'
-import { useErrorHandler } from '../../composables/useErrorHandler.js'
-
-// Store 인스턴스
-const learningStore = useLearningStore()
-const tutorStore = useTutorStore()
-
-// 에러 핸들러 컴포저블
-const { executeWithErrorHandling } = useErrorHandler()
 
 // Props 정의
 const props = defineProps({
@@ -134,7 +109,7 @@ const props = defineProps({
   }
 })
 
-// Emits 정의 (하위 호환성을 위해 유지)
+// Emits 정의
 const emit = defineEmits(['send-message'])
 
 // 반응형 상태
@@ -152,58 +127,8 @@ const getMessageClass = (messageType) => {
       return `${baseClass} system-message`
     case 'qna':
       return `${baseClass} qna-message`
-    case 'theory':
-      return `${baseClass} theory-message`
-    case 'feedback':
-      return `${baseClass} feedback-message`
-    case 'evaluation':
-      return `${baseClass} evaluation-message`
     default:
       return `${baseClass} system-message`
-  }
-}
-
-// QnA 타입 메시지 포맷팅
-const formatQnAMessage = (message) => {
-  if (typeof message === 'string') {
-    return message
-  }
-  
-  // QnA 타입의 구조화된 응답 처리
-  if (message.question && message.answer) {
-    return `**Q: ${message.question}**\n\nA: ${message.answer}`
-  }
-  
-  return message.content || message.message || '응답을 처리할 수 없습니다.'
-}
-
-// 메시지 내용 포맷팅 (타입별 처리)
-const formatMessageContent = (message) => {
-  if (!message) return ''
-  
-  switch (message.type) {
-    case 'qna':
-      return formatQnAMessage(message.message)
-    case 'theory':
-      return message.message || message.content || ''
-    case 'feedback':
-      return message.message || message.content || ''
-    case 'evaluation':
-      // 평가 결과 포맷팅
-      if (message.metadata) {
-        const { is_correct, score, explanation } = message.metadata
-        let formatted = message.message || ''
-        if (explanation) {
-          formatted += `\n\n💡 **설명:** ${explanation}`
-        }
-        if (typeof score === 'number') {
-          formatted += `\n\n📊 **점수:** ${score}점`
-        }
-        return formatted
-      }
-      return message.message || ''
-    default:
-      return message.message || message.content || ''
   }
 }
 
@@ -242,58 +167,15 @@ const handleInput = (event) => {
   target.style.height = target.scrollHeight + 'px'
 }
 
-// learningStore 로딩 상태 확인 (props.isLoading과 통합)
-const isApiLoading = computed(() => {
-  return props.isLoading || learningStore.isLoading
-})
-
-// 메시지 전송 처리 (에러 핸들링 통합)
-const sendMessage = async () => {
+const sendMessage = () => {
   const message = currentMessage.value.trim()
-  if (!message || isApiLoading.value) return
+  if (!message || props.isLoading) return
   
-  console.log('ChatInteraction: 메시지 전송 시작:', message)
+  // 부모 컴포넌트로 메시지 전송
+  emit('send-message', message)
   
-  // 사용자 메시지를 즉시 채팅 히스토리에 추가
-  tutorStore.addChatMessage({
-    sender: '사용자',
-    message: message,
-    type: 'user',
-    timestamp: new Date()
-  })
-  
-  // 입력창 초기화 (사용자 경험 개선)
-  const originalMessage = message
+  // 입력창 초기화
   currentMessage.value = ''
-  
-  // 에러 핸들링이 통합된 API 호출
-  const result = await executeWithErrorHandling(
-    learningStore.sendMessage,
-    'sendMessage',
-    originalMessage,
-    'user'
-  )
-  
-  if (result.success) {
-    console.log('ChatInteraction: 메시지 전송 성공:', result.data)
-    
-    // API 응답의 workflow_response는 learningStore에서 자동으로 처리되고
-    // tutorStore의 watch를 통해 UI가 업데이트됨
-    
-    // 하위 호환성을 위해 부모 컴포넌트에도 이벤트 전송
-    emit('send-message', originalMessage)
-    
-  } else {
-    console.error('ChatInteraction: 메시지 전송 실패:', result.error)
-    
-    // 에러는 ErrorAlert 컴포넌트에서 표시되므로 여기서는 간단한 시스템 메시지만 추가
-    tutorStore.addChatMessage({
-      sender: '시스템',
-      message: '⚠️ 메시지 전송에 실패했습니다. 상단의 에러 알림을 확인해주세요.',
-      type: 'system',
-      timestamp: new Date()
-    })
-  }
   
   // 입력창에 포커스
   nextTick(() => {
@@ -303,75 +185,11 @@ const sendMessage = async () => {
   })
 }
 
-// 에러 재시도 처리
-const retryLastMessage = async () => {
-  if (!learningStore.canRetry) {
-    console.warn('ChatInteraction: 재시도 불가능한 상태')
-    return
-  }
-  
-  console.log('ChatInteraction: 마지막 메시지 재시도 시도')
-  
-  try {
-    const result = await learningStore.retryLastAction('sendMessage', currentMessage.value)
-    
-    if (result.success) {
-      console.log('ChatInteraction: 재시도 성공')
-      tutorStore.addChatMessage({
-        sender: '시스템',
-        message: '✅ 메시지가 성공적으로 전송되었습니다.',
-        type: 'system',
-        timestamp: new Date()
-      })
-    } else {
-      console.error('ChatInteraction: 재시도 실패:', result.error)
-    }
-  } catch (error) {
-    console.error('ChatInteraction: 재시도 중 예외:', error)
-  }
-}
-
-// 세션 상태 확인
-const checkSessionStatus = () => {
-  if (!learningStore.isSessionActive) {
-    tutorStore.addChatMessage({
-      sender: '시스템',
-      message: '⚠️ 활성 세션이 없습니다. 학습을 시작해주세요.',
-      type: 'system',
-      timestamp: new Date()
-    })
-    return false
-  }
-  return true
-}
-
-// 디버그 정보 표시 (개발용)
-const showDebugInfo = () => {
-  const debugInfo = {
-    learningStore: {
-      isSessionActive: learningStore.isSessionActive,
-      isLoading: learningStore.isLoading,
-      hasError: learningStore.hasError,
-      currentAgent: learningStore.workflowState.current_agent,
-      sessionId: learningStore.sessionState.session_id
-    },
-    tutorStore: {
-      currentAgent: tutorStore.currentAgent,
-      currentUIMode: tutorStore.currentUIMode,
-      chatHistoryLength: tutorStore.chatHistory.length,
-      isConnected: tutorStore.isConnectedToLearningStore
-    }
-  }
-  
-  console.log('ChatInteraction 디버그 정보:', debugInfo)
-  return debugInfo
-}
-
-const sendQuickMessage = async (message) => {
-  if (isApiLoading.value) return
+const sendQuickMessage = (message) => {
+  if (props.isLoading) return
   
   currentMessage.value = message
-  await sendMessage()
+  sendMessage()
 }
 
 // 채팅 히스토리 스크롤 자동 이동
@@ -394,63 +212,13 @@ watch(() => props.isLoading, (newValue) => {
   }
 })
 
-// learningStore 로딩 상태 감시
-watch(() => learningStore.isLoading, (newValue) => {
-  if (newValue) {
-    scrollToBottom()
-  }
-})
-
-// tutorStore 채팅 히스토리 변화 감시 (실시간 UI 업데이트)
-watch(() => tutorStore.chatHistory, () => {
-  scrollToBottom()
-}, { deep: true })
-
-// learningStore 에러 상태 감시
-watch(() => learningStore.hasError, (hasError) => {
-  if (hasError && learningStore.errorState.error_message) {
-    console.warn('ChatInteraction: learningStore 에러 감지:', learningStore.errorState.error_message)
-    
-    // 에러 메시지를 채팅에 표시
-    tutorStore.addChatMessage({
-      sender: '시스템',
-      message: `⚠️ ${learningStore.errorState.error_message}`,
-      type: 'system',
-      timestamp: new Date()
-    })
-  }
-})
-
-// 세션 상태 변화 감시
-watch(() => learningStore.isSessionActive, (isActive) => {
-  if (!isActive) {
-    console.log('ChatInteraction: 세션이 비활성화됨')
-    // 세션이 종료되면 입력 비활성화 등의 처리 가능
-  }
-})
-
 // 라이프사이클 훅
 onMounted(() => {
-  console.log('ChatInteraction 마운트됨')
-  
-  // 초기 상태 확인
-  console.log('초기 상태:', {
-    learningStoreActive: learningStore.isSessionActive,
-    tutorStoreAgent: tutorStore.currentAgent,
-    tutorStoreUIMode: tutorStore.currentUIMode,
-    chatHistoryLength: tutorStore.chatHistory.length
-  })
-  
   scrollToBottom()
   
   // 입력창에 포커스
   if (messageInputRef.value) {
     messageInputRef.value.focus()
-  }
-  
-  // learningStore 연동 상태 확인
-  if (learningStore.isSessionActive) {
-    console.log('ChatInteraction: 활성 세션 감지됨, 세션 정보:', learningStore.sessionSummary)
   }
 })
 </script>
@@ -536,30 +304,6 @@ onMounted(() => {
   align-self: flex-start;
 }
 
-.theory-message {
-  background: #e8f5e8;
-  border-left: 3px solid #4caf50;
-  margin-right: 2rem;
-  margin-left: 0;
-  align-self: flex-start;
-}
-
-.feedback-message {
-  background: #fff3e0;
-  border-left: 3px solid #ff9800;
-  margin-right: 2rem;
-  margin-left: 0;
-  align-self: flex-start;
-}
-
-.evaluation-message {
-  background: #e3f2fd;
-  border-left: 3px solid #2196f3;
-  margin-right: 2rem;
-  margin-left: 0;
-  align-self: flex-start;
-}
-
 .loading-message {
   background: #fff3cd;
   border: 1px solid #ffeaa7;
@@ -582,19 +326,6 @@ onMounted(() => {
 .message-text {
   line-height: 1.5;
   word-wrap: break-word;
-  white-space: pre-wrap; /* 줄바꿈 문자 처리 */
-}
-
-/* QnA 메시지 내 강조 텍스트 스타일 */
-.message-text strong {
-  color: #333;
-  font-weight: 600;
-}
-
-/* 메시지 내 이모지 및 아이콘 스타일 */
-.message-text .emoji {
-  font-size: 1.1em;
-  margin-right: 0.25rem;
 }
 
 .message-timestamp {
@@ -740,47 +471,6 @@ onMounted(() => {
   100% { transform: rotate(360deg); }
 }
 
-/* 에러 컨테이너 */
-.error-container {
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 0.375rem;
-  padding: 0.75rem;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.error-message {
-  flex: 1;
-  font-size: 0.875rem;
-  color: #c53030;
-  line-height: 1.4;
-}
-
-.retry-button {
-  padding: 0.5rem 0.75rem;
-  background: #e53e3e;
-  color: white;
-  border: none;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
-}
-
-.retry-button:hover:not(:disabled) {
-  background: #c53030;
-}
-
-.retry-button:disabled {
-  background: #a0aec0;
-  cursor: not-allowed;
-}
-
 /* 입력 힌트 */
 .input-hints {
   background: #f8f9fa;
@@ -832,10 +522,7 @@ onMounted(() => {
   }
   
   .system-message,
-  .qna-message,
-  .theory-message,
-  .feedback-message,
-  .evaluation-message {
+  .qna-message {
     margin-right: 1rem;
   }
   
@@ -849,16 +536,6 @@ onMounted(() => {
   
   .message-input {
     font-size: 16px; /* iOS에서 줌 방지 */
-  }
-  
-  .error-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-  
-  .retry-button {
-    width: 100%;
   }
 }
 </style>

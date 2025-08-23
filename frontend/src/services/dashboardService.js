@@ -17,7 +17,7 @@ class DashboardService {
   async getDashboardOverview() {
     try {
       const response = await api.get('/dashboard/overview')
-
+      
       if (response.data.success) {
         return {
           success: true,
@@ -83,13 +83,13 @@ class DashboardService {
    */
   formatDate(dateString) {
     if (!dateString) return null
-
+    
     try {
       const date = new Date(dateString)
       const year = date.getFullYear()
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const day = String(date.getDate()).padStart(2, '0')
-
+      
       return `${year}년 ${month}월 ${day}일`
     } catch (error) {
       console.warn('날짜 포맷팅 실패:', dateString, error)
@@ -120,16 +120,11 @@ class DashboardService {
    */
   formatStudyTime(seconds) {
     if (!seconds || seconds === 0) return '0분'
-
+    
     const totalMinutes = Math.floor(seconds / 60)
     const hours = Math.floor(totalMinutes / 60)
     const remainingMinutes = totalMinutes % 60
-
-    // 60초 미만일 경우 1분으로 표시
-    if (totalMinutes === 0 && seconds > 0) {
-      return '1분'
-    }
-
+    
     if (hours === 0) {
       return `${remainingMinutes}분`
     } else if (remainingMinutes === 0) {
@@ -180,10 +175,10 @@ class DashboardService {
 
     // 새 데이터 조회
     const freshData = await this.getDashboardOverview()
-
+    
     // 캐시 저장
     this.setCachedData(cacheKey, freshData)
-
+    
     return freshData
   }
 
@@ -196,7 +191,7 @@ class DashboardService {
       if (!cached) return null
 
       const { data, timestamp } = JSON.parse(cached)
-
+      
       // 캐시 만료 확인
       if (Date.now() - timestamp > timeout) {
         localStorage.removeItem(key)
@@ -231,7 +226,7 @@ class DashboardService {
   async getFormattedDashboardData(forceRefresh = false) {
     try {
       const response = await this.getDashboardDataWithCache(forceRefresh)
-
+      
       if (!response.success) {
         throw new Error('대시보드 데이터 조회 실패')
       }
@@ -264,7 +259,7 @@ class DashboardService {
     if (error.response) {
       // 서버 응답이 있는 경우
       const errorData = error.response.data
-
+      
       if (errorData && !errorData.success) {
         return {
           message: errorData.error.message || '대시보드 조회 실패',

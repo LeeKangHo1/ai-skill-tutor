@@ -54,13 +54,10 @@
         :current-content-mode="currentContentMode"
         :completed-steps="completedSteps"
         @navigation-click="handleNavigationClick"
-        @proceed-to-next="handleProceedToNext"
-        @retry-session="handleRetrySession"
-        @go-to-dashboard="handleGoToDashboard"
       />
 
-      <!-- 오른쪽: 상호작용 영역 (50%) - 세션 완료 시 숨김 -->
-      <div v-if="!learningStore.isSessionCompleted" class="interaction-area">
+      <!-- 오른쪽: 상호작용 영역 (50%) -->
+      <div class="interaction-area">
         <div class="interaction-header">
           {{ uiMode === 'chat' ? '💬 채팅' : '📝 퀴즈' }}
         </div>
@@ -70,7 +67,7 @@
           <ChatInteraction 
             v-if="uiMode === 'chat'"
             :chat-history="chatHistory"
-            :is-loading="isLoading || isApiLoading"
+            :is-loading="isLoading"
             @send-message="handleSendMessage"
           />
 
@@ -78,7 +75,7 @@
           <QuizInteraction 
             v-else-if="uiMode === 'quiz'"
             :quiz-data="quizData"
-            :is-loading="isLoading || isApiLoading"
+            :is-loading="isLoading"
             @submit-answer="handleSubmitAnswer"
             @request-hint="handleRequestHint"
           />
@@ -87,95 +84,65 @@
     </div>
 
     <!-- 로딩 모달 -->
-    <div v-if="isLoading || isApiLoading" class="loading-overlay">
+    <div v-if="isLoading" class="loading-overlay">
       <div class="loading-spinner">
         <div class="spinner"></div>
         <p>{{ loadingMessage }}</p>
-      </div>
-    </div>
-
-    <!-- 에러 표시 -->
-    <div v-if="hasApiError" class="error-overlay">
-      <div class="error-message">
-        <h3>⚠️ 오류 발생</h3>
-        <p>{{ learningStore.errorState.error_message }}</p>
-        <button 
-          v-if="learningStore.canRetry" 
-          class="btn btn-primary"
-          @click="learningStore.retryLastAction"
-        >
-          다시 시도
-        </button>
-        <button class="btn btn-secondary" @click="learningStore.clearErrors">
-          닫기
-        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-// frontend/src/views/learning/LearningPage.vue
-import { ref, computed, onMounted, onUnmounted, watch, provide } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useTutorStore } from '@/stores/tutorStore'
-import { useLearningStore } from '@/stores/learningStore'
 import MainContentArea from '@/components/learning/MainContentArea.vue'
 import ChatInteraction from '@/components/learning/ChatInteraction.vue'
 import QuizInteraction from '@/components/learning/QuizInteraction.vue'
 
 // 라우터 및 스토어
 const router = useRouter()
-const route = useRoute()
 const tutorStore = useTutorStore()
-const learningStore = useLearningStore()
 
-// ===== 반응형 상태 =====
+// 반응형 상태
 const isLoading = ref(false)
 const loadingMessage = ref('학습 내용을 준비하고 있습니다...')
 
-// 컴포넌트별 데이터 (tutorStore에서 관리하므로 computed로 변경)
-const contentData = computed(() => tutorStore.mainContent || {
+// 컴포넌트별 데이터
+const contentData = ref({
   title: '',
   subtitle: '',
   content: '',
   type: 'theory'
 })
 
-// ===== 컴퓨티드 속성들 (tutorStore 기반) =====
-const currentAgent = computed(() => tutorStore.currentAgent)
-const uiMode = computed(() => tutorStore.currentUIMode)
-const currentContentMode = computed(() => tutorStore.currentContentMode || 'current')
-const completedSteps = computed(() => tutorStore.completedSteps || { theory: true, quiz: false, feedback: false })
-
-// 세션 정보 (learningStore 우선, tutorStore 폴백)
-const currentChapter = computed(() => {
-  return learningStore.sessionState?.chapter_number || 
-         tutorStore.sessionInfo?.chapter_number || 2
-})
-
-const currentSection = computed(() => {
-  return learningStore.sessionState?.section_number || 
-         tutorStore.sessionInfo?.section_number || 1
-})
-
-const sectionTitle = computed(() => {
-  return learningStore.sessionState?.section_title || 
-         tutorStore.sessionInfo?.section_title || 'LLM이란 무엇인가'
-})
-
-// tutorStore에서 UI 데이터 가져오기
-const chatHistory = computed(() => tutorStore.chatHistory || [])
-const quizData = computed(() => tutorStore.quizData || {
+const quizData = ref({
   question: '',
   options: [],
   type: 'multiple_choice',
   hint: ''
 })
 
-// learningStore 상태 반영
-const isApiLoading = computed(() => learningStore.isLoading)
-const hasApiError = computed(() => learningStore.hasError)
+const chatHistory = ref([
+  {
+    sender: '튜터',
+    message: 'LLM에 대해 학습해보겠습니다. 위 내용을 확인해주세요!',
+    type: 'system',
+    timestamp: new Date()
+  }
+])
+
+// 컴퓨티드 속성들
+const currentAgent = computed(() => tutorStore.currentAgent)
+const uiMode = computed(() => tutorStore.currentUIMode)
+const currentContentMode = computed(() => tutorStore.currentContentMode || 'current')
+const completedSteps = computed(() => tutorStore.completedSteps || { theory: true, quiz: false, feedback: false })
+
+// 세션 정보
+const currentChapter = computed(() => tutorStore.sessionInfo?.chapter_number || 2)
+const currentSection = computed(() => tutorStore.sessionInfo?.section_number || 1)
+const sectionTitle = computed(() => tutorStore.sessionInfo?.section_title || 'LLM이란 무엇인가')
 
 // 진행 단계 클래스 계산
 const getStepClass = (stepType) => {
@@ -205,166 +172,53 @@ const getStepClass = (stepType) => {
   return 'step-pending'
 }
 
-// ===== learningStore와 tutorStore 연동 함수들 =====
-
-// 세션 시작 함수 - learningStore.startSession 호출 및 결과를 tutorStore에 반영
-const startLearning = async (chapterNumber, sectionNumber, initialMessage = '학습을 시작합니다') => {
-  try {
-    console.log(`학습 세션 시작: 챕터 ${chapterNumber}, 섹션 ${sectionNumber}`)
-    
-    isLoading.value = true
-    loadingMessage.value = '학습 세션을 시작하고 있습니다...'
-    
-    // learningStore를 통해 세션 시작
-    const result = await learningStore.startSession(chapterNumber, sectionNumber, initialMessage)
-    
-    if (result.success && result.data.workflow_response) {
-      // API 응답의 workflow_response를 tutorStore에 반영
-      tutorStore.updateFromWorkflowResponse(result.data.workflow_response)
-      
-      console.log('세션 시작 성공, UI 상태 업데이트 완료')
-    } else {
-      console.error('세션 시작 실패:', result.error)
-      // 에러 상황에서도 tutorStore에 에러 상태 반영
-      tutorStore.setError?.(result.error || '세션 시작에 실패했습니다.')
-    }
-  } catch (error) {
-    console.error('세션 시작 중 오류 발생:', error)
-    tutorStore.setError?.('세션 시작 중 오류가 발생했습니다.')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 메시지 전송 함수 - learningStore를 통한 API 호출 및 tutorStore 업데이트
-const sendMessage = async (message, messageType = 'user') => {
-  try {
-    console.log('메시지 전송:', message)
-    
-    isLoading.value = true
-    loadingMessage.value = '메시지를 처리하고 있습니다...'
-    
-    // learningStore를 통해 메시지 전송
-    const result = await learningStore.sendMessage(message, messageType)
-    
-    if (result.success && result.data.workflow_response) {
-      // API 응답의 workflow_response를 tutorStore에 반영
-      tutorStore.updateFromWorkflowResponse(result.data.workflow_response)
-      
-      console.log('메시지 전송 성공, UI 상태 업데이트 완료')
-    } else {
-      console.error('메시지 전송 실패:', result.error)
-      tutorStore.setError?.(result.error || '메시지 전송에 실패했습니다.')
-    }
-  } catch (error) {
-    console.error('메시지 전송 중 오류 발생:', error)
-    tutorStore.setError?.('메시지 전송 중 오류가 발생했습니다.')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 퀴즈 제출 함수 - learningStore를 통한 API 호출 및 tutorStore 업데이트
-const submitQuiz = async (answer) => {
-  try {
-    console.log('퀴즈 답안 제출:', answer)
-    
-    isLoading.value = true
-    loadingMessage.value = '답변을 평가하고 있습니다...'
-    
-    // learningStore를 통해 퀴즈 제출
-    const result = await learningStore.submitQuiz(answer)
-    
-    if (result.success && result.data.workflow_response) {
-      // API 응답의 workflow_response를 tutorStore에 반영
-      tutorStore.updateFromWorkflowResponse(result.data.workflow_response)
-      
-      console.log('퀴즈 제출 성공, UI 상태 업데이트 완료')
-    } else {
-      console.error('퀴즈 제출 실패:', result.error)
-      tutorStore.setError?.(result.error || '퀴즈 제출에 실패했습니다.')
-    }
-  } catch (error) {
-    console.error('퀴즈 제출 중 오류 발생:', error)
-    tutorStore.setError?.('퀴즈 제출 중 오류가 발생했습니다.')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 세션 완료 함수 - learningStore를 통한 API 호출 및 tutorStore 업데이트
-const completeSession = async (proceedDecision = 'proceed') => {
-  try {
-    console.log('세션 완료 처리:', proceedDecision)
-    
-    isLoading.value = true
-    loadingMessage.value = '세션을 완료하고 있습니다...'
-    
-    // learningStore를 통해 세션 완료
-    const result = await learningStore.completeSession(proceedDecision)
-    
-    if (result.success) {
-      // 세션 완료 후 tutorStore 상태 업데이트
-      if (result.data.workflow_response) {
-        tutorStore.updateFromWorkflowResponse(result.data.workflow_response)
-      }
-      
-      console.log('세션 완료 성공')
-    } else {
-      console.error('세션 완료 실패:', result.error)
-      tutorStore.setError?.(result.error || '세션 완료에 실패했습니다.')
-    }
-  } catch (error) {
-    console.error('세션 완료 중 오류 발생:', error)
-    tutorStore.setError?.('세션 완료 중 오류가 발생했습니다.')
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// ===== 컴포넌트 이벤트 핸들러들 =====
-
 // 이벤트 핸들러들
 const handleSendMessage = async (message) => {
   try {
-    // 사용자 메시지를 채팅 히스토리에 추가 (UI 즉시 반영)
-    tutorStore.addChatMessage({
+    isLoading.value = true
+    loadingMessage.value = '메시지를 처리하고 있습니다...'
+    
+    // 사용자 메시지를 채팅 히스토리에 추가
+    chatHistory.value.push({
       sender: '나',
       message: message,
       type: 'user',
       timestamp: new Date()
     })
     
-    // learningStore를 통한 실제 API 호출
-    await sendMessage(message, 'user')
+    // 백엔드 API 호출 시뮬레이션
+    await simulateAPICall(message)
     
   } catch (error) {
     console.error('메시지 전송 오류:', error)
-    tutorStore.addChatMessage({
+    chatHistory.value.push({
       sender: '시스템',
       message: '오류가 발생했습니다. 다시 시도해주세요.',
       type: 'system',
       timestamp: new Date()
     })
+  } finally {
+    isLoading.value = false
   }
 }
 
-const handleSubmitAnswer = async (answerData) => {
+const handleSubmitAnswer = async (answer) => {
   try {
-    // answerData에서 실제 답안 추출
-    const answer = answerData.answer || answerData
+    isLoading.value = true
+    loadingMessage.value = '답변을 평가하고 있습니다...'
     
-    // learningStore를 통한 실제 API 호출
-    await submitQuiz(answer)
+    // 백엔드 API 호출 시뮬레이션
+    await simulateQuizSubmission(answer)
     
   } catch (error) {
     console.error('퀴즈 제출 오류:', error)
+  } finally {
+    isLoading.value = false
   }
 }
 
 const handleRequestHint = () => {
-  // 힌트 요청을 채팅 히스토리에 추가
-  tutorStore.addChatMessage({
+  chatHistory.value.push({
     sender: '튜터',
     message: '힌트: LLM의 "L"이 무엇을 의미하는지 생각해보세요.',
     type: 'system',
@@ -375,192 +229,158 @@ const handleRequestHint = () => {
 const handleNavigationClick = (navigationType) => {
   // 네비게이션 버튼 클릭 처리
   if (navigationType === 'theory') {
-    tutorStore.updateContentMode('review_theory')
+    updateContentMode('review_theory')
   } else if (navigationType === 'quiz') {
-    tutorStore.updateContentMode('review_quiz')
+    updateContentMode('review_quiz')
   } else if (navigationType === 'current') {
-    tutorStore.updateContentMode('current')
-  }
-}
-
-// ===== 세션 완료 관련 이벤트 핸들러 =====
-
-// 다음 단계로 진행 핸들러
-const handleProceedToNext = async (nextStepInfo) => {
-  try {
-    console.log('다음 단계로 진행:', nextStepInfo)
-    
-    isLoading.value = true
-    loadingMessage.value = '다음 학습 단계를 준비하고 있습니다...'
-    
-    // 세션 상태 초기화
-    learningStore.resetSessionState()
-    tutorStore.resetState?.()
-    
-    // 다음 챕터/섹션으로 라우팅
-    await router.push(`/learning/${nextStepInfo.chapter}/${nextStepInfo.section}`)
-    
-  } catch (error) {
-    console.error('다음 단계 진행 중 오류:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 세션 재시도 핸들러
-const handleRetrySession = async (sessionInfo) => {
-  try {
-    console.log('세션 재시도:', sessionInfo)
-    
-    isLoading.value = true
-    loadingMessage.value = '세션을 다시 시작하고 있습니다...'
-    
-    // 세션 상태 초기화
-    learningStore.resetSessionState()
-    tutorStore.resetState?.()
-    
-    // 현재 페이지 새로고침으로 세션 재시작
-    window.location.reload()
-    
-  } catch (error) {
-    console.error('세션 재시도 중 오류:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 대시보드로 이동 핸들러
-const handleGoToDashboard = async () => {
-  try {
-    console.log('대시보드로 이동')
-    
-    isLoading.value = true
-    loadingMessage.value = '대시보드로 이동하고 있습니다...'
-    
-    // 세션 상태 초기화
-    learningStore.resetSessionState()
-    tutorStore.resetState?.()
-    
-    // 대시보드로 라우팅
-    await router.push('/dashboard')
-    
-  } catch (error) {
-    console.error('대시보드 이동 중 오류:', error)
-  } finally {
-    isLoading.value = false
+    updateContentMode('current')
   }
 }
 
 const goToDashboard = () => {
-  handleGoToDashboard()
+  router.push('/dashboard')
 }
 
-// ===== 유틸리티 함수들 =====
+// 유틸리티 함수들
+const simulateAPICall = async (message) => {
+  // SupervisorRouter 시뮬레이션
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  if (message.includes('다음') || message.includes('퀴즈')) {
+    // QuizGenerator로 라우팅
+    tutorStore.updateAgent('quiz_generator')
+    tutorStore.updateUIMode('quiz')
+    updateContentData('quiz')
+    updateQuizData()
+    
+    chatHistory.value.push({
+      sender: '튜터',
+      message: '퀴즈를 준비했습니다. 오른쪽에서 답변해주세요.',
+      type: 'system',
+      timestamp: new Date()
+    })
+  } else if (message.includes('차이') || message.includes('?')) {
+    // QnAResolver로 라우팅
+    tutorStore.updateAgent('qna_resolver')
+    updateContentData('qna')
+    
+    chatHistory.value.push({
+      sender: '튜터',
+      message: 'AI는 더 넓은 개념으로, 인간의 지능을 모방하는 모든 기술을 포함합니다...',
+      type: 'qna',
+      timestamp: new Date()
+    })
+  } else {
+    chatHistory.value.push({
+      sender: '튜터',
+      message: '무엇을 도와드릴까요? "다음으로 넘어가주세요" 또는 질문을 해주세요.',
+      type: 'system',
+      timestamp: new Date()
+    })
+  }
+}
 
-// 디버그용 함수들
-const debugStoreStates = () => {
-  console.log('=== Store 상태 디버그 ===')
-  console.log('learningStore 상태:', {
-    isSessionActive: learningStore.isSessionActive,
-    isLoading: learningStore.isLoading,
-    hasError: learningStore.hasError,
-    sessionState: learningStore.sessionState,
-    workflowState: learningStore.workflowState
+const simulateQuizSubmission = async (answer) => {
+  await new Promise(resolve => setTimeout(resolve, 1500))
+  
+  // EvaluationFeedbackAgent로 라우팅
+  tutorStore.updateAgent('evaluation_feedback')
+  tutorStore.updateUIMode('chat')
+  updateContentData('feedback')
+  
+  chatHistory.value.push({
+    sender: '튜터',
+    message: '정답입니다! 상세한 피드백을 확인해주세요.',
+    type: 'system',
+    timestamp: new Date()
   })
-  console.log('tutorStore 상태:', tutorStore.getStateInfo())
-  console.log('연동 상태:', tutorStore.checkLearningStoreConnection())
 }
 
-// ===== 하위 컴포넌트에서 사용할 수 있도록 함수들을 provide =====
-provide('learningActions', {
-  startLearning,
-  sendMessage,
-  submitQuiz,
-  completeSession
-})
+const updateContentData = (type) => {
+  switch (type) {
+    case 'theory':
+      contentData.value = {
+        title: '🧠 LLM(Large Language Model)이란?',
+        subtitle: '',
+        content: 'LLM은 대규모 언어 모델로, 방대한 텍스트 데이터를 학습하여 인간과 유사한 언어 이해와 생성 능력을 가진 AI 모델입니다.',
+        type: 'theory'
+      }
+      break
+    case 'quiz':
+      contentData.value = {
+        title: '📝 퀴즈 문제',
+        subtitle: '',
+        content: '다음 중 LLM의 특징이 아닌 것은?',
+        type: 'quiz'
+      }
+      break
+    case 'feedback':
+      contentData.value = {
+        title: '✅ 평가 결과',
+        subtitle: '',
+        content: '정답입니다! (100점)',
+        type: 'feedback'
+      }
+      break
+    case 'qna':
+      contentData.value = {
+        title: '❓ 질문 답변',
+        subtitle: '',
+        content: 'AI와 머신러닝의 차이에 대한 답변',
+        type: 'qna'
+      }
+      break
+  }
+}
 
-provide('learningStore', learningStore)
-provide('tutorStore', tutorStore)
+const updateQuizData = () => {
+  quizData.value = {
+    question: '다음 중 LLM의 특징이 아닌 것은?',
+    options: [
+      { value: '1', text: '대규모 데이터 학습' },
+      { value: '2', text: '실시간 인터넷 검색' },
+      { value: '3', text: '언어 이해 능력' },
+      { value: '4', text: '텍스트 생성 능력' }
+    ],
+    type: 'multiple_choice',
+    hint: 'LLM의 "L"이 무엇을 의미하는지 생각해보세요.'
+  }
+}
 
-// ===== 라이프사이클 훅 =====
+const updateContentMode = (mode) => {
+  tutorStore.updateContentMode(mode)
+}
+
+// 라이프사이클 훅
 onMounted(async () => {
   try {
-    // 라우트 파라미터에서 챕터/섹션 정보 가져오기
-    const chapterNumber = parseInt(route.params.chapter) || 2
-    const sectionNumber = parseInt(route.params.section) || 1
+    isLoading.value = true
+    loadingMessage.value = '학습 세션을 초기화하고 있습니다...'
     
-    console.log('LearningPage 마운트:', { chapterNumber, sectionNumber })
+    // 초기 컨텐츠 설정
+    updateContentData('theory')
     
-    // learningStore와 tutorStore를 통한 세션 시작
-    await startLearning(chapterNumber, sectionNumber, '학습을 시작합니다')
+    // 세션 시작 (실제로는 API 호출)
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // 초기 상태 설정
+    tutorStore.updateAgent('theory_educator')
+    tutorStore.updateUIMode('chat')
     
   } catch (error) {
     console.error('세션 초기화 오류:', error)
+  } finally {
+    isLoading.value = false
   }
 })
 
-// 컴포넌트 언마운트 시 상태 정리
-onUnmounted(() => {
-  console.log('LearningPage 언마운트')
-  // 필요시 세션 정리 로직 추가
-})
-
-// ===== 감시자 =====
+// 감시자
 watch(currentAgent, (newAgent) => {
   console.log('에이전트 변경:', newAgent)
 })
 
 watch(uiMode, (newMode) => {
   console.log('UI 모드 변경:', newMode)
-})
-
-// learningStore 상태 변화 감시
-watch(() => learningStore.isLoading, (newLoading) => {
-  isLoading.value = newLoading
-})
-
-watch(() => learningStore.hasError, (hasError) => {
-  if (hasError) {
-    console.error('learningStore 에러:', learningStore.errorState)
-  }
-})
-
-// tutorStore와 learningStore 연동 상태 감시
-watch(() => tutorStore.isConnectedToLearningStore, (isConnected) => {
-  console.log('tutorStore-learningStore 연동 상태:', isConnected)
-})
-
-// 세션 완료 조건 감시 및 자동 완료 처리
-watch(() => tutorStore.isSessionReadyToComplete, async (isReady) => {
-  if (isReady && learningStore.isSessionActive && !learningStore.isSessionCompleted) {
-    console.log('세션 완료 조건 충족, 자동으로 세션 완료 처리 시작')
-    
-    try {
-      // 잠시 대기 후 세션 완료 처리 (사용자가 피드백을 읽을 시간 제공)
-      setTimeout(async () => {
-        if (tutorStore.isSessionReadyToComplete && learningStore.isSessionActive) {
-          console.log('세션 완료 처리 실행')
-          
-          // learningStore를 통해 세션 완료 (기본값: proceed)
-          const result = await learningStore.completeSession('proceed')
-          
-          if (result.success) {
-            console.log('세션 완료 성공, UI가 자동으로 완료 화면으로 전환됩니다')
-            
-            // tutorStore에 완료 상태 반영
-            if (result.data.workflow_response) {
-              tutorStore.updateFromWorkflowResponse(result.data.workflow_response)
-            }
-          } else {
-            console.error('세션 완료 실패:', result.error)
-          }
-        }
-      }, 3000) // 3초 후 자동 완료
-      
-    } catch (error) {
-      console.error('세션 완료 처리 중 오류:', error)
-    }
-  }
 })
 </script>
 
@@ -687,16 +507,6 @@ watch(() => tutorStore.isSessionReadyToComplete, async (isReady) => {
   min-height: 0; /* flexbox 오버플로우 활성화 */
 }
 
-/* 세션 완료 시 메인 컨텐츠가 전체 너비 차지 */
-.learning-content:has(.interaction-area:not(:first-child)) {
-  grid-template-columns: 1fr;
-}
-
-/* 상호작용 영역이 없을 때 메인 컨텐츠 전체 너비 */
-.learning-content > :only-child {
-  grid-column: 1 / -1;
-}
-
 /* 오른쪽: 상호작용 영역 (50%) */
 .interaction-area {
   background: #f8f9fa;
@@ -756,58 +566,6 @@ watch(() => tutorStore.isSessionReadyToComplete, async (isReady) => {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-/* 에러 오버레이 */
-.error-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1001;
-}
-
-.error-message {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  max-width: 400px;
-}
-
-.error-message h3 {
-  color: #dc3545;
-  margin-bottom: 1rem;
-}
-
-.error-message p {
-  margin-bottom: 1.5rem;
-  color: #6c757d;
-}
-
-.error-message .btn {
-  margin: 0 0.5rem;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.error-message .btn-primary {
-  background: #74a8f7;
-  color: white;
-}
-
-.error-message .btn-secondary {
-  background: #6c757d;
-  color: white;
 }
 
 /* 반응형 */

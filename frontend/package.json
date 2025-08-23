@@ -11,9 +11,6 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "test:unit": "vitest",
-    "test:integration": "vitest run tests/0812/integration_workflow.test.js --reporter=verbose",
-    "test:integration-watch": "vitest tests/0812/integration_workflow.test.js",
-    "test:all": "vitest run tests/0812/ --reporter=verbose",
     "build-only": "vite build",
     "type-check": "vue-tsc --build"
   },

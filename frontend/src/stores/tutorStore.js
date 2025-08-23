@@ -1,18 +1,11 @@
 // frontend/src/stores/tutorStore.js
-// UI 상태 관리 전용 Pinia Store
-// learningStore와 분리하여 UI 관련 상태만 관리하고 learningStore와 연동
-
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
-import { useLearningStore } from './learningStore.js'
+import { ref, computed } from 'vue'
 
 export const useTutorStore = defineStore('tutor', () => {
-  // learningStore 인스턴스 (연동용)
-  const learningStore = useLearningStore()
+  // ===== 기본 상태 =====
   
-  // ===== UI 상태 관리 =====
-  
-  // 현재 활성 에이전트 (UI 표시용)
+  // 현재 활성 에이전트
   const currentAgent = ref('theory_educator')
   
   // UI 모드 ('chat' | 'quiz')
@@ -24,19 +17,31 @@ export const useTutorStore = defineStore('tutor', () => {
   // 사용자 의도
   const userIntent = ref('')
   
-  // 세션 진행 단계 (UI 표시용)
+  // 세션 진행 단계
   const sessionProgressStage = ref('session_start')
   
-  // 완료된 단계 (UI 진행률 표시용)
+  // 완료된 단계
   const completedSteps = ref({
     theory: true,
     quiz: false,
     feedback: false
   })
   
-  // ===== UI 컨텐츠 데이터 =====
+  // ===== 세션 정보 =====
   
-  // 메인 컨텐츠 데이터 (UI 표시용)
+  // 현재 세션 정보
+  const sessionInfo = ref({
+    session_id: null,
+    chapter_number: 2,
+    section_number: 1,
+    chapter_title: 'LLM이란 무엇인가',
+    section_title: 'LLM의 기본 개념',
+    user_type: 'beginner'
+  })
+  
+  // ===== 컨텐츠 데이터 =====
+  
+  // 메인 컨텐츠 데이터
   const mainContent = ref({
     agent_name: 'theory_educator',
     content_type: 'theory',
@@ -45,7 +50,7 @@ export const useTutorStore = defineStore('tutor', () => {
     metadata: {}
   })
   
-  // 채팅 히스토리 (UI 표시용)
+  // 채팅 히스토리
   const chatHistory = ref([
     {
       sender: '튜터',
@@ -55,7 +60,7 @@ export const useTutorStore = defineStore('tutor', () => {
     }
   ])
   
-  // 퀴즈 데이터 (UI 표시용)
+  // 퀴즈 데이터
   const quizData = ref({
     question: '',
     type: 'multiple_choice',
@@ -65,7 +70,7 @@ export const useTutorStore = defineStore('tutor', () => {
     user_answer: ''
   })
   
-  // 현재 퀴즈 상태 (UI 상태용)
+  // 현재 퀴즈 상태
   const currentQuizInfo = ref({
     quiz_type: 'multiple_choice',
     is_quiz_active: false,
@@ -74,71 +79,14 @@ export const useTutorStore = defineStore('tutor', () => {
     score: null
   })
   
-  // ===== learningStore 연동 메서드 (watch 이전에 정의) =====
-  
-  /**
-   * learningStore의 워크플로우 응답을 받아서 UI 상태 업데이트
-   * @param {Object} workflowResponse - learningStore의 워크플로우 응답
-   */
-  const updateFromWorkflowResponse = (workflowResponse) => {
-    if (!workflowResponse) return
-    
-    console.log('워크플로우 응답으로 UI 상태 업데이트:', workflowResponse)
-    
-    // 에이전트 상태 동기화
-    if (workflowResponse.current_agent) {
-      updateAgent(workflowResponse.current_agent)
-    }
-    
-    // UI 모드 동기화
-    if (workflowResponse.ui_mode) {
-      updateUIMode(workflowResponse.ui_mode)
-    }
-    
-    // 세션 진행 단계 동기화
-    if (workflowResponse.session_progress_stage) {
-      updateSessionProgress(workflowResponse.session_progress_stage)
-    }
-    
-    // 컨텐츠 처리
-    if (workflowResponse.content) {
-      processWorkflowContent(workflowResponse.content)
-    }
-    
-    // 평가 결과 처리
-    if (workflowResponse.evaluation_result) {
-      processEvaluationResult(workflowResponse.evaluation_result)
-    }
-  }
-
-  // ===== learningStore 연동 감시자 =====
-  
-  // learningStore의 워크플로우 상태 변화 감시 및 UI 상태 동기화
-  watch(
-    () => learningStore.workflowState,
-    (newWorkflowState) => {
-      if (newWorkflowState && Object.keys(newWorkflowState).length > 0) {
-        console.log('learningStore 워크플로우 상태 변화 감지:', newWorkflowState)
-        updateFromWorkflowResponse(newWorkflowState)
-      }
-    },
-    { deep: true, immediate: true }
-  )
-  
-  // learningStore의 세션 상태 변화 감시
-  watch(
-    () => learningStore.sessionState,
-    (newSessionState) => {
-      if (newSessionState && newSessionState.is_active) {
-        console.log('learningStore 세션 상태 변화 감지:', newSessionState)
-        // 세션 정보가 변경되면 UI 초기화
-        if (newSessionState.chapter_number && newSessionState.section_number) {
-          initializeSessionUI(newSessionState)
-        }
-      }
-    },
-    { deep: true, immediate: true }
-  )
+  // 워크플로우 응답
+  const lastWorkflowResponse = ref({
+    current_agent: 'theory_educator',
+    session_progress_stage: 'session_start',
+    ui_mode: 'chat',
+    content: {},
+    metadata: {}
+  })
   
   // ===== 컴퓨티드 속성 =====
   
@@ -160,44 +108,6 @@ export const useTutorStore = defineStore('tutor', () => {
     return ['theory_completed', 'quiz_and_feedback_completed'].includes(sessionProgressStage.value)
   })
   
-  // 세션 완료 조건 확인
-  const isSessionReadyToComplete = computed(() => {
-    // 모든 단계가 완료되었고, 피드백 단계까지 도달한 경우
-    return completedSteps.value.theory && 
-           completedSteps.value.quiz && 
-           completedSteps.value.feedback &&
-           sessionProgressStage.value === 'quiz_and_feedback_completed'
-  })
-  
-  // learningStore 연동 상태 확인
-  const isConnectedToLearningStore = computed(() => {
-    return learningStore.isSessionActive && learningStore.workflowState.current_agent !== null
-  })
-  
-  // 통합 세션 정보 (learningStore 우선)
-  const sessionInfo = computed(() => {
-    if (learningStore.isSessionActive) {
-      return {
-        session_id: learningStore.sessionState.session_id,
-        chapter_number: learningStore.sessionState.chapter_number,
-        section_number: learningStore.sessionState.section_number,
-        chapter_title: learningStore.sessionState.chapter_title,
-        section_title: learningStore.sessionState.section_title,
-        estimated_duration: learningStore.sessionState.estimated_duration,
-        is_active: learningStore.sessionState.is_active
-      }
-    }
-    return {
-      session_id: null,
-      chapter_number: null,
-      section_number: null,
-      chapter_title: '',
-      section_title: '',
-      estimated_duration: '',
-      is_active: false
-    }
-  })
-  
   // 진행 단계 표시용 데이터
   const sessionSteps = computed(() => [
     {
@@ -215,30 +125,32 @@ export const useTutorStore = defineStore('tutor', () => {
     {
       name: '풀이',
       key: 'feedback',
-      active: currentAgent.value === 'evaluation_feedback_agent',
+      active: currentAgent.value === 'evaluation_feedback',
       completed: completedSteps.value.feedback
     }
   ])
   
-  // ===== UI 액션 메서드 =====
+  // ===== 액션 메서드 =====
   
-  // 에이전트 업데이트 (UI 상태만)
+  // 에이전트 업데이트
   const updateAgent = (agentName) => {
-    console.log(`UI 에이전트 업데이트: ${currentAgent.value} → ${agentName}`)
+    console.log(`에이전트 업데이트: ${currentAgent.value} → ${agentName}`)
     currentAgent.value = agentName
     
-    // 에이전트별 UI 기본 설정
+    // 에이전트별 기본 설정
     switch (agentName) {
       case 'theory_educator':
         currentUIMode.value = 'chat'
+        sessionProgressStage.value = 'theory_completed'
         break
       case 'quiz_generator':
         currentUIMode.value = 'quiz'
-        completedSteps.value.theory = true
-        break
-      case 'evaluation_feedback_agent':
-        currentUIMode.value = 'chat'
+        sessionProgressStage.value = 'theory_completed'
         completedSteps.value.quiz = true
+        break
+      case 'evaluation_feedback':
+        currentUIMode.value = 'chat'
+        sessionProgressStage.value = 'quiz_and_feedback_completed'
         completedSteps.value.feedback = true
         break
       case 'qna_resolver':
@@ -260,15 +172,20 @@ export const useTutorStore = defineStore('tutor', () => {
     currentContentMode.value = mode
   }
   
-  // 세션 진행 단계 업데이트 (UI 표시용)
+  // 세션 진행 단계 업데이트
   const updateSessionProgress = (stage) => {
-    console.log(`UI 세션 진행 단계 업데이트: ${sessionProgressStage.value} → ${stage}`)
+    console.log(`세션 진행 단계 업데이트: ${sessionProgressStage.value} → ${stage}`)
     sessionProgressStage.value = stage
   }
   
   // 완료된 단계 업데이트
   const updateCompletedSteps = (steps) => {
     completedSteps.value = { ...completedSteps.value, ...steps }
+  }
+  
+  // 세션 정보 업데이트
+  const updateSessionInfo = (info) => {
+    sessionInfo.value = { ...sessionInfo.value, ...info }
   }
   
   // 메인 컨텐츠 업데이트
@@ -306,218 +223,59 @@ export const useTutorStore = defineStore('tutor', () => {
     quizData.value.user_answer = answer
   }
   
-  // ===== learningStore 연동 메서드 (중복 제거됨) =====
-  
-  /**
-   * 워크플로우 컨텐츠를 UI에 맞게 처리
-   * @param {Object} content - 워크플로우 컨텐츠
-   */
-  const processWorkflowContent = (content) => {
-    if (!content || !content.type) return
+  // 워크플로우 응답 업데이트
+  const updateWorkflowResponse = (response) => {
+    lastWorkflowResponse.value = { ...lastWorkflowResponse.value, ...response }
     
-    console.log('워크플로우 컨텐츠 처리:', content)
-    
-    switch (content.type) {
-      case 'theory':
-        // 이론 컨텐츠를 메인 컨텐츠와 채팅에 추가
-        updateMainContent({
-          agent_name: currentAgent.value,
-          content_type: 'theory',
-          title: content.title || '이론 학습',
-          content: content.content || '',
-          metadata: content
-        })
-        
-        if (content.content) {
-          addChatMessage({
-            sender: '튜터',
-            message: content.content,
-            type: 'theory',
-            metadata: content
-          })
-        }
-        break
-        
-      case 'quiz':
-        // 퀴즈 데이터 업데이트
-        updateQuizData({
-          question: content.question || '',
-          type: content.quiz_type || 'multiple_choice',
-          options: content.options || [],
-          hint: content.hint || '',
-          correct_answer: content.correct_answer || '',
-          user_answer: ''
-        })
-        
-        updateQuizInfo({
-          quiz_type: content.quiz_type || 'multiple_choice',
-          is_quiz_active: true,
-          is_answer_submitted: false,
-          hint_usage_count: 0,
-          score: null
-        })
-        break
-        
-      case 'feedback':
-        // 피드백을 채팅에 추가
-        if (content.content) {
-          addChatMessage({
-            sender: '튜터',
-            message: content.content,
-            type: 'feedback',
-            metadata: content
-          })
-        }
-        break
-        
-      case 'qna':
-        // Q&A 응답을 채팅에 추가
-        if (content.content) {
-          addChatMessage({
-            sender: '튜터',
-            message: content.content,
-            type: 'qna',
-            metadata: content
-          })
-        }
-        break
-        
-      default:
-        console.warn('알 수 없는 컨텐츠 타입:', content.type)
+    // 워크플로우 응답에 따른 상태 동기화
+    if (response.current_agent) {
+      updateAgent(response.current_agent)
+    }
+    if (response.ui_mode) {
+      updateUIMode(response.ui_mode)
+    }
+    if (response.session_progress_stage) {
+      updateSessionProgress(response.session_progress_stage)
     }
   }
   
-  /**
-   * 평가 결과를 UI에 반영
-   * @param {Object} evaluationResult - 평가 결과
-   */
-  const processEvaluationResult = (evaluationResult) => {
-    if (!evaluationResult) return
-    
-    console.log('평가 결과 처리:', evaluationResult)
-    
-    // 퀴즈 상태 업데이트
-    updateQuizInfo({
-      is_answer_submitted: true,
-      score: evaluationResult.score || 0
-    })
-    
-    // 피드백 메시지 추가
-    if (evaluationResult.feedback) {
-      addChatMessage({
-        sender: '튜터',
-        message: evaluationResult.feedback,
-        type: 'evaluation',
-        metadata: {
-          is_correct: evaluationResult.is_correct,
-          score: evaluationResult.score,
-          explanation: evaluationResult.explanation
-        }
-      })
-    }
-  }
+  // ===== 초기화 메서드 =====
   
-  /**
-   * learningStore 세션 시작 시 UI 초기화
-   * @param {Object} sessionState - learningStore의 세션 상태
-   */
-  const initializeSessionUI = (sessionState) => {
-    console.log('세션 시작으로 UI 초기화:', sessionState)
-    
-    // UI 상태 초기화
-    currentAgent.value = 'theory_educator'
-    currentUIMode.value = 'chat'
-    currentContentMode.value = 'current'
-    sessionProgressStage.value = 'session_start'
-    userIntent.value = ''
-    
-    // 완료 단계 초기화
-    completedSteps.value = {
-      theory: false,
-      quiz: false,
-      feedback: false
-    }
-    
-    // 채팅 히스토리 초기화
-    chatHistory.value = [
-      {
-        sender: '튜터',
-        message: `${sessionState.chapter_title} - ${sessionState.section_title} 학습을 시작합니다!`,
-        type: 'system',
-        timestamp: new Date()
-      }
-    ]
-    
-    // 퀴즈 데이터 초기화
-    quizData.value = {
-      question: '',
-      type: 'multiple_choice',
-      options: [],
-      hint: '',
-      correct_answer: '',
-      user_answer: ''
-    }
-    
-    currentQuizInfo.value = {
-      quiz_type: 'multiple_choice',
-      is_quiz_active: false,
-      is_answer_submitted: false,
-      hint_usage_count: 0,
-      score: null
-    }
-  }
-  
-  // ===== UI 초기화 메서드 =====
-  
-  /**
-   * UI 상태 초기화 (learningStore와 독립적)
-   * @param {Object} sessionData - 세션 데이터 (선택적)
-   */
+  // 세션 초기화
   const initializeSession = (sessionData = {}) => {
-    console.log('UI 세션 초기화 시작')
+    console.log('세션 초기화 시작')
     
-    // 기본 UI 상태 설정
+    // 기본값 설정
     currentAgent.value = 'theory_educator'
     currentUIMode.value = 'chat'
     currentContentMode.value = 'current'
     sessionProgressStage.value = 'session_start'
-    userIntent.value = ''
+    
+    // 세션 정보 설정
+    if (sessionData.chapter_number) {
+      sessionInfo.value.chapter_number = sessionData.chapter_number
+    }
+    if (sessionData.section_number) {
+      sessionInfo.value.section_number = sessionData.section_number
+    }
     
     // 완료 단계 초기화
     completedSteps.value = {
-      theory: false,
+      theory: true, // 이론은 기본적으로 시작 시 완료로 설정
       quiz: false,
       feedback: false
     }
     
-    // 채팅 히스토리 초기화
-    const welcomeMessage = sessionData.chapter_title 
-      ? `${sessionData.chapter_title} 학습을 시작합니다!`
-      : 'LLM에 대해 학습해보겠습니다. 위 내용을 확인해주세요!'
-    
-    chatHistory.value = [
-      {
-        sender: '튜터',
-        message: welcomeMessage,
-        type: 'system',
-        timestamp: new Date()
-      }
-    ]
-    
-    // 퀴즈 데이터 초기화
-    resetQuizData()
-    
-    console.log('UI 세션 초기화 완료', {
+    console.log('세션 초기화 완료', {
       agent: currentAgent.value,
-      uiMode: currentUIMode.value
+      uiMode: currentUIMode.value,
+      sessionInfo: sessionInfo.value
     })
   }
   
-  /**
-   * UI 상태 완전 리셋
-   */
+  // 세션 리셋
   const resetSession = () => {
-    console.log('UI 세션 리셋')
+    console.log('세션 리셋')
     
     currentAgent.value = 'theory_educator'
     currentUIMode.value = 'chat'
@@ -526,7 +284,7 @@ export const useTutorStore = defineStore('tutor', () => {
     userIntent.value = ''
     
     completedSteps.value = {
-      theory: false,
+      theory: true,
       quiz: false,
       feedback: false
     }
@@ -540,13 +298,6 @@ export const useTutorStore = defineStore('tutor', () => {
       }
     ]
     
-    resetQuizData()
-  }
-  
-  /**
-   * 퀴즈 데이터 초기화
-   */
-  const resetQuizData = () => {
     quizData.value = {
       question: '',
       type: 'multiple_choice',
@@ -565,11 +316,9 @@ export const useTutorStore = defineStore('tutor', () => {
     }
   }
   
-  // ===== 디버그 및 유틸리티 메서드 =====
+  // ===== 디버그 메서드 =====
   
-  /**
-   * 현재 UI 상태 정보 반환
-   */
+  // 현재 상태 정보
   const getStateInfo = () => {
     return {
       currentAgent: currentAgent.value,
@@ -577,52 +326,27 @@ export const useTutorStore = defineStore('tutor', () => {
       currentContentMode: currentContentMode.value,
       sessionProgressStage: sessionProgressStage.value,
       completedSteps: completedSteps.value,
-      sessionInfo: sessionInfo.value,
-      isConnectedToLearningStore: isConnectedToLearningStore.value,
-      learningStoreStatus: {
-        isSessionActive: learningStore.isSessionActive,
-        isLoading: learningStore.isLoading,
-        hasError: learningStore.hasError
-      }
+      sessionInfo: sessionInfo.value
     }
   }
   
-  /**
-   * learningStore와의 연동 상태 확인
-   */
-  const checkLearningStoreConnection = () => {
-    const connection = {
-      isConnected: isConnectedToLearningStore.value,
-      sessionActive: learningStore.isSessionActive,
-      currentAgent: learningStore.workflowState.current_agent,
-      uiMode: learningStore.workflowState.ui_mode,
-      syncStatus: {
-        agentSync: currentAgent.value === learningStore.workflowState.current_agent,
-        uiModeSync: currentUIMode.value === learningStore.workflowState.ui_mode,
-        progressSync: sessionProgressStage.value === learningStore.workflowState.session_progress_stage
-      }
-    }
-    
-    console.log('learningStore 연동 상태:', connection)
-    return connection
-  }
-  
-  // ===== Store 반환 =====
-  
+  // Store 반환
   return {
-    // UI 상태
+    // 상태
     currentAgent,
     currentUIMode,
     currentContentMode,
     userIntent,
     sessionProgressStage,
     completedSteps,
+    sessionInfo,
     mainContent,
     chatHistory,
     quizData,
     currentQuizInfo,
+    lastWorkflowResponse,
     
-    // 컴퓨티드 (UI 관련)
+    // 컴퓨티드
     isQuizMode,
     isChatMode,
     isSessionStart,
@@ -630,52 +354,24 @@ export const useTutorStore = defineStore('tutor', () => {
     isQuizAndFeedbackCompleted,
     canAskQuestion,
     canProceedNext,
-    isSessionReadyToComplete,
     sessionSteps,
     
-    // learningStore 연동 컴퓨티드
-    isConnectedToLearningStore,
-    sessionInfo,
-    
-    // UI 액션
+    // 액션
     updateAgent,
     updateUIMode,
     updateContentMode,
     updateSessionProgress,
     updateCompletedSteps,
+    updateSessionInfo,
     updateMainContent,
     updateChatHistory,
     addChatMessage,
     updateQuizData,
     updateQuizInfo,
     updateUserAnswer,
-    
-    // learningStore 연동 액션
-    updateFromWorkflowResponse,
-    updateWorkflowResponse: updateFromWorkflowResponse, // 별칭 추가
-    processWorkflowContent,
-    processEvaluationResult,
-    initializeSessionUI,
-    
-    // 초기화 액션
+    updateWorkflowResponse,
     initializeSession,
     resetSession,
-    resetQuizData,
-    
-    // 에러 처리
-    setError: (error) => {
-      console.error('tutorStore 에러 설정:', error)
-      // 에러를 채팅 히스토리에 추가
-      addChatMessage({
-        sender: '시스템',
-        message: typeof error === 'string' ? error : '오류가 발생했습니다.',
-        type: 'system',
-        timestamp: new Date()
-      })
-    },
-    
-    // 디버그 및 유틸리티
-    getStateInfo,
-    checkLearningStoreConnection
+    getStateInfo
   }
 })
