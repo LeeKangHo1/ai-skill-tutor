@@ -288,7 +288,7 @@ def get_current_user():
             SELECT 
                 u.user_id, u.login_id, u.username, u.email,
                 u.user_type, u.diagnosis_completed, u.created_at,
-                up.current_chapter
+                up.current_chapter, up.current_section
             FROM users u
             LEFT JOIN user_progress up ON u.user_id = up.user_id
             WHERE u.user_id = %s
@@ -312,6 +312,7 @@ def get_current_user():
                 "user_type": user_data['user_type'],
                 "diagnosis_completed": bool(user_data['diagnosis_completed']),
                 "current_chapter": user_data['current_chapter'] or 1,
+                "current_section": user_data['current_section'] or 1,
                 "created_at": user_data['created_at'].isoformat() if user_data['created_at'] else None
             },
             message="사용자 정보 조회가 완료되었습니다."

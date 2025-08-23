@@ -40,7 +40,7 @@ class TokenService:
             SELECT 
                 uat.token_id, uat.user_id, uat.expires_at, uat.is_active,
                 u.login_id, u.username, u.user_type, u.diagnosis_completed,
-                up.current_chapter
+                up.current_chapter, up.current_section
             FROM user_auth_tokens uat
             JOIN users u ON uat.user_id = u.user_id
             LEFT JOIN user_progress up ON u.user_id = up.user_id
@@ -66,7 +66,8 @@ class TokenService:
                 'username': token_data['username'],
                 'user_type': token_data['user_type'],
                 'diagnosis_completed': bool(token_data['diagnosis_completed']),
-                'current_chapter': token_data['current_chapter'] or 1
+                'current_chapter': token_data['current_chapter'] or 1,
+                'current_section': token_data['current_section'] or 1
             }
         }
     

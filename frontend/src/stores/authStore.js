@@ -49,6 +49,11 @@ export const useAuthStore = defineStore('auth', {
     currentChapter: (state) => state.user?.current_chapter || 1,
 
     /**
+     * 현재 섹션
+     */
+    currentSection: (state) => state.user?.current_section || 1,
+
+    /**
      * 사용자 ID
      */
     userId: (state) => state.user?.user_id || null,
@@ -357,6 +362,17 @@ export const useAuthStore = defineStore('auth', {
     updateCurrentChapter(chapterNumber) {
       if (this.user) {
         this.user.current_chapter = chapterNumber
+        // localStorage도 업데이트
+        tokenManager.setUserInfo(this.user)
+      }
+    },
+
+    /**
+     * 현재 섹션 업데이트
+     */
+    updateCurrentSection(sectionNumber) {
+      if (this.user) {
+        this.user.current_section = sectionNumber
         // localStorage도 업데이트
         tokenManager.setUserInfo(this.user)
       }
