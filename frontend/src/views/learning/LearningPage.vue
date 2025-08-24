@@ -20,25 +20,13 @@
     <div class="session-progress">
       <div class="progress-info">
         <div class="progress-steps">
-          <div 
-            class="progress-step"
-            :class="getStepClass('theory')"
-            id="theory-step"
-          >
+          <div class="progress-step" :class="getStepClass('theory')" id="theory-step">
             <div class="step-indicator">이론</div>
           </div>
-          <div 
-            class="progress-step"
-            :class="getStepClass('quiz')"
-            id="quiz-step"
-          >
+          <div class="progress-step" :class="getStepClass('quiz')" id="quiz-step">
             <div class="step-indicator">퀴즈</div>
           </div>
-          <div 
-            class="progress-step"
-            :class="getStepClass('feedback')"
-            id="feedback-step"
-          >
+          <div class="progress-step" :class="getStepClass('feedback')" id="feedback-step">
             <div class="step-indicator">풀이</div>
           </div>
         </div>
@@ -47,38 +35,25 @@
 
     <!-- 메인 컨텐츠 영역 -->
     <div class="learning-content">
-      <!-- 왼쪽: 메인 컨텐츠 (60%) -->
-      <MainContentArea 
-        :current-agent="currentAgent"
-        :content-data="contentData"
-        :current-content-mode="currentContentMode"
-        :completed-steps="completedSteps"
-        @navigation-click="handleNavigationClick"
-      />
+      <!-- 왼쪽: 메인 컨텐츠 (50%) -->
+      <MainContentArea :current-agent="currentAgent" :content-data="contentData"
+        :current-content-mode="currentContentMode" :completed-steps="completedSteps"
+        @navigation-click="handleNavigationClick" />
 
       <!-- 오른쪽: 상호작용 영역 (50%) -->
       <div class="interaction-area">
         <div class="interaction-header">
           {{ uiMode === 'chat' ? '💬 채팅' : '📝 퀴즈' }}
         </div>
-        
+
         <div class="interaction-body">
           <!-- 채팅 모드 -->
-          <ChatInteraction 
-            v-if="uiMode === 'chat'"
-            :chat-history="chatHistory"
-            :is-loading="isLoading"
-            @send-message="handleSendMessage"
-          />
+          <ChatInteraction v-if="uiMode === 'chat'" :chat-history="chatHistory" :is-loading="isLoading"
+            @send-message="handleSendMessage" />
 
           <!-- 퀴즈 모드 -->
-          <QuizInteraction 
-            v-else-if="uiMode === 'quiz'"
-            :quiz-data="quizData"
-            :is-loading="isLoading"
-            @submit-answer="handleSubmitAnswer"
-            @request-hint="handleRequestHint"
-          />
+          <QuizInteraction v-else-if="uiMode === 'quiz'" :quiz-data="quizData" :is-loading="isLoading"
+            @submit-answer="handleSubmitAnswer" @request-hint="handleRequestHint" />
         </div>
       </div>
     </div>
@@ -96,14 +71,14 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useTutorStore } from '@/stores/tutorStore'
+import { useLearningStore } from '@/stores/learningStore'
 import MainContentArea from '@/components/learning/MainContentArea.vue'
 import ChatInteraction from '@/components/learning/ChatInteraction.vue'
 import QuizInteraction from '@/components/learning/QuizInteraction.vue'
 
 // 라우터 및 스토어
 const router = useRouter()
-const tutorStore = useTutorStore()
+const learningStore = useLearningStore()
 
 // 반응형 상태
 const isLoading = ref(false)
@@ -134,41 +109,41 @@ const chatHistory = ref([
 ])
 
 // 컴퓨티드 속성들
-const currentAgent = computed(() => tutorStore.currentAgent)
-const uiMode = computed(() => tutorStore.currentUIMode)
-const currentContentMode = computed(() => tutorStore.currentContentMode || 'current')
-const completedSteps = computed(() => tutorStore.completedSteps || { theory: true, quiz: false, feedback: false })
+const currentAgent = computed(() => learningStore.currentAgent)
+const uiMode = computed(() => learningStore.currentUIMode)
+const currentContentMode = computed(() => learningStore.currentContentMode || 'current')
+const completedSteps = computed(() => learningStore.completedSteps || { theory: true, quiz: false, feedback: false })
 
 // 세션 정보
-const currentChapter = computed(() => tutorStore.sessionInfo?.chapter_number || 2)
-const currentSection = computed(() => tutorStore.sessionInfo?.section_number || 1)
-const sectionTitle = computed(() => tutorStore.sessionInfo?.section_title || 'LLM이란 무엇인가')
+const currentChapter = computed(() => learningStore.sessionInfo?.chapter_number || 2)
+const currentSection = computed(() => learningStore.sessionInfo?.section_number || 1)
+const sectionTitle = computed(() => learningStore.sessionInfo?.section_title || 'LLM이란 무엇인가')
 
 // 진행 단계 클래스 계산
 const getStepClass = (stepType) => {
   const agent = currentAgent.value
-  
+
   if (stepType === 'theory') {
     if (agent === 'theory_educator' || agent === 'qna_resolver') {
       return 'step-active'
     }
     return completedSteps.value.theory ? 'step-completed' : 'step-pending'
   }
-  
+
   if (stepType === 'quiz') {
     if (agent === 'quiz_generator') {
       return 'step-active'
     }
     return completedSteps.value.quiz ? 'step-completed' : 'step-pending'
   }
-  
+
   if (stepType === 'feedback') {
     if (agent === 'evaluation_feedback') {
       return 'step-active'
     }
     return completedSteps.value.feedback ? 'step-completed' : 'step-pending'
   }
-  
+
   return 'step-pending'
 }
 
@@ -177,7 +152,7 @@ const handleSendMessage = async (message) => {
   try {
     isLoading.value = true
     loadingMessage.value = '메시지를 처리하고 있습니다...'
-    
+
     // 사용자 메시지를 채팅 히스토리에 추가
     chatHistory.value.push({
       sender: '나',
@@ -185,10 +160,10 @@ const handleSendMessage = async (message) => {
       type: 'user',
       timestamp: new Date()
     })
-    
+
     // 백엔드 API 호출 시뮬레이션
     await simulateAPICall(message)
-    
+
   } catch (error) {
     console.error('메시지 전송 오류:', error)
     chatHistory.value.push({
@@ -206,10 +181,10 @@ const handleSubmitAnswer = async (answer) => {
   try {
     isLoading.value = true
     loadingMessage.value = '답변을 평가하고 있습니다...'
-    
+
     // 백엔드 API 호출 시뮬레이션
     await simulateQuizSubmission(answer)
-    
+
   } catch (error) {
     console.error('퀴즈 제출 오류:', error)
   } finally {
@@ -245,14 +220,14 @@ const goToDashboard = () => {
 const simulateAPICall = async (message) => {
   // SupervisorRouter 시뮬레이션
   await new Promise(resolve => setTimeout(resolve, 1000))
-  
+
   if (message.includes('다음') || message.includes('퀴즈')) {
     // QuizGenerator로 라우팅
-    tutorStore.updateAgent('quiz_generator')
-    tutorStore.updateUIMode('quiz')
+    learningStore.updateAgent('quiz_generator')
+    learningStore.updateUIMode('quiz')
     updateContentData('quiz')
     updateQuizData()
-    
+
     chatHistory.value.push({
       sender: '튜터',
       message: '퀴즈를 준비했습니다. 오른쪽에서 답변해주세요.',
@@ -261,9 +236,9 @@ const simulateAPICall = async (message) => {
     })
   } else if (message.includes('차이') || message.includes('?')) {
     // QnAResolver로 라우팅
-    tutorStore.updateAgent('qna_resolver')
+    learningStore.updateAgent('qna_resolver')
     updateContentData('qna')
-    
+
     chatHistory.value.push({
       sender: '튜터',
       message: 'AI는 더 넓은 개념으로, 인간의 지능을 모방하는 모든 기술을 포함합니다...',
@@ -282,12 +257,12 @@ const simulateAPICall = async (message) => {
 
 const simulateQuizSubmission = async (answer) => {
   await new Promise(resolve => setTimeout(resolve, 1500))
-  
+
   // EvaluationFeedbackAgent로 라우팅
-  tutorStore.updateAgent('evaluation_feedback')
-  tutorStore.updateUIMode('chat')
+  learningStore.updateAgent('evaluation_feedback')
+  learningStore.updateUIMode('chat')
   updateContentData('feedback')
-  
+
   chatHistory.value.push({
     sender: '튜터',
     message: '정답입니다! 상세한 피드백을 확인해주세요.',
@@ -348,7 +323,7 @@ const updateQuizData = () => {
 }
 
 const updateContentMode = (mode) => {
-  tutorStore.updateContentMode(mode)
+  learningStore.updateContentMode(mode)
 }
 
 // 라이프사이클 훅
@@ -356,17 +331,17 @@ onMounted(async () => {
   try {
     isLoading.value = true
     loadingMessage.value = '학습 세션을 초기화하고 있습니다...'
-    
+
     // 초기 컨텐츠 설정
     updateContentData('theory')
-    
+
     // 세션 시작 (실제로는 API 호출)
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     // 초기 상태 설정
-    tutorStore.updateAgent('theory_educator')
-    tutorStore.updateUIMode('chat')
-    
+    learningStore.updateAgent('theory_educator')
+    learningStore.updateUIMode('chat')
+
   } catch (error) {
     console.error('세션 초기화 오류:', error)
   } finally {
@@ -504,7 +479,8 @@ watch(uiMode, (newMode) => {
   grid-template-columns: 1fr 1fr;
   gap: 0;
   overflow: hidden;
-  min-height: 0; /* flexbox 오버플로우 활성화 */
+  min-height: 0;
+  /* flexbox 오버플로우 활성화 */
 }
 
 /* 오른쪽: 상호작용 영역 (50%) */
@@ -512,7 +488,8 @@ watch(uiMode, (newMode) => {
   background: #f8f9fa;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* flexbox 오버플로우 활성화 */
+  min-height: 0;
+  /* flexbox 오버플로우 활성화 */
 }
 
 .interaction-header {
@@ -521,14 +498,17 @@ watch(uiMode, (newMode) => {
   padding: 1rem;
   text-align: center;
   font-weight: 500;
-  flex-shrink: 0; /* 헤더 크기 고정 */
+  flex-shrink: 0;
+  /* 헤더 크기 고정 */
 }
 
 .interaction-body {
   flex: 1;
   padding: 1rem;
-  overflow: hidden; /* 자식 컴포넌트에서 스크롤 처리하도록 */
-  min-height: 0; /* flexbox 오버플로우 활성화 */
+  overflow: hidden;
+  /* 자식 컴포넌트에서 스크롤 처리하도록 */
+  min-height: 0;
+  /* flexbox 오버플로우 활성화 */
 }
 
 /* 로딩 오버레이 */
@@ -564,8 +544,13 @@ watch(uiMode, (newMode) => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 반응형 */
@@ -574,7 +559,7 @@ watch(uiMode, (newMode) => {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
   }
-  
+
   .interaction-area {
     max-height: 300px;
   }
