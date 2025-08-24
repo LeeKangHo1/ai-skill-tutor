@@ -86,7 +86,7 @@ const props = defineProps({
 })
 
 // Emits 정의
-const emit = defineEmits(['navigation-click', 'content-loaded', 'api-error'])
+const emit = defineEmits(['navigation-click', 'content-loaded', 'api-error', 'qna-response'])
 
 // 스토어
 const authStore = useAuthStore()
@@ -390,6 +390,16 @@ const loadAgentContent = async (agent) => {
         emit('content-loaded', { type: contentType, data: mappedContent, source: 'api' })
         lastApiCall.value = agent
         console.log(`MainContentArea: ${agent} API 데이터 로드 성공`, mappedContent)
+        
+        // QnA 응답인 경우 채팅 히스토리에 추가하기 위해 이벤트 전달
+        if (agent === 'qna_resolver' && mappedContent.answer) {
+          console.log('🔄 MainContentArea에서 QnA 응답 감지 - 채팅 이벤트 전달')
+          emit('qna-response', {
+            message: mappedContent.answer,
+            type: 'qna',
+            timestamp: new Date()
+          })
+        }
       } else {
         throw new Error('API 응답 매핑 실패')
       }
@@ -435,6 +445,13 @@ watch(() => props.currentAgent, (newAgent, oldAgent) => {
     // quiz_generator는 UI에 직접적인 영향을 주지 않으므로 API 호출하지 않음
     if (newAgent === 'quiz_generator') {
       console.log('MainContentArea: quiz_generator는 UI 업데이트 스킵')
+      return
+    }
+
+    // qna_resolver는 채팅에서만 처리되므로 MainContentArea에서는 API 호출하지 않음
+    if (newAgent === 'qna_resolver') {
+      console.log('MainContentArea: qna_resolver는 채팅 전용 - API 호출 스킵')
+      // 이론 컨텐츠를 유지하기 위해 아무것도 하지 않음
       return
     }
 

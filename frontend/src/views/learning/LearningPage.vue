@@ -20,7 +20,8 @@
       <!-- 왼쪽: 메인 컨텐츠 (50%) -->
       <MainContentArea :current-agent="currentAgent" :content-data="contentData"
         :current-content-mode="currentContentMode" :completed-steps="learningStore.completedSteps"
-        @navigation-click="handleNavigationClick" @content-loaded="handleContentLoaded" @api-error="handleApiError" />
+        @navigation-click="handleNavigationClick" @content-loaded="handleContentLoaded" @api-error="handleApiError" 
+        @qna-response="handleQnAResponse" />
 
       <!-- 오른쪽: 상호작용 영역 (50%) -->
       <div class="interaction-area">
@@ -218,6 +219,21 @@ const handleApiError = (errorData) => {
   }
 }
 
+const handleQnAResponse = (qnaData) => {
+  console.log('🔄 LearningPage: MainContentArea에서 QnA 응답 수신:', qnaData)
+  
+  // MainContentArea에서 받은 QnA 응답을 채팅 히스토리에 추가
+  if (qnaData.message) {
+    chatHistory.value.push({
+      sender: '튜터',
+      message: qnaData.message,
+      type: qnaData.type || 'qna',
+      timestamp: qnaData.timestamp || new Date()
+    })
+    console.log('✅ MainContentArea QnA 응답이 채팅 히스토리에 추가됨')
+  }
+}
+
 const goToDashboard = () => {
   router.push('/dashboard')
 }
@@ -277,6 +293,7 @@ const sendMessageToAPI = async (message) => {
         
         if (content) {
           console.log('🔍 컨텐츠 속성 상세:', {
+            type: content.type,
             quiz_type: content.quiz_type,
             question: content.question,
             options: content.options,
@@ -285,11 +302,21 @@ const sendMessageToAPI = async (message) => {
             optionsLength: content.options?.length
           })
           
-          // 퀴즈 데이터 조건 확인 - 더 관대한 조건으로 설정
-          if (workflowResponse.current_agent === 'quiz_generator' || 
-              content.quiz_type || 
-              content.question || 
-              (content.options && content.options.length > 0)) {
+          // 퀴즈 데이터 조건 확인 - QnA와 퀴즈를 명확히 구분
+          const isQuizContent = (
+            workflowResponse.current_agent === 'quiz_generator' ||
+            content.type === 'quiz' ||
+            content.quiz_type ||
+            (content.options && Array.isArray(content.options) && content.options.length > 0)
+          )
+          
+          // QnA 응답은 퀴즈로 처리하지 않음
+          const isQnAContent = (
+            workflowResponse.current_agent === 'qna_resolver' ||
+            content.type === 'qna'
+          )
+          
+          if (isQuizContent && !isQnAContent) {
             console.log('🎯 퀴즈 데이터 조건 만족 - setQuizDataFromAPI 호출')
             
             // API 응답을 올바른 구조로 전달
@@ -297,13 +324,34 @@ const sendMessageToAPI = async (message) => {
               workflow_response: workflowResponse
             }
             learningStore.setQuizDataFromAPI(formattedResponse)
+          } else if (isQnAContent) {
+            console.log('💬 QnA 응답 감지 - 채팅 모드 유지')
+            console.log('🔍 QnA content.answer 확인:', content.answer)
+            console.log('🔍 현재 chatHistory 길이:', chatHistory.value.length)
+            
+            // QnA 응답은 채팅 히스토리에 추가
+            if (content.answer) {
+              const qnaMessage = {
+                sender: '튜터',
+                message: content.answer,
+                type: 'qna',
+                timestamp: new Date()
+              }
+              console.log('📝 QnA 메시지 추가:', qnaMessage)
+              chatHistory.value.push(qnaMessage)
+              console.log('✅ QnA 메시지 추가 후 chatHistory 길이:', chatHistory.value.length)
+            } else {
+              console.warn('⚠️ content.answer가 없습니다:', content)
+            }
           } else {
             console.log('❌ 퀴즈 데이터 조건 불만족')
           }
         }
         
-        // 채팅 메시지 처리 (퀴즈 생성 시에는 채팅에 추가하지 않음)
-        if (content && content.refined_content && workflowResponse.current_agent !== 'quiz_generator') {
+        // 채팅 메시지 처리 (퀴즈 생성 시와 QnA 응답 시에는 채팅에 추가하지 않음)
+        if (content && content.refined_content && 
+            workflowResponse.current_agent !== 'quiz_generator' && 
+            workflowResponse.current_agent !== 'qna_resolver') {
           chatHistory.value.push({
             sender: '튜터',
             message: content.refined_content,
@@ -318,13 +366,50 @@ const sendMessageToAPI = async (message) => {
         learningStore.updateWorkflowResponse(apiResponse.workflow_response)
         
         const content = apiResponse.workflow_response.content
-        if (content && (content.quiz_type || content.question || content.options)) {
-          console.log('🎯 직접 구조에서 퀴즈 데이터 발견')
-          learningStore.setQuizDataFromAPI(apiResponse)
+        if (content) {
+          // 퀴즈 데이터 조건 확인 - QnA와 퀴즈를 명확히 구분
+          const isQuizContent = (
+            apiResponse.workflow_response.current_agent === 'quiz_generator' ||
+            content.type === 'quiz' ||
+            content.quiz_type ||
+            (content.options && Array.isArray(content.options) && content.options.length > 0)
+          )
+          
+          // QnA 응답은 퀴즈로 처리하지 않음
+          const isQnAContent = (
+            apiResponse.workflow_response.current_agent === 'qna_resolver' ||
+            content.type === 'qna'
+          )
+          
+          if (isQuizContent && !isQnAContent) {
+            console.log('🎯 직접 구조에서 퀴즈 데이터 발견')
+            learningStore.setQuizDataFromAPI(apiResponse)
+          } else if (isQnAContent) {
+            console.log('💬 직접 구조에서 QnA 응답 감지 - 채팅 모드 유지')
+            console.log('🔍 직접 구조 QnA content.answer 확인:', content.answer)
+            console.log('🔍 직접 구조 현재 chatHistory 길이:', chatHistory.value.length)
+            
+            // QnA 응답은 채팅 히스토리에 추가
+            if (content.answer) {
+              const qnaMessage = {
+                sender: '튜터',
+                message: content.answer,
+                type: 'qna',
+                timestamp: new Date()
+              }
+              console.log('📝 직접 구조 QnA 메시지 추가:', qnaMessage)
+              chatHistory.value.push(qnaMessage)
+              console.log('✅ 직접 구조 QnA 메시지 추가 후 chatHistory 길이:', chatHistory.value.length)
+            } else {
+              console.warn('⚠️ 직접 구조에서 content.answer가 없습니다:', content)
+            }
+          }
         }
         
-        // 채팅 메시지 처리 (퀴즈 생성 시에는 채팅에 추가하지 않음)
-        if (content && content.refined_content && apiResponse.workflow_response.current_agent !== 'quiz_generator') {
+        // 채팅 메시지 처리 (퀴즈 생성 시와 QnA 응답 시에는 채팅에 추가하지 않음)
+        if (content && content.refined_content && 
+            apiResponse.workflow_response.current_agent !== 'quiz_generator' && 
+            apiResponse.workflow_response.current_agent !== 'qna_resolver') {
           chatHistory.value.push({
             sender: '튜터',
             message: content.refined_content,

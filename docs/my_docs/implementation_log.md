@@ -31,7 +31,7 @@ agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 ```
 
 **Agent 최적화 설정:**
-- `max_iterations=3`: 최대 1번의 도구 호출 허용
+- `max_iterations=3`: 최대 3번의 도구 호출 허용
 - `early_stopping_method="generate"`: 답변 생성 후 자동 중단
 - `handle_parsing_errors=True`: 파싱 에러 자동 처리
 

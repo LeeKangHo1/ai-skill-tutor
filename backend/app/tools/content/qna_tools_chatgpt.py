@@ -53,24 +53,32 @@ def qna_generation_tool(user_question: str, current_context: Dict[str, Any] = No
             tools=tools,
             verbose=True,  # 디버깅용
             handle_parsing_errors=True,
-            max_iterations=1,  # 최대 1번의 도구 호출 허용
-            early_stopping_method="generate"  # 답변 생성 후 중단
+            max_iterations=3,  # 최대 3번의 반복 허용 (도구 호출 + 답변 생성)
+            early_stopping_method="force"  # 강제로 답변 생성
         )
         
-        print(f"[QnA Agent] Agent 실행 중...")
+        print(f"[QnA Agent] Agent 실행 중... 질문: '{user_question}'")
         
         # 7. Agent 실행
         response = agent_executor.invoke({
             "input": user_question
         })
         
+        print(f"[QnA Agent] Agent 실행 완료 - 응답 구조: {list(response.keys())}")
+        
         # 8. 결과 추출
         final_answer = response.get("output", "")
         
-        logger.info("QnA 답변 생성 완료 (LangChain Agent)")
-        print(f"[QnA Agent] Agent 답변 생성 완료 - 길이: {len(final_answer)}자")
+        if final_answer:
+            logger.info("QnA 답변 생성 완료 (LangChain Agent)")
+            print(f"[QnA Agent] Agent 답변 생성 완료 - 길이: {len(final_answer)}자")
+            print(f"[QnA Agent] 답변 미리보기: {final_answer[:100]}...")
+        else:
+            logger.warning("QnA Agent에서 빈 답변 반환")
+            print(f"[QnA Agent] 경고: 빈 답변 반환됨")
+            print(f"[QnA Agent] 전체 응답: {response}")
         
-        return final_answer
+        return final_answer if final_answer else _generate_error_response(user_question, "Agent에서 빈 답변 반환")
         
     except Exception as e:
         logger.error(f"QnA Agent 답변 생성 실패: {str(e)}")
@@ -112,7 +120,7 @@ def vector_search_qna_tool(search_query: str) -> List[Dict[str, Any]]:
                 print(f"[벡터 검색] 결과 {i}: {chunk_type} (유사도: {similarity_score:.3f})")
                 print(f"[벡터 검색]   내용: {content_preview}...")
         else:
-            print(f"[벡터 검색] 결과 없음")
+            print(f"[벡터 검색] 결과 없음 - 쿼리: '{search_query}'")
         
         # Agent가 이해하기 쉬운 형태로 반환
         agent_friendly_results = []
@@ -127,6 +135,7 @@ def vector_search_qna_tool(search_query: str) -> List[Dict[str, Any]]:
             }
             agent_friendly_results.append(agent_result)
         
+        print(f"[벡터 검색] Agent용 결과 변환 완료 - {len(agent_friendly_results)}개")
         return agent_friendly_results
         
     except Exception as e:
