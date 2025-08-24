@@ -10,10 +10,14 @@ LangGraph, 외부 서비스 연동 등 핵심 기능을 제공합니다.
 from .langraph import StateManager, WorkflowExecutor, TutorGraphBuilder
 # ⚠️ DEPRECATED - 데이터베이스 모듈은 더 이상 export하지 않음
 # from .database import MySQLClient, MigrationRunner
-from .external import VectorDBClient
+from .external import ChromaDBClient, get_chroma_client, VectorDBSetup
 
 __all__ = [
-    'StateManager', 'WorkflowExecutor', 'TutorGraphBuilder',
+    'StateManager', 
+    'WorkflowExecutor', 
+    'TutorGraphBuilder',
     # 'MySQLClient', 'MigrationRunner',  # ⚠️ DEPRECATED
-    'VectorDBClient',
+    'ChromaDBClient',
+    'get_chroma_client',
+    'VectorDBSetup'
 ]

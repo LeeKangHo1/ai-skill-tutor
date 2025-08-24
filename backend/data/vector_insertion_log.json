@@ -1,0 +1,1871 @@
+{
+  "insertion_date": "2025-08-24T12:11:49.821793",
+  "total_chunks": 157,
+  "successful_insertions": 157,
+  "failed_insertions": 0,
+  "results": [
+    {
+      "id": "chapter_1-section_1-chunk_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+      "chapter": 1,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:28.681043",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_2-chunk_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI, 머신러닝, 딥러닝 - 관계 파헤치기",
+      "chapter": 1,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:28.999970",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_3-chunk_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "LLM, 챗봇, 생성형 AI, GPT, 파라미터 - 핵심 용어 5분 정리",
+      "chapter": 1,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:29.519825",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_4-chunk_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗봇과 무엇을 할 수 있을까?",
+      "chapter": 1,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:30.011670",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:30.368014",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:30.824108",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:31.320014",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:31.821488",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:10:32.319809",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_1-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "전문가로 변신시키는 '역할 부여'의 마법",
+      "chapter": 5,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:32.862524",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_2-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "찰떡같이 알아듣게 만드는 '구체적 조건' 제시하기",
+      "chapter": 5,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:33.343271",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_3-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "원하는 결과물을 얻는 '형식 지정' 방법",
+      "chapter": 5,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:33.813954",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_4-core_concept_1-claude",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "글자로 그림을? 이미지 생성 프롬프트 맛보기",
+      "chapter": 5,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:34.334953",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+      "chapter": 1,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:34.811577",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_1-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+      "chapter": 1,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:35.295405",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_1-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+      "chapter": 1,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:35.747783",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI, 머신러닝, 딥러닝 - 관계 파헤치기",
+      "chapter": 1,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:36.103176",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_2-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI, 머신러닝, 딥러닝 - 관계 파헤치기",
+      "chapter": 1,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:36.856940",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "LLM, 챗봇, 생성형 AI, GPT, 파라미터 - 핵심 용어 5분 정리",
+      "chapter": 1,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:37.334642",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_3-chunk_2-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "LLM, 챗봇, 생성형 AI, GPT, 파라미터 - 핵심 용어 5분 정리",
+      "chapter": 1,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:37.877679",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_4-chunk_1-gemini",
+      "chunk_type": "use-case",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗봇과 무엇을 할 수 있을까?",
+      "chapter": 1,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:38.323584",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_4-chunk_2-gemini",
+      "chunk_type": "use-case",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗봇과 무엇을 할 수 있을까?",
+      "chapter": 1,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:38.825480",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_4-chunk_3-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗봇과 무엇을 할 수 있을까?",
+      "chapter": 1,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:39.306105",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:39.789650",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:40.254168",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-chunk_3-gemini",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:40.812275",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:41.164398",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:41.673260",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-chunk_3-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:42.220976",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:42.690140",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:43.164339",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-chunk_3-gemini",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "advanced"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:43.503773",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:43.990435",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:44.526947",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:45.021880",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:10:45.478628",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:10:45.985667",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:10:46.549882",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT (OpenAI): AI 시대의 문을 연 선두주자",
+      "chapter": 3,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:47.070588",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_1-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT (OpenAI): AI 시대의 문을 연 선두주자",
+      "chapter": 3,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:47.561338",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_1-chunk_3-gemini",
+      "chunk_type": "comparison",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "챗GPT (OpenAI): AI 시대의 문을 연 선두주자",
+      "chapter": 3,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:47.901711",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "제미나이 (Google): 검색의 왕, AI로 날개를 달다",
+      "chapter": 3,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:48.391016",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_2-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "제미나이 (Google): 검색의 왕, AI로 날개를 달다",
+      "chapter": 3,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:48.870638",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_2-chunk_3-gemini",
+      "chunk_type": "comparison",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "제미나이 (Google): 검색의 왕, AI로 날개를 달다",
+      "chapter": 3,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:49.361618",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "클로드 (Anthropic): 안전하고 인간적인 AI를 향하여",
+      "chapter": 3,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:49.870161",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_3-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "advanced"
+      ],
+      "section_title": "클로드 (Anthropic): 안전하고 인간적인 AI를 향하여",
+      "chapter": 3,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:50.533356",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_3-chunk_3-gemini",
+      "chunk_type": "comparison",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "클로드 (Anthropic): 안전하고 인간적인 AI를 향하여",
+      "chapter": 3,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:51.019610",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_4-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "또 다른 선택지들: 한국형 & 특화 챗봇",
+      "chapter": 3,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:51.507791",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_4-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "또 다른 선택지들: 한국형 & 특화 챗봇",
+      "chapter": 3,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:51.829894",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_4-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "advanced"
+      ],
+      "section_title": "또 다른 선택지들: 한국형 & 특화 챗봇",
+      "chapter": 3,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:52.179481",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_5-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "무료? 유료? 무엇을 선택해야 할까?",
+      "chapter": 3,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:10:52.700670",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_5-chunk_2-gemini",
+      "chunk_type": "how-to",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "무료? 유료? 무엇을 선택해야 할까?",
+      "chapter": 3,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:10:53.141019",
+      "status": "success"
+    },
+    {
+      "id": "chapter_3-section_5-chunk_3-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "무료? 유료? 무엇을 선택해야 할까?",
+      "chapter": 3,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:10:53.612516",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "프롬프트, AI를 움직이는 주문",
+      "chapter": 4,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:54.173267",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_1-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "프롬프트, AI를 움직이는 주문",
+      "chapter": 4,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:54.738264",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_1-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "프롬프트, AI를 움직이는 주문",
+      "chapter": 4,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:10:55.242843",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "좋은 프롬프트의 3가지 기본 요소",
+      "chapter": 4,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:55.572477",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_2-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "좋은 프롬프트의 3가지 기본 요소",
+      "chapter": 4,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:56.085549",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_2-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "좋은 프롬프트의 3가지 기본 요소",
+      "chapter": 4,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:10:56.569287",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "이것만은 피하자! 나쁜 프롬프트 예시",
+      "chapter": 4,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:57.048843",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_3-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "이것만은 피하자! 나쁜 프롬프트 예시",
+      "chapter": 4,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:57.545579",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_3-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "이것만은 피하자! 나쁜 프롬프트 예시",
+      "chapter": 4,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:10:58.045787",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_4-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "실습: 나만의 첫 프롬프트 만들기",
+      "chapter": 4,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:58.545118",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_4-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "실습: 나만의 첫 프롬프트 만들기",
+      "chapter": 4,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:59.124944",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_4-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "실습: 나만의 첫 프롬프트 만들기",
+      "chapter": 4,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:10:59.835802",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "전문가로 변신시키는 '역할 부여'의 마법",
+      "chapter": 5,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:00.405769",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_1-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "전문가로 변신시키는 '역할 부여'의 마법",
+      "chapter": 5,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:00.878626",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_1-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "전문가로 변신시키는 '역할 부여'의 마법",
+      "chapter": 5,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:01.499989",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "찰떡같이 알아듣게 만드는 '구체적 조건' 제시하기",
+      "chapter": 5,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:02.033403",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_2-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "찰떡같이 알아듣게 만드는 '구체적 조건' 제시하기",
+      "chapter": 5,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:02.500614",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_2-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "찰떡같이 알아듣게 만드는 '구체적 조건' 제시하기",
+      "chapter": 5,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:03.045716",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "원하는 결과물을 얻는 '형식 지정' 방법",
+      "chapter": 5,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:03.540820",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_3-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "원하는 결과물을 얻는 '형식 지정' 방법",
+      "chapter": 5,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:04.041149",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_3-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "원하는 결과물을 얻는 '형식 지정' 방법",
+      "chapter": 5,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:04.636110",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_4-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "글자로 그림을? 이미지 생성 프롬프트 맛보기",
+      "chapter": 5,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:05.249192",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_4-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "글자로 그림을? 이미지 생성 프롬프트 맛보기",
+      "chapter": 5,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:05.809782",
+      "status": "success"
+    },
+    {
+      "id": "chapter_5-section_4-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "글자로 그림을? 이미지 생성 프롬프트 맛보기",
+      "chapter": 5,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:06.277152",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "10분 걸릴 문서 요약, 10초 만에 끝내기",
+      "chapter": 6,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:06.730992",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_1-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "10분 걸릴 문서 요약, 10초 만에 끝내기",
+      "chapter": 6,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:07.198611",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_1-chunk_3-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "10분 걸릴 문서 요약, 10초 만에 끝내기",
+      "chapter": 6,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:07.660334",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "어색한 번역은 이제 그만! 똑똑한 AI 번역기",
+      "chapter": 6,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:08.293486",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_2-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "어색한 번역은 이제 그만! 똑똑한 AI 번역기",
+      "chapter": 6,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:08.844989",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_2-chunk_3-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "어색한 번역은 이제 그만! 똑똑한 AI 번역기",
+      "chapter": 6,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:09.355561",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "막막할 때, 아이디어 발전시키기",
+      "chapter": 6,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:09.924636",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_3-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "막막할 때, 아이디어 발전시키기",
+      "chapter": 6,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:10.516258",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_3-chunk_3-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "막막할 때, 아이디어 발전시키기",
+      "chapter": 6,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:11.092147",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_4-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "나만의 여행 계획, AI와 함께 짜기",
+      "chapter": 6,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:11.440764",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_4-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "나만의 여행 계획, AI와 함께 짜기",
+      "chapter": 6,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:12.048501",
+      "status": "success"
+    },
+    {
+      "id": "chapter_6-section_4-chunk_3-gemini",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "advanced"
+      ],
+      "section_title": "나만의 여행 계획, AI와 함께 짜기",
+      "chapter": 6,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:12.531898",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "매일 쓰는 이메일, 3초 만에 작성하기",
+      "chapter": 7,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:13.020298",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_1-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "매일 쓰는 이메일, 3초 만에 작성하기",
+      "chapter": 7,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:13.500549",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_1-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "매일 쓰는 이메일, 3초 만에 작성하기",
+      "chapter": 7,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:14.044883",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "복잡한 엑셀 함수, AI에게 물어보기",
+      "chapter": 7,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:14.528092",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_2-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "복잡한 엑셀 함수, AI에게 물어보기",
+      "chapter": 7,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:15.015560",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_2-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "복잡한 엑셀 함수, AI에게 물어보기",
+      "chapter": 7,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:15.376032",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "회의록 정리, 이제 AI에게 맡기세요",
+      "chapter": 7,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:15.934786",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_3-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "회의록 정리, 이제 AI에게 맡기세요",
+      "chapter": 7,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:16.541965",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_3-chunk_3-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "회의록 정리, 이제 AI에게 맡기세요",
+      "chapter": 7,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:17.025250",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_4-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "나만의 업무 비서 만들기 (종합 실습)",
+      "chapter": 7,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:17.612901",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_4-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "나만의 업무 비서 만들기 (종합 실습)",
+      "chapter": 7,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:18.159073",
+      "status": "success"
+    },
+    {
+      "id": "chapter_7-section_4-chunk_3-gemini",
+      "chunk_type": "how-to",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "나만의 업무 비서 만들기 (종합 실습)",
+      "chapter": 7,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:18.717311",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_1-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "AI의 가장 큰 함정: 환각 현상과 해결 방법",
+      "chapter": 8,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:19.308741",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_1-chunk_2-gemini",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI의 가장 큰 함정: 환각 현상과 해결 방법",
+      "chapter": 8,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:19.651358",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_1-chunk_3-gemini",
+      "chunk_type": "how-to",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "AI의 가장 큰 함정: 환각 현상과 해결 방법",
+      "chapter": 8,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:20.140587",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_2-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "AI에게 똑똑하게 생각시키는 법: CoT (Chain-of-Thought)",
+      "chapter": 8,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:20.823105",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_2-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI에게 똑똑하게 생각시키는 법: CoT (Chain-of-Thought)",
+      "chapter": 8,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:21.296536",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_2-chunk_3-gemini",
+      "chunk_type": "how-to",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "AI에게 똑똑하게 생각시키는 법: CoT (Chain-of-Thought)",
+      "chapter": 8,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:21.786275",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_3-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI를 24시간 개인 교사로 만드는 법: 챗봇과 함께 학습하기",
+      "chapter": 8,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:22.341809",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_3-chunk_2-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "AI를 24시간 개인 교사로 만드는 법: 챗봇과 함께 학습하기",
+      "chapter": 8,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:22.918732",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_3-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "AI를 24시간 개인 교사로 만드는 법: 챗봇과 함께 학습하기",
+      "chapter": 8,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:23.483411",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_4-chunk_1-gemini",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "우리가 던져야 할 질문들: AI 윤리 문제",
+      "chapter": 8,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:24.067347",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_4-chunk_2-gemini",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "우리가 던져야 할 질문들: AI 윤리 문제",
+      "chapter": 8,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:24.566216",
+      "status": "success"
+    },
+    {
+      "id": "chapter_8-section_4-chunk_3-gemini",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "우리가 던져야 할 질문들: AI 윤리 문제",
+      "chapter": 8,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:25.086133",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_1-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+      "chapter": 1,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:25.631545",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_1-practical_example_2-gpt",
+      "chunk_type": "practical_example",
+      "user_type": "beginner",
+      "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+      "chapter": 1,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:26.205900",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_1-analogy_3-gpt",
+      "chunk_type": "analogy",
+      "user_type": "beginner",
+      "section_title": "AI는 어떻게 우리 삶에 들어와 있을까?",
+      "chapter": 1,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:26.709451",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_2-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "AI, 머신러닝, 딥러닝 - 관계 파헤치기",
+      "chapter": 1,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:27.218009",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_2-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": "beginner",
+      "section_title": "AI, 머신러닝, 딥러닝 - 관계 파헤치기",
+      "chapter": 1,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:27.768857",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_2-technical_detail_3-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": "beginner",
+      "section_title": "AI, 머신러닝, 딥러닝 - 관계 파헤치기",
+      "chapter": 1,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:28.276623",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_3-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "LLM, 챗봇, 생성형 AI, GPT, 파라미터 - 핵심 용어 5분 정리",
+      "chapter": 1,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:28.747890",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_3-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": "beginner",
+      "section_title": "LLM, 챗봇, 생성형 AI, GPT, 파라미터 - 핵심 용어 5분 정리",
+      "chapter": 1,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:29.282436",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_3-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": "beginner",
+      "section_title": "LLM, 챗봇, 생성형 AI, GPT, 파라미터 - 핵심 용어 5분 정리",
+      "chapter": 1,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:29.848089",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_4-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "챗봇과 무엇을 할 수 있을까?",
+      "chapter": 1,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:30.377320",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_4-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": "beginner",
+      "section_title": "챗봇과 무엇을 할 수 있을까?",
+      "chapter": 1,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:30.943500",
+      "status": "success"
+    },
+    {
+      "id": "chapter_1-section_4-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": "beginner",
+      "section_title": "챗봇과 무엇을 할 수 있을까?",
+      "chapter": 1,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:31.449512",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:32.581430",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:32.950305",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:33.375156",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_1-technical_detail_4-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "딥러닝 빅뱅의 시작, 알렉스넷과 GPU (2012)",
+      "chapter": 2,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:33.816692",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:34.516377",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:34.979952",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:35.561279",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_2-technical_detail_4-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "알파고 쇼크 (2016): 인공지능, 인간을 넘어서다",
+      "chapter": 2,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:36.115683",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:36.712068",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:37.233689",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:37.728806",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_3-technical_detail_4-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "트랜스포머 논문 (2017): '주목'이 모든 것을 바꿨다",
+      "chapter": 2,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:38.258301",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:38.775657",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:39.280708",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:39.869049",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_4-technical_detail_4-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "챗GPT 3.5 출시 (2022): 모두를 위한 AI 시대의 개막",
+      "chapter": 2,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:40.390306",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:11:40.870085",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:11:41.375953",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": [
+        "beginner"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:11:42.388531",
+      "status": "success"
+    },
+    {
+      "id": "chapter_2-section_5-technical_detail_4-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "그리고 현재 (2025년): 멀티모달 AI의 시대",
+      "chapter": 2,
+      "section": 5,
+      "inserted_at": "2025-08-24T12:11:43.027818",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_1-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "프롬프트, AI를 움직이는 주문",
+      "chapter": 4,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:43.536269",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_1-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": "beginner",
+      "section_title": "프롬프트, AI를 움직이는 주문",
+      "chapter": 4,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:44.119126",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_1-technical_detail_3-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "프롬프트, AI를 움직이는 주문",
+      "chapter": 4,
+      "section": 1,
+      "inserted_at": "2025-08-24T12:11:44.983585",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_2-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "좋은 프롬프트의 3가지 기본 요소",
+      "chapter": 4,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:45.576296",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_2-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": "beginner",
+      "section_title": "좋은 프롬프트의 3가지 기본 요소",
+      "chapter": 4,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:45.939080",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_2-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": "beginner",
+      "section_title": "좋은 프롬프트의 3가지 기본 요소",
+      "chapter": 4,
+      "section": 2,
+      "inserted_at": "2025-08-24T12:11:46.616591",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_3-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "이것만은 피하자! 나쁜 프롬프트 예시",
+      "chapter": 4,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:47.223946",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_3-analogy_2-gpt",
+      "chunk_type": "analogy",
+      "user_type": "beginner",
+      "section_title": "이것만은 피하자! 나쁜 프롬프트 예시",
+      "chapter": 4,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:47.723924",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_3-practical_example_3-gpt",
+      "chunk_type": "practical_example",
+      "user_type": "beginner",
+      "section_title": "이것만은 피하자! 나쁜 프롬프트 예시",
+      "chapter": 4,
+      "section": 3,
+      "inserted_at": "2025-08-24T12:11:48.364792",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_4-core_concept_1-gpt",
+      "chunk_type": "core_concept",
+      "user_type": "beginner",
+      "section_title": "실습: 나만의 첫 프롬프트 만들기",
+      "chapter": 4,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:48.897664",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_4-practical_example_2-gpt",
+      "chunk_type": "practical_example",
+      "user_type": "beginner",
+      "section_title": "실습: 나만의 첫 프롬프트 만들기",
+      "chapter": 4,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:49.361475",
+      "status": "success"
+    },
+    {
+      "id": "chapter_4-section_4-technical_detail_3-gpt",
+      "chunk_type": "technical_detail",
+      "user_type": [
+        "beginner",
+        "advanced"
+      ],
+      "section_title": "실습: 나만의 첫 프롬프트 만들기",
+      "chapter": 4,
+      "section": 4,
+      "inserted_at": "2025-08-24T12:11:49.821765",
+      "status": "success"
+    }
+  ]
+}

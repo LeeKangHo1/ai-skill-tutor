@@ -57,6 +57,9 @@ tests/
 # 채팅 로그 데이터
 data/chat_log/
 
+# 벡터 데이터 원본
+data/chapters_vec/
+
 # ChromaDB 벡터 데이터베이스
 chroma_db/
 *.chroma

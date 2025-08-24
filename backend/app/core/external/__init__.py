@@ -4,6 +4,11 @@
 ChromaDB, AI 클라이언트 등 외부 서비스와의 연동을 관리합니다.
 """
 
-from .vector_db import VectorDBClient
+from .chroma_client import ChromaDBClient, get_chroma_client
+from .vector_db_setup import VectorDBSetup
 
-__all__ = ['VectorDBClient']
+__all__ = [
+    'ChromaDBClient',
+    'get_chroma_client', 
+    'VectorDBSetup'
+]
