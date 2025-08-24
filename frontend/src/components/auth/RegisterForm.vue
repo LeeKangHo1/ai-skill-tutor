@@ -14,29 +14,14 @@
           <span class="required">*</span>
         </label>
         <div class="input-with-check">
-          <input
-            id="loginId"
-            v-model="formData.loginId"
-            type="text"
-            class="form-control"
-            :class="{ 
-              'is-invalid': errors.loginId, 
-              'is-valid': validFields.loginId && !errors.loginId 
-            }"
-            placeholder="4-20자의 영문, 숫자, 언더스코어"
-            autocomplete="username"
-            :disabled="isLoading"
-            @blur="validateField('loginId')"
-            @input="handleLoginIdInput"
-          />
-          <button
-            v-if="formData.loginId.length >= 4"
-            type="button"
-            class="check-availability-btn"
-            :class="{ 'checking': checkingLoginId }"
-            @click="checkLoginIdAvailability"
-            :disabled="isLoading || checkingLoginId || errors.loginId"
-          >
+          <input id="loginId" v-model="formData.loginId" type="text" class="form-control" :class="{
+            'is-invalid': errors.loginId,
+            'is-valid': validFields.loginId && !errors.loginId
+          }" placeholder="4-20자의 영문, 숫자, 언더스코어" autocomplete="username" :disabled="isLoading"
+            @blur="validateField('loginId')" @input="handleLoginIdInput" />
+          <button v-if="formData.loginId.length >= 4" type="button" class="check-availability-btn"
+            :class="{ 'checking': checkingLoginId }" @click="checkLoginIdAvailability"
+            :disabled="isLoading || checkingLoginId || errors.loginId">
             <span v-if="checkingLoginId" class="spinner-border spinner-border-sm"></span>
             <i v-else-if="validFields.loginId" class="fas fa-check text-success"></i>
             <span v-else>확인</span>
@@ -48,7 +33,8 @@
         <div v-else-if="validFields.loginId" class="valid-feedback">
           사용 가능한 로그인 ID입니다
         </div>
-        <div v-else-if="formData.loginId.length >= 4 && !errors.loginId && !checkingLoginId" class="check-required-feedback">
+        <div v-else-if="formData.loginId.length >= 4 && !errors.loginId && !checkingLoginId"
+          class="check-required-feedback">
           중복 확인 버튼을 눌러주세요
         </div>
       </div>
@@ -58,21 +44,11 @@
           사용자명
           <span class="required">*</span>
         </label>
-        <input
-          id="username"
-          v-model="formData.username"
-          type="text"
-          class="form-control"
-          :class="{ 
-            'is-invalid': errors.username,
-            'is-valid': validFields.username && !errors.username
-          }"
-          placeholder="표시될 사용자명을 입력하세요"
-          autocomplete="name"
-          :disabled="isLoading"
-          @blur="validateField('username')"
-          @input="clearFieldError('username')"
-        />
+        <input id="username" v-model="formData.username" type="text" class="form-control" :class="{
+          'is-invalid': errors.username,
+          'is-valid': validFields.username && !errors.username
+        }" placeholder="표시될 사용자명을 입력하세요" autocomplete="name" :disabled="isLoading" @blur="validateField('username')"
+          @input="clearFieldError('username')" />
         <div v-if="errors.username" class="invalid-feedback">
           {{ errors.username }}
         </div>
@@ -84,29 +60,14 @@
           <span class="required">*</span>
         </label>
         <div class="input-with-check">
-          <input
-            id="email"
-            v-model="formData.email"
-            type="email"
-            class="form-control"
-            :class="{ 
-              'is-invalid': errors.email,
-              'is-valid': validFields.email && !errors.email
-            }"
-            placeholder="example@domain.com"
-            autocomplete="email"
-            :disabled="isLoading"
-            @blur="validateField('email')"
-            @input="handleEmailInput"
-          />
-          <button
-            v-if="formData.email && !errors.email"
-            type="button"
-            class="check-availability-btn"
-            :class="{ 'checking': checkingEmail }"
-            @click="checkEmailAvailability"
-            :disabled="isLoading || checkingEmail || errors.email"
-          >
+          <input id="email" v-model="formData.email" type="email" class="form-control" :class="{
+            'is-invalid': errors.email,
+            'is-valid': validFields.email && !errors.email
+          }" placeholder="example@domain.com" autocomplete="email" :disabled="isLoading"
+            @blur="validateField('email')" @input="handleEmailInput" />
+          <button v-if="formData.email && !errors.email" type="button" class="check-availability-btn"
+            :class="{ 'checking': checkingEmail }" @click="checkEmailAvailability"
+            :disabled="isLoading || checkingEmail || errors.email">
             <span v-if="checkingEmail" class="spinner-border spinner-border-sm"></span>
             <i v-else-if="validFields.email" class="fas fa-check text-success"></i>
             <span v-else>확인</span>
@@ -129,28 +90,14 @@
           <span class="required">*</span>
         </label>
         <div class="password-input-wrapper">
-          <input
-            id="password"
-            v-model="formData.password"
-            :type="showPassword ? 'text' : 'password'"
-            class="form-control"
-            :class="{ 
+          <input id="password" v-model="formData.password" :type="showPassword ? 'text' : 'password'"
+            class="form-control" :class="{
               'is-invalid': errors.password,
               'is-valid': validFields.password && !errors.password
-            }"
-            placeholder="최소 8자, 영문과 숫자 포함"
-            autocomplete="new-password"
-            :disabled="isLoading"
-            @blur="validateField('password')"
-            @input="handlePasswordInput"
-          />
-          <button
-            type="button"
-            class="password-toggle"
-            @click="togglePasswordVisibility"
-            :disabled="isLoading"
-            aria-label="비밀번호 표시/숨기기"
-          >
+            }" placeholder="최소 8자, 영문과 숫자 포함" autocomplete="new-password" :disabled="isLoading"
+            @blur="validateField('password')" @input="handlePasswordInput" />
+          <button type="button" class="password-toggle" @click="togglePasswordVisibility" :disabled="isLoading"
+            aria-label="비밀번호 표시/숨기기">
             <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
           </button>
         </div>
@@ -159,11 +106,7 @@
         </div>
         <div v-else-if="formData.password" class="password-strength">
           <div class="strength-meter">
-            <div 
-              class="strength-bar"
-              :class="passwordStrength.class"
-              :style="{ width: passwordStrength.width }"
-            ></div>
+            <div class="strength-bar" :class="passwordStrength.class" :style="{ width: passwordStrength.width }"></div>
           </div>
           <span class="strength-text" :class="passwordStrength.class">
             {{ passwordStrength.text }}
@@ -177,28 +120,14 @@
           <span class="required">*</span>
         </label>
         <div class="password-input-wrapper">
-          <input
-            id="passwordConfirm"
-            v-model="formData.passwordConfirm"
-            :type="showPasswordConfirm ? 'text' : 'password'"
-            class="form-control"
-            :class="{ 
+          <input id="passwordConfirm" v-model="formData.passwordConfirm"
+            :type="showPasswordConfirm ? 'text' : 'password'" class="form-control" :class="{
               'is-invalid': errors.passwordConfirm,
               'is-valid': validFields.passwordConfirm && !errors.passwordConfirm
-            }"
-            placeholder="비밀번호를 다시 입력하세요"
-            autocomplete="new-password"
-            :disabled="isLoading"
-            @blur="validateField('passwordConfirm')"
-            @input="clearFieldError('passwordConfirm')"
-          />
-          <button
-            type="button"
-            class="password-toggle"
-            @click="togglePasswordConfirmVisibility"
-            :disabled="isLoading"
-            aria-label="비밀번호 확인 표시/숨기기"
-          >
+            }" placeholder="비밀번호를 다시 입력하세요" autocomplete="new-password" :disabled="isLoading"
+            @blur="validateField('passwordConfirm')" @input="clearFieldError('passwordConfirm')" />
+          <button type="button" class="password-toggle" @click="togglePasswordConfirmVisibility" :disabled="isLoading"
+            aria-label="비밀번호 확인 표시/숨기기">
             <i :class="showPasswordConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
           </button>
         </div>
@@ -209,17 +138,10 @@
 
       <div class="form-group">
         <div class="form-check">
-          <input
-            id="agreeTerms"
-            v-model="formData.agreeTerms"
-            type="checkbox"
-            class="form-check-input"
-            :class="{ 'is-invalid': errors.agreeTerms }"
-            :disabled="isLoading"
-            @change="validateField('agreeTerms')"
-          />
+          <input id="agreeTerms" v-model="formData.agreeTerms" type="checkbox" class="form-check-input"
+            :class="{ 'is-invalid': errors.agreeTerms }" :disabled="isLoading" @change="validateField('agreeTerms')" />
           <label for="agreeTerms" class="form-check-label">
-            <a href="#" @click.prevent="showTerms" class="terms-link">이용약관</a> 및 
+            <a href="#" @click.prevent="showTerms" class="terms-link">이용약관</a> 및
             <a href="#" @click.prevent="showPrivacy" class="terms-link">개인정보처리방침</a>에 동의합니다
             <span class="required">*</span>
           </label>
@@ -234,11 +156,7 @@
         {{ generalError }}
       </div>
 
-      <button
-        type="submit"
-        class="btn btn-primary btn-block"
-        :disabled="isLoading || !isFormValid"
-      >
+      <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading || !isFormValid">
         <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
         {{ isLoading ? '가입 중...' : '회원가입' }}
       </button>
@@ -255,7 +173,7 @@ import authService from '../../services/authService'
 export default {
   name: 'RegisterForm',
   emits: ['register-success', 'switch-to-login', 'show-terms', 'show-privacy'],
-  
+
   setup(props, { emit }) {
     const authStore = useAuthStore()
 
@@ -284,7 +202,7 @@ export default {
       const allFieldsValid = requiredFields.every(field => validFields.value[field])
       const noErrors = Object.keys(errors.value).length === 0
       const termsAgreed = formData.value.agreeTerms
-      
+
       return allFieldsValid && noErrors && termsAgreed
     })
 
@@ -325,7 +243,7 @@ export default {
     // 메서드들
     const validateField = (fieldName) => {
       const value = formData.value[fieldName]
-      
+
       switch (fieldName) {
         case 'loginId':
           if (!value) {
@@ -384,7 +302,7 @@ export default {
             delete errors.value.password
             validFields.value.password = true
           }
-          
+
           // 비밀번호 확인 재검증
           if (formData.value.passwordConfirm) {
             validateField('passwordConfirm')
@@ -443,7 +361,7 @@ export default {
       checkingLoginId.value = true
       try {
         const result = await authService.checkLoginIdAvailability(formData.value.loginId)
-        
+
         if (result.success && result.data.login_id?.available) {
           validFields.value.loginId = true
           delete errors.value.loginId
@@ -465,7 +383,7 @@ export default {
       checkingEmail.value = true
       try {
         const result = await authService.checkEmailAvailability(formData.value.email)
-        
+
         if (result.success && result.data.email?.available) {
           validFields.value.email = true
           delete errors.value.email
@@ -531,7 +449,7 @@ export default {
         }
 
         const result = await authStore.register(userData)
-        
+
         if (result.success) {
           emit('register-success', {
             user: authStore.user,
@@ -542,7 +460,7 @@ export default {
         }
       } catch (error) {
         console.error('회원가입 오류:', error)
-        
+
         // 에러 타입에 따른 메시지 설정
         if (error.code === 'DUPLICATE_DATA') {
           generalError.value = error.message
@@ -611,6 +529,8 @@ export default {
   max-width: 450px;
   margin: 0 auto;
   padding: 1rem;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .form-header {
@@ -752,17 +672,35 @@ export default {
   .strength-bar {
     height: 100%;
     transition: width 0.3s ease-in-out;
-    &.weak { background-color: $danger; }
-    &.medium { background-color: $warning; }
-    &.strong { background-color: $success; }
+
+    &.weak {
+      background-color: $danger;
+    }
+
+    &.medium {
+      background-color: $warning;
+    }
+
+    &.strong {
+      background-color: $success;
+    }
   }
 
   .strength-text {
     font-size: 0.875rem;
     font-weight: 500;
-    &.weak { color: $danger; }
-    &.medium { color: $warning; }
-    &.strong { color: $success; }
+
+    &.weak {
+      color: $danger;
+    }
+
+    &.medium {
+      color: $warning;
+    }
+
+    &.strong {
+      color: $success;
+    }
   }
 }
 
@@ -774,6 +712,7 @@ export default {
   .form-check-input {
     margin-right: 0.5rem;
     margin-top: 0.25rem;
+
     &.is-invalid {
       border-color: $danger;
     }
@@ -860,7 +799,7 @@ export default {
       cursor: not-allowed;
     }
   }
-  
+
   &.btn-block {
     width: 100%;
   }
@@ -875,9 +814,11 @@ export default {
 .text-success {
   color: $success;
 }
+
 .text-muted {
   color: $secondary;
 }
+
 .me-2 {
   margin-right: 0.5rem;
 }
