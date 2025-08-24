@@ -9,9 +9,9 @@ from app.tools.content.qna_tools_chatgpt import qna_generation_tool
 
 class QnAResolverAgent:
     """
-    QnA 답변 에이전트 v2.0 - LCEL 파이프라인 기반 RAG 시스템
+    QnA 답변 에이전트 v3.0 - LangChain Agent 기반 RAG 시스템
     - 사용자 질문을 분석하여 벡터 검색 기반 답변 생성
-    - Function calling 방식으로 필요시에만 벡터 검색 수행
+    - LangChain Agent가 Function calling을 완전히 실행
     - 순수 답변 대본만 생성 (사용자 대면 메시지 없음)
     """
     
@@ -20,7 +20,7 @@ class QnAResolverAgent:
     
     def process(self, state: TutorState) -> TutorState:
         """
-        LCEL 파이프라인 기반 QnA 답변 생성 메인 프로세스
+        LangChain Agent 기반 QnA 답변 생성 메인 프로세스
         
         Args:
             state: 현재 TutorState
@@ -29,7 +29,7 @@ class QnAResolverAgent:
             업데이트된 TutorState (qna_draft 포함)
         """
         try:
-            print(f"[{self.agent_name}] LCEL 파이프라인 기반 QnA 답변 생성 시작")
+            print(f"[{self.agent_name}] LangChain Agent 기반 QnA 답변 생성 시작")
             
             # 1. 사용자 질문 추출 (대화 기록에서 최근 user 메시지)
             user_question = self._extract_latest_user_message(state)
@@ -43,10 +43,10 @@ class QnAResolverAgent:
                 "theory_draft": state.get("theory_draft")
             }
             
-            # 3. LCEL 파이프라인 기반 QnA 답변 생성
+            # 3. LangChain Agent 기반 QnA 답변 생성 (완전한 Function Calling 실행)
             qna_response = qna_generation_tool(user_question, current_context)
             
-            # 4. State 업데이트 - TheoryEducator와 동일한 패턴
+            # 4. State 업데이트 - 기존과 동일
             # 4-1. 에이전트 draft 업데이트
             updated_state = state_manager.update_agent_draft(
                 state, 
@@ -61,7 +61,7 @@ class QnAResolverAgent:
             )
             
             # 4-3. 대화 기록 추가 (처리 완료 로그)
-            log_message = f"QnA 답변 생성 완료 - 사용자 입력: '{user_question[:50]}{'...' if len(user_question) > 50 else ''}'"
+            log_message = f"QnA Agent 답변 생성 완료 - 사용자 입력: '{user_question[:50]}{'...' if len(user_question) > 50 else ''}'"
             updated_state = state_manager.add_conversation(
                 updated_state,
                 agent_name=self.agent_name,
@@ -69,7 +69,7 @@ class QnAResolverAgent:
                 message_type="system"
             )
             
-            print(f"[{self.agent_name}] QnA 답변 생성 완료")
+            print(f"[{self.agent_name}] QnA Agent 답변 생성 완료")
             return updated_state
             
         except Exception as e:
@@ -88,7 +88,7 @@ class QnAResolverAgent:
             error_state = state_manager.add_conversation(
                 error_state,
                 agent_name=self.agent_name,
-                message=f"QnA 답변 생성 중 오류 발생: {str(e)}",
+                message=f"QnA Agent 답변 생성 중 오류 발생: {str(e)}",
                 message_type="system"
             )
             return error_state
@@ -117,6 +117,7 @@ class QnAResolverAgent:
             for i, conv in enumerate(reversed(conversations)):
                 agent_name = conv.get("agent_name", "")
                 message_type = conv.get("message_type", "")
+                
                 # message_content와 message 필드 모두 확인 (호환성)
                 message_content = conv.get("message_content", "") or conv.get("message", "")
                 message_content = message_content.strip()
@@ -124,7 +125,7 @@ class QnAResolverAgent:
                 print(f"[{self.agent_name}] 대화 기록 확인 - agent: '{agent_name}', type: '{message_type}', content: '{message_content[:50]}{'...' if len(message_content) > 50 else ''}'")
                 
                 # 사용자 메시지 조건: agent_name="user" AND message_type="user"
-                if agent_name == "user" and message_type == "user":
+                if agent_name == "user" and message_type == "user" and message_content:
                     print(f"[{self.agent_name}] 최근 사용자 메시지 발견: '{message_content}'")
                     return message_content
             

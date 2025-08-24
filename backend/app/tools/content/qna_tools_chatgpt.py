@@ -5,19 +5,19 @@ import os
 import json
 from typing import Dict, Any, List
 
-from langchain_core.prompts import PromptTemplate
-from langchain_openai import ChatOpenAI
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_core.prompts import ChatPromptTemplate
 
 from app.tools.external.vector_search_tools import search_qna_materials
 
 
 def qna_generation_tool(user_question: str, current_context: Dict[str, Any] = None) -> str:
     """
-    LCEL 파이프라인 기반 QnA 답변 생성
-    - PromptTemplate | ChatOpenAI (with tools) | StrOutputParser 구조
-    - Function calling 방식으로 벡터 검색 자동 수행
+    LangChain Agent 기반 QnA 답변 생성
+    - create_tool_calling_agent + AgentExecutor 사용
+    - Function calling을 통한 완전한 벡터 검색 실행
     
     Args:
         user_question: 사용자 질문
@@ -29,49 +29,59 @@ def qna_generation_tool(user_question: str, current_context: Dict[str, Any] = No
     logger = logging.getLogger(__name__)
     
     try:
-        logger.info("QnA 답변 생성 시작 (LCEL 파이프라인)")
-        print(f"[QnA 도구] LCEL 파이프라인 기반 답변 생성 시작")
+        logger.info("QnA 답변 생성 시작 (LangChain Agent)")
+        print(f"[QnA Agent] LangChain Agent 기반 답변 생성 시작")
         
         # 1. QnA 컨텍스트 메타데이터 로드
         context_metadata = _load_qna_context_metadata()
         
-        # 2. 프롬프트 템플릿 생성
-        prompt_template = _create_qna_prompt_template()
+        # 2. ChatGPT 모델 초기화
+        model = _get_chatgpt_model()
         
-        # 3. ChatGPT 모델 (벡터 검색 도구 바인딩)
-        model = _get_chatgpt_model_with_tools()
+        # 3. 프롬프트 템플릿 생성
+        prompt_template = _create_agent_prompt_template(context_metadata, current_context)
         
-        # 4. 출력 파서
-        output_parser = StrOutputParser()
+        # 4. 벡터 검색 도구 리스트
+        tools = [vector_search_qna_tool]
         
-        # 5. LCEL 파이프라인 구성
-        qna_chain = prompt_template | model | output_parser
+        # 5. LangChain Agent 생성
+        agent = create_tool_calling_agent(model, tools, prompt_template)
         
-        # 6. 파이프라인 실행
-        print(f"[QnA 도구] LCEL 파이프라인 실행 중...")
+        # 6. AgentExecutor 생성
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=tools,
+            verbose=True,  # 디버깅용
+            handle_parsing_errors=True,
+            max_iterations=3,  # 최대 3번의 도구 호출 허용
+            early_stopping_method="generate"  # 답변 생성 후 중단
+        )
         
-        response = qna_chain.invoke({
-            "user_question": user_question,
-            "learning_context": json.dumps(context_metadata, ensure_ascii=False, indent=2),
-            "current_chapter": current_context.get("chapter", "알 수 없음") if current_context else "알 수 없음",
-            "current_section": current_context.get("section", "알 수 없음") if current_context else "알 수 없음"
+        print(f"[QnA Agent] Agent 실행 중...")
+        
+        # 7. Agent 실행
+        response = agent_executor.invoke({
+            "input": user_question
         })
         
-        logger.info("QnA 답변 생성 완료 (LCEL 파이프라인)")
-        print(f"[QnA 도구] LCEL 파이프라인 답변 생성 완료 - 길이: {len(response)}자")
+        # 8. 결과 추출
+        final_answer = response.get("output", "")
         
-        return response
+        logger.info("QnA 답변 생성 완료 (LangChain Agent)")
+        print(f"[QnA Agent] Agent 답변 생성 완료 - 길이: {len(final_answer)}자")
+        
+        return final_answer
         
     except Exception as e:
-        logger.error(f"QnA 답변 생성 실패: {str(e)}")
-        print(f"[QnA 도구] LCEL 파이프라인 오류: {str(e)}")
+        logger.error(f"QnA Agent 답변 생성 실패: {str(e)}")
+        print(f"[QnA Agent] Agent 실행 오류: {str(e)}")
         return _generate_error_response(user_question, str(e))
 
 
 @tool
 def vector_search_qna_tool(search_query: str) -> List[Dict[str, Any]]:
     """
-    QnA용 벡터 검색 도구 (LangChain Tool for Function Calling)
+    QnA용 벡터 검색 도구 (LangChain Tool for Agent)
     
     Args:
         search_query: 검색할 쿼리 텍스트
@@ -81,7 +91,7 @@ def vector_search_qna_tool(search_query: str) -> List[Dict[str, Any]]:
     """
     logger = logging.getLogger(__name__)
     logger.info(f"벡터 검색 도구 호출 - 쿼리: {search_query[:50]}...")
-    print(f"[벡터 검색] 검색 시작 - 쿼리: {search_query}")
+    print(f"[벡터 검색] Agent가 벡터 검색 시작 - 쿼리: '{search_query}'")
     
     try:
         # 기존 search_qna_materials() 함수 활용
@@ -97,17 +107,17 @@ def vector_search_qna_tool(search_query: str) -> List[Dict[str, Any]]:
                 chunk_type = result.get('chunk_type', 'unknown')
                 similarity_score = result.get('similarity_score', 0)
                 quality_score = result.get('content_quality_score', 0)
-                keywords = result.get('primary_keywords', [])
+                content_preview = result.get('content', '')[:100]
                 
-                print(f"[벡터 검색] 결과 {i}: {chunk_type} (유사도: {similarity_score:.3f}, 품질: {quality_score})")
-                print(f"[벡터 검색]   키워드: {', '.join(keywords) if keywords else '없음'}")
+                print(f"[벡터 검색] 결과 {i}: {chunk_type} (유사도: {similarity_score:.3f})")
+                print(f"[벡터 검색]   내용: {content_preview}...")
         else:
             print(f"[벡터 검색] 결과 없음")
         
-        # Function calling에서 사용하기 위해 간소화된 형태로 반환
-        simplified_results = []
+        # Agent가 이해하기 쉬운 형태로 반환
+        agent_friendly_results = []
         for result in search_results:
-            simplified_result = {
+            agent_result = {
                 "content": result["content"],
                 "type": result["chunk_type"],
                 "keywords": result["primary_keywords"],
@@ -115,9 +125,9 @@ def vector_search_qna_tool(search_query: str) -> List[Dict[str, Any]]:
                 "similarity": round(result["similarity_score"], 3),
                 "source": f"챕터 {result['chapter']}-{result['section']}"
             }
-            simplified_results.append(simplified_result)
+            agent_friendly_results.append(agent_result)
         
-        return simplified_results
+        return agent_friendly_results
         
     except Exception as e:
         logger.error(f"벡터 검색 도구 실패: {str(e)}")
@@ -141,12 +151,12 @@ def _load_qna_context_metadata() -> Dict[str, Any]:
         with open(metadata_path, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
         
-        print(f"[QnA 도구] 컨텍스트 메타데이터 로드 완료 - {len(metadata.get('chapters', []))}개 챕터")
+        print(f"[QnA Agent] 컨텍스트 메타데이터 로드 완료 - {len(metadata.get('chapters', []))}개 챕터")
         return metadata
         
     except Exception as e:
         logging.getLogger(__name__).error(f"QnA 컨텍스트 메타데이터 로드 실패: {str(e)}")
-        print(f"[QnA 도구] 메타데이터 로드 실패: {str(e)}")
+        print(f"[QnA Agent] 메타데이터 로드 실패: {str(e)}")
         
         # 폴백: 기본 컨텍스트 반환
         return {
@@ -157,24 +167,37 @@ def _load_qna_context_metadata() -> Dict[str, Any]:
         }
 
 
-def _create_qna_prompt_template() -> PromptTemplate:
+def _create_agent_prompt_template(context_metadata: Dict[str, Any], current_context: Dict[str, Any] = None) -> ChatPromptTemplate:
     """
-    QnA용 프롬프트 템플릿 생성 (Function Calling 지원)
+    Agent용 프롬프트 템플릿 생성
     
+    Args:
+        context_metadata: QnA 컨텍스트 메타데이터
+        current_context: 현재 학습 컨텍스트
+        
     Returns:
-        PromptTemplate 객체
+        ChatPromptTemplate 객체
     """
     
-    template = """당신은 AI 활용법 학습 튜터의 QnA 전문 어시스턴트입니다.
+    # 메타데이터를 JSON 문자열로 변환하고 중괄호 이스케이프 처리
+    learning_context_str = json.dumps(context_metadata, ensure_ascii=False, indent=2)
+    # ChatPromptTemplate에서 중괄호를 변수로 인식하지 않도록 이스케이프 처리
+    learning_context_str = learning_context_str.replace("{", "{{").replace("}", "}}")
+    
+    # 현재 학습 위치 정보
+    current_chapter = current_context.get("chapter", "알 수 없음") if current_context else "알 수 없음"
+    current_section = current_context.get("section", "알 수 없음") if current_context else "알 수 없음"
+    
+    system_message = f"""당신은 AI 활용법 학습 튜터의 QnA 전문 어시스턴트입니다.
 
 === 학습 커리큘럼 컨텍스트 ===
-{learning_context}
+{learning_context_str}
 
 현재 학습 위치: 챕터 {current_chapter}, 섹션 {current_section}
 
 === 주요 역할 ===
 1. 사용자의 AI 관련 질문에 정확하고 친근하게 답변
-2. 필요시 벡터 검색을 통해 관련 학습 자료 참조
+2. 필요시 vector_search_qna_tool을 사용하여 관련 학습 자료 검색
 3. 학습 맥락에 맞는 실용적인 답변 제공
 
 === 벡터 검색 사용 가이드라인 ===
@@ -191,26 +214,28 @@ def _create_qna_prompt_template() -> PromptTemplate:
 - AI 입문자도 이해할 수 있는 수준으로 설명
 - 답변 길이: 200-800자 정도 (너무 길지 않게)
 
-=== 사용자 질문 ===
-{user_question}
+=== 도구 사용법 ===
+벡터 검색이 필요하다고 판단되면 vector_search_qna_tool을 호출하세요.
+검색 결과를 바탕으로 정확하고 상세한 답변을 생성해주세요."""
 
-위 질문에 대해 적절한 답변을 생성해주세요. 필요하다면 벡터 검색을 활용하세요."""
+    # ChatPromptTemplate 생성 (Agent 전용 형식)
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_message),
+        ("human", "{input}"),
+        ("placeholder", "{agent_scratchpad}")  # Agent가 도구 사용 기록을 저장하는 곳
+    ])
+    
+    return prompt
 
-    return PromptTemplate(
-        template=template,
-        input_variables=["learning_context", "current_chapter", "current_section", "user_question"]
-    )
 
-
-def _get_chatgpt_model_with_tools() -> ChatOpenAI:
+def _get_chatgpt_model() -> ChatOpenAI:
     """
-    Function Calling을 지원하는 ChatGPT 모델 초기화
+    ChatGPT 모델 초기화 (Agent용)
     
     Returns:
-        벡터 검색 도구가 바인딩된 ChatOpenAI 모델
+        ChatOpenAI 모델 객체
     """
     
-    # ChatGPT 모델 초기화
     model = ChatOpenAI(
         model=os.getenv('OPENAI_MODEL', 'gpt-4o-mini'),
         openai_api_key=os.getenv('OPENAI_API_KEY'),
@@ -218,10 +243,7 @@ def _get_chatgpt_model_with_tools() -> ChatOpenAI:
         max_tokens=int(os.getenv('OPENAI_MAX_TOKENS', '4096'))
     )
     
-    # 벡터 검색 도구 바인딩
-    model_with_tools = model.bind_tools([vector_search_qna_tool])
-    
-    return model_with_tools
+    return model
 
 
 def _generate_error_response(user_question: str, error_msg: str) -> str:
