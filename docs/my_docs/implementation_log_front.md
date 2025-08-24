@@ -9,7 +9,7 @@
 - **QuizInteraction.vue**: 퀴즈 모드 + 객관식/주관식 + 힌트 시스템
 
 ### Pinia 상태 관리 시스템 구축 ✅
-- **tutorStore.js**: 전역 상태 관리 완전 구현
+- **learningStore.js**: 전역 상태 관리 완전 구현
 - **주요 상태**: currentAgent, currentUIMode, chatHistory, quizData, completedSteps
 - **핵심 액션**: updateAgent(), updateUIMode(), addChatMessage(), initializeSession()
 - **컴퓨티드**: isQuizMode, sessionSteps, canAskQuestion 등
