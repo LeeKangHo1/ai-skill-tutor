@@ -196,6 +196,86 @@ export const learningService = {
         status: error.response?.status || 0
       }
     }
+  },
+
+  // ========== v2.0 API 메서드들 ==========
+
+  /**
+   * 학습 세션 시작 (v2.0 API)
+   * @param {number} chapterNumber - 챕터 번호
+   * @param {number} sectionNumber - 섹션 번호
+   * @param {string} userMessage - 시작 메시지
+   * @returns {Promise<Object>} 세션 시작 결과
+   */
+  async startLearningSession(chapterNumber, sectionNumber, userMessage) {
+    try {
+      const response = await apiClient.post('/learning/session/start', {
+        chapter_number: chapterNumber,
+        section_number: sectionNumber,
+        user_message: userMessage
+      })
+      return {
+        success: true,
+        data: response.data,
+        status: response.status
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        status: error.response?.status || 0
+      }
+    }
+  },
+
+  /**
+   * 세션 메시지 전송 (v2.0 API - 통합 워크플로우)
+   * @param {string} userMessage - 사용자 메시지
+   * @param {string} messageType - 메시지 타입 (기본값: 'user')
+   * @returns {Promise<Object>} AI 워크플로우 응답
+   */
+  async sendSessionMessage(userMessage, messageType = 'user') {
+    try {
+      const response = await apiClient.post('/learning/session/message', {
+        user_message: userMessage,
+        message_type: messageType
+      })
+      return {
+        success: true,
+        data: response.data,
+        status: response.status
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        status: error.response?.status || 0
+      }
+    }
+  },
+
+  /**
+   * 퀴즈 답안 제출 (v2.0 API - 통합 워크플로우)
+   * @param {string} userAnswer - 사용자 답안
+   * @returns {Promise<Object>} 퀴즈 평가 결과
+   */
+  async submitQuizAnswerV2(userAnswer) {
+    try {
+      const response = await apiClient.post('/learning/quiz/submit', {
+        user_answer: userAnswer
+      })
+      return {
+        success: true,
+        data: response.data,
+        status: response.status
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        status: error.response?.status || 0
+      }
+    }
   }
 }
 

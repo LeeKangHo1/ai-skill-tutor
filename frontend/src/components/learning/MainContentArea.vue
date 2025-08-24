@@ -7,24 +7,33 @@
     </div>
 
     <div class="content-body">
+      <!-- 로딩 상태 -->
+      <div v-if="isLoading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>컨텐츠를 불러오는 중...</p>
+      </div>
+
       <!-- 이론 설명 컨텐츠 -->
       <div 
-        v-if="shouldShowContent('theory')"
+        v-else-if="shouldShowContent('theory')"
         class="theory-content content-active"
         :class="{ 'content-hidden': !isContentVisible('theory') }"
       >
-        <h3>🧠 {{ contentData.title || 'LLM(Large Language Model)이란?' }}</h3>
+        <h3>🧠 {{ theoryContent.title || 'LLM(Large Language Model)이란?' }}</h3>
         <div class="theory-body">
-          <p>{{ theoryContent.description }}</p>
-          <br>
-          <div class="key-points">
+          <!-- API 응답 텍스트를 그대로 표시 (포맷팅 유지) -->
+          <div class="theory-description" v-html="formatText(theoryContent.description)"></div>
+          
+          <!-- 핵심 포인트가 별도로 있는 경우만 표시 -->
+          <div v-if="theoryContent.keyPoints && theoryContent.keyPoints.length > 0 && !isKeyPointsInDescription" class="key-points">
             <p><strong>💡 핵심 포인트:</strong></p>
             <ul>
               <li v-for="point in theoryContent.keyPoints" :key="point">{{ point }}</li>
             </ul>
           </div>
-          <br>
-          <div class="examples">
+          
+          <!-- 예시가 별도로 있는 경우만 표시 -->
+          <div v-if="theoryContent.examples && theoryContent.examples.length > 0 && !isExamplesInDescription" class="examples">
             <p><strong>📋 대표 예시:</strong></p>
             <ul>
               <li v-for="example in theoryContent.examples" :key="example">{{ example }}</li>
@@ -35,7 +44,7 @@
 
       <!-- 퀴즈 컨텐츠 -->
       <div 
-        v-if="shouldShowContent('quiz')"
+        v-else-if="shouldShowContent('quiz')"
         class="quiz-content"
         :class="{ 'content-active': isContentVisible('quiz'), 'content-hidden': !isContentVisible('quiz') }"
       >
@@ -51,7 +60,7 @@
 
       <!-- 피드백 컨텐츠 -->
       <div 
-        v-if="shouldShowContent('feedback')"
+        v-else-if="shouldShowContent('feedback')"
         class="feedback-content"
         :class="{ 'content-active': isContentVisible('feedback'), 'content-hidden': !isContentVisible('feedback') }"
       >
@@ -71,7 +80,7 @@
 
       <!-- QnA 컨텐츠 (이론 유지하면서 질답 추가) -->
       <div 
-        v-if="shouldShowContent('qna')"
+        v-else-if="shouldShowContent('qna')"
         class="qna-content"
         :class="{ 'content-active': isContentVisible('qna'), 'content-hidden': !isContentVisible('qna') }"
       >
@@ -115,7 +124,11 @@
 </template>
 
 <script setup>
-import { computed, defineProps, defineEmits } from 'vue'
+import { computed, defineProps, defineEmits, ref, onMounted, watch } from 'vue'
+import { learningService } from '@/services/learningService.js'
+import { mapApiResponseToComponent, safeApiCall } from '@/utils/dataMappers.js'
+import { useAuthStore } from '@/stores/authStore.js'
+import { useLearningStore } from '@/stores/learningStore.js'
 
 // Props 정의
 const props = defineProps({
@@ -145,7 +158,43 @@ const props = defineProps({
 })
 
 // Emits 정의
-const emit = defineEmits(['navigation-click'])
+const emit = defineEmits(['navigation-click', 'content-loaded', 'api-error'])
+
+// 스토어
+const authStore = useAuthStore()
+const learningStore = useLearningStore()
+
+// 반응형 상태
+const isLoading = ref(false)
+const apiContentData = ref(null)
+const lastApiCall = ref(null)
+
+// 사용자의 현재 챕터/섹션 정보
+const currentChapterNumber = computed(() => authStore.currentChapter || 1)
+const currentSectionNumber = computed(() => authStore.currentSection || 1)
+
+// 텍스트 포맷팅 함수
+const formatText = (text) => {
+  if (!text) return ''
+  
+  return text
+    .replace(/\n\n/g, '<br><br>') // 이중 줄바꿈을 <br><br>로
+    .replace(/\n/g, '<br>') // 단일 줄바꿈을 <br>로
+    .replace(/### /g, '<h4>') // ### 헤더 처리
+    .replace(/\n/g, '</h4>') // 헤더 닫기 (간단한 처리)
+}
+
+// 핵심 포인트가 이미 description에 포함되어 있는지 확인
+const isKeyPointsInDescription = computed(() => {
+  return theoryContent.value.description?.includes('💡 핵심 포인트') || 
+         theoryContent.value.description?.includes('핵심 포인트')
+})
+
+// 예시가 이미 description에 포함되어 있는지 확인
+const isExamplesInDescription = computed(() => {
+  return theoryContent.value.description?.includes('📋 대표 예시') || 
+         theoryContent.value.description?.includes('대표 예시')
+})
 
 // 에이전트별 컨텐츠 매핑
 const agentContentMap = {
@@ -156,11 +205,12 @@ const agentContentMap = {
 }
 
 // 컴퓨티드 속성들
-const chapterTitle = computed(() => '2챕터 1섹션')
+const chapterTitle = computed(() => `${currentChapterNumber.value}챕터 ${currentSectionNumber.value}섹션`)
 const sectionTitle = computed(() => 'LLM이란 무엇인가')
 
-// 이론 컨텐츠 데이터
-const theoryContent = computed(() => ({
+// 더미 데이터 (fallback용)
+const dummyTheoryContent = {
+  title: 'LLM(Large Language Model)이란?',
   description: 'LLM은 대규모 언어 모델로, 방대한 텍스트 데이터를 학습하여 인간과 유사한 언어 이해와 생성 능력을 가진 AI 모델입니다.',
   keyPoints: [
     '대규모 데이터 학습',
@@ -172,26 +222,73 @@ const theoryContent = computed(() => ({
     'Claude (Anthropic)',
     'Bard (Google)'
   ]
-}))
+}
 
-// 퀴즈 컨텐츠 데이터
-const quizContent = computed(() => ({
+const dummyQuizContent = {
   question: '다음 중 LLM의 특징이 아닌 것은?'
-}))
+}
 
-// 피드백 컨텐츠 데이터
-const feedbackContent = computed(() => ({
+const dummyFeedbackContent = {
   scoreText: '정답입니다! (100점)',
   explanation: '훌륭합니다! LLM의 핵심 특징을 정확히 이해하고 계시네요. 실시간 인터넷 검색은 LLM의 기본 기능이 아닙니다. LLM은 학습된 데이터를 바탕으로 응답을 생성합니다.',
   nextStep: '점수가 우수하므로 다음 섹션으로 진행하는 것을 권장합니다.'
-}))
+}
 
-// QnA 컨텐츠 데이터
-const qnaContent = computed(() => ({
+const dummyQnaContent = {
   question: 'AI와 머신러닝의 차이가 뭐예요?',
   answer: 'AI는 더 넓은 개념으로, 인간의 지능을 모방하는 모든 기술을 포함합니다. 머신러닝은 AI의 한 분야로, 데이터를 통해 학습하는 방법론입니다. LLM은 머신러닝의 딥러닝 분야에 속하는 특화된 모델입니다.',
   relatedInfo: '3챕터에서 AI의 역사와 발전 과정을 더 자세히 다룹니다.'
-}))
+}
+
+// API 데이터와 더미 데이터를 결합한 컨텐츠 데이터
+const theoryContent = computed(() => {
+  // 1. 현재 컴포넌트의 API 데이터 확인
+  if (apiContentData.value?.theory) {
+    return apiContentData.value.theory
+  }
+  
+  // 2. 스토어의 캐시된 데이터 확인
+  const cachedTheory = learningStore.getApiContentCache('theory')
+  if (cachedTheory) {
+    return cachedTheory
+  }
+  
+  // 3. 더미데이터 사용
+  return dummyTheoryContent
+})
+
+const quizContent = computed(() => {
+  if (apiContentData.value?.quiz) {
+    return apiContentData.value.quiz
+  }
+  const cachedQuiz = learningStore.getApiContentCache('quiz')
+  if (cachedQuiz) {
+    return cachedQuiz
+  }
+  return dummyQuizContent
+})
+
+const feedbackContent = computed(() => {
+  if (apiContentData.value?.feedback) {
+    return apiContentData.value.feedback
+  }
+  const cachedFeedback = learningStore.getApiContentCache('feedback')
+  if (cachedFeedback) {
+    return cachedFeedback
+  }
+  return dummyFeedbackContent
+})
+
+const qnaContent = computed(() => {
+  if (apiContentData.value?.qna) {
+    return apiContentData.value.qna
+  }
+  const cachedQna = learningStore.getApiContentCache('qna')
+  if (cachedQna) {
+    return cachedQna
+  }
+  return dummyQnaContent
+})
 
 // 컨텐츠 표시/숨김 로직
 const shouldShowContent = (contentType) => {
@@ -242,6 +339,181 @@ const canShowNavigationButton = (buttonType) => {
   return false
 }
 
+// API 호출 함수들
+const loadInitialContent = async () => {
+  console.log('MainContentArea: 초기 컨텐츠 로드 시작')
+  isLoading.value = true
+  
+  try {
+    // 학습 세션 시작 API 호출 - 사용자의 현재 챕터/섹션 사용
+    const { success, data, error } = await safeApiCall(
+      () => learningService.startLearningSession(
+        currentChapterNumber.value, 
+        currentSectionNumber.value, 
+        "학습을 시작합니다"
+      ),
+      dummyTheoryContent
+    )
+    
+    if (success && data) {
+      // API 응답을 컴포넌트 데이터로 변환
+      const mappedContent = mapApiResponseToComponent(data, 'theory')
+      if (mappedContent) {
+        apiContentData.value = { theory: mappedContent }
+        // 스토어에도 캐시 저장
+        learningStore.updateApiContentCache('theory', mappedContent)
+        emit('content-loaded', { type: 'theory', data: mappedContent, source: 'api' })
+        console.log('MainContentArea: API 데이터 로드 성공', mappedContent)
+      } else {
+        throw new Error('API 응답 매핑 실패')
+      }
+    } else {
+      // 더미데이터 fallback
+      apiContentData.value = { theory: dummyTheoryContent }
+      // 스토어에도 더미데이터 저장 (일관성 유지)
+      learningStore.updateApiContentCache('theory', dummyTheoryContent)
+      emit('content-loaded', { type: 'theory', data: dummyTheoryContent, source: 'fallback' })
+      emit('api-error', { message: error || 'API 호출 실패', fallback: true })
+      console.warn('MainContentArea: 더미데이터로 fallback', error)
+    }
+  } catch (error) {
+    // 에러 발생 시 더미데이터 사용
+    apiContentData.value = { theory: dummyTheoryContent }
+    // 스토어에도 더미데이터 저장
+    learningStore.updateApiContentCache('theory', dummyTheoryContent)
+    emit('content-loaded', { type: 'theory', data: dummyTheoryContent, source: 'fallback' })
+    emit('api-error', { message: error.message, fallback: true })
+    console.error('MainContentArea: 컨텐츠 로드 에러', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const loadAgentContent = async (agent) => {
+  console.log(`MainContentArea: 에이전트 컨텐츠 로드 시작 - ${agent}`)
+  
+  // 이미 같은 에이전트로 API 호출한 경우 스킵
+  if (lastApiCall.value === agent && apiContentData.value?.[agentContentMap[agent]]) {
+    console.log(`MainContentArea: ${agent} 컨텐츠 이미 로드됨`)
+    return
+  }
+  
+  isLoading.value = true
+  
+  try {
+    let apiResult
+    let contentType = agentContentMap[agent]
+    let fallbackData
+    
+    // 에이전트별 API 호출 및 fallback 데이터 설정
+    switch (agent) {
+      case 'theory_educator':
+        apiResult = await safeApiCall(
+          () => learningService.sendSessionMessage("이론 설명을 해주세요", "user"),
+          dummyTheoryContent
+        )
+        fallbackData = dummyTheoryContent
+        break
+        
+      case 'quiz_generator':
+        apiResult = await safeApiCall(
+          () => learningService.sendSessionMessage("퀴즈를 출제해주세요", "user"),
+          dummyQuizContent
+        )
+        fallbackData = dummyQuizContent
+        break
+        
+      case 'evaluation_feedback':
+        apiResult = await safeApiCall(
+          () => learningService.sendSessionMessage("평가 결과를 알려주세요", "user"),
+          dummyFeedbackContent
+        )
+        fallbackData = dummyFeedbackContent
+        break
+        
+      case 'qna_resolver':
+        apiResult = await safeApiCall(
+          () => learningService.sendSessionMessage("질문에 답변해주세요", "user"),
+          dummyQnaContent
+        )
+        fallbackData = dummyQnaContent
+        break
+        
+      default:
+        console.warn(`MainContentArea: 알 수 없는 에이전트 - ${agent}`)
+        return
+    }
+    
+    if (apiResult.success && apiResult.data) {
+      // API 응답을 컴포넌트 데이터로 변환
+      const mappedContent = mapApiResponseToComponent(apiResult.data, contentType)
+      if (mappedContent) {
+        if (!apiContentData.value) apiContentData.value = {}
+        apiContentData.value[contentType] = mappedContent
+        // 스토어에도 캐시 저장
+        learningStore.updateApiContentCache(contentType, mappedContent)
+        emit('content-loaded', { type: contentType, data: mappedContent, source: 'api' })
+        lastApiCall.value = agent
+        console.log(`MainContentArea: ${agent} API 데이터 로드 성공`, mappedContent)
+      } else {
+        throw new Error('API 응답 매핑 실패')
+      }
+    } else {
+      // 더미데이터 fallback
+      if (!apiContentData.value) apiContentData.value = {}
+      apiContentData.value[contentType] = fallbackData
+      // 스토어에도 더미데이터 저장
+      learningStore.updateApiContentCache(contentType, fallbackData)
+      emit('content-loaded', { type: contentType, data: fallbackData, source: 'fallback' })
+      emit('api-error', { message: apiResult.error || 'API 호출 실패', fallback: true })
+      console.warn(`MainContentArea: ${agent} 더미데이터로 fallback`, apiResult.error)
+    }
+  } catch (error) {
+    // 에러 발생 시 더미데이터 사용
+    const contentType = agentContentMap[agent]
+    const fallbackData = {
+      theory: dummyTheoryContent,
+      quiz: dummyQuizContent,
+      feedback: dummyFeedbackContent,
+      qna: dummyQnaContent
+    }[contentType]
+    
+    if (!apiContentData.value) apiContentData.value = {}
+    apiContentData.value[contentType] = fallbackData
+    // 스토어에도 더미데이터 저장
+    learningStore.updateApiContentCache(contentType, fallbackData)
+    emit('content-loaded', { type: contentType, data: fallbackData, source: 'fallback' })
+    emit('api-error', { message: error.message, fallback: true })
+    console.error(`MainContentArea: ${agent} 컨텐츠 로드 에러`, error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// 라이프사이클 훅
+onMounted(() => {
+  console.log('MainContentArea: 컴포넌트 마운트됨')
+  
+  // 스토어에 캐시된 데이터가 있는지 먼저 확인
+  const cachedTheory = learningStore.getApiContentCache('theory')
+  if (cachedTheory) {
+    console.log('MainContentArea: 캐시된 이론 데이터 발견', cachedTheory)
+    apiContentData.value = { theory: cachedTheory }
+    emit('content-loaded', { type: 'theory', data: cachedTheory, source: 'cache' })
+  } else {
+    // 캐시된 데이터가 없으면 API 호출
+    loadInitialContent()
+  }
+})
+
+// 에이전트 변경 감지
+watch(() => props.currentAgent, (newAgent, oldAgent) => {
+  if (newAgent !== oldAgent) {
+    console.log(`MainContentArea: 에이전트 변경 감지 - ${oldAgent} → ${newAgent}`)
+    loadAgentContent(newAgent)
+  }
+}, { immediate: false })
+
 // 이벤트 핸들러
 const handleNavigationClick = (navigationType) => {
   emit('navigation-click', navigationType)
@@ -274,6 +546,31 @@ const handleNavigationClick = (navigationType) => {
 
 .content-body {
   min-height: 400px;
+}
+
+/* 로딩 상태 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #6c757d;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #74a8f7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* 에이전트별 컨텐츠 스타일 */

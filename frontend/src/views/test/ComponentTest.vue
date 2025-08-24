@@ -38,6 +38,24 @@
           <button @click="changeAgent('qna_resolver')" :class="{ active: testAgent === 'qna_resolver' }">
             QnA 모드
           </button>
+          <button @click="testApiConnection" class="api-test-btn">
+            🔌 API 연결 테스트
+          </button>
+        </div>
+        
+        <!-- API 연동 상태 표시 -->
+        <div class="api-status" v-if="apiTestResult">
+          <div :class="['status-indicator', apiTestResult.success ? 'success' : 'error']">
+            {{ apiTestResult.success ? '✅ API 연결 성공' : '❌ API 연결 실패' }}
+          </div>
+          <div class="status-details">
+            <strong>데이터 소스:</strong> {{ apiTestResult.source || 'unknown' }}
+            <br>
+            <strong>응답 시간:</strong> {{ apiTestResult.responseTime || 'N/A' }}ms
+            <div v-if="!apiTestResult.success" class="error-message">
+              <strong>오류:</strong> {{ apiTestResult.error }}
+            </div>
+          </div>
         </div>
         
         <div class="test-wrapper main-content-test">
@@ -47,6 +65,8 @@
             :current-content-mode="testContentMode"
             :completed-steps="testCompletedSteps"
             @navigation-click="handleNavigationClick"
+            @content-loaded="handleContentLoaded"
+            @api-error="handleApiError"
           />
         </div>
       </div>
@@ -141,6 +161,9 @@ const testContentData = ref({
   type: 'theory'
 })
 
+// API 테스트 상태
+const apiTestResult = ref(null)
+
 // ChatInteraction 테스트 데이터
 const testChatHistory = ref([
   {
@@ -204,6 +227,109 @@ const changeAgent = (agent) => {
 const handleNavigationClick = (navigationType) => {
   addLog(`네비게이션 클릭: ${navigationType}`, 'event')
   testContentMode.value = navigationType === 'current' ? 'current' : `review_${navigationType}`
+}
+
+// MainContentArea API 연동 이벤트 핸들러
+const handleContentLoaded = (eventData) => {
+  const { type, source, data } = eventData
+  addLog(`컨텐츠 로드됨 - 타입: ${type}, 소스: ${source}`, source === 'api' ? 'success' : 'warning')
+  
+  // API 테스트 결과 업데이트
+  if (apiTestResult.value) {
+    apiTestResult.value.success = source === 'api'
+    apiTestResult.value.source = source
+    apiTestResult.value.dataType = type
+  }
+}
+
+const handleApiError = (errorData) => {
+  const { message, fallback } = errorData
+  addLog(`API 오류: ${message} ${fallback ? '(더미데이터 사용)' : ''}`, 'warning')
+  
+  // API 테스트 결과 업데이트
+  if (apiTestResult.value) {
+    apiTestResult.value.success = false
+    apiTestResult.value.error = message
+    apiTestResult.value.source = 'fallback'
+  }
+}
+
+// API 연결 테스트
+const testApiConnection = async () => {
+  addLog('API 연결 테스트 시작', 'info')
+  
+  const startTime = Date.now()
+  apiTestResult.value = {
+    success: false,
+    source: 'testing',
+    responseTime: null,
+    error: null
+  }
+  
+  try {
+    // 먼저 기본 연결 테스트
+    const { apiService } = await import('@/services/api.js')
+    const connectionResult = await apiService.checkConnection()
+    
+    if (connectionResult.success) {
+      addLog('기본 API 연결 성공', 'success')
+      
+      // authStore에서 사용자의 현재 챕터/섹션 정보 가져오기
+      const { useAuthStore } = await import('@/stores/authStore.js')
+      const authStore = useAuthStore()
+      const chapterNumber = authStore.currentChapter || 1
+      const sectionNumber = authStore.currentSection || 1
+      
+      addLog(`사용자 챕터/섹션: ${chapterNumber}/${sectionNumber}`, 'info')
+      
+      // learningService를 직접 테스트
+      const { learningService } = await import('@/services/learningService.js')
+      const result = await learningService.startLearningSession(chapterNumber, sectionNumber, "API 테스트")
+      
+      const responseTime = Date.now() - startTime
+      
+      if (result.success) {
+        apiTestResult.value = {
+          success: true,
+          source: 'api',
+          responseTime,
+          error: null
+        }
+        addLog(`Learning API 테스트 성공 (${responseTime}ms)`, 'success')
+      } else {
+        apiTestResult.value = {
+          success: false,
+          source: 'error',
+          responseTime,
+          error: result.error || 'Learning API 호출 실패'
+        }
+        addLog(`Learning API 테스트 실패: ${result.error}`, 'warning')
+        
+        // 403 에러인 경우 인증 문제임을 명시
+        if (result.error?.includes('403') || result.error?.includes('Forbidden')) {
+          addLog('인증 토큰이 필요합니다. 로그인 후 다시 시도해주세요.', 'warning')
+        }
+      }
+    } else {
+      const responseTime = Date.now() - startTime
+      apiTestResult.value = {
+        success: false,
+        source: 'error',
+        responseTime,
+        error: connectionResult.error || '기본 API 연결 실패'
+      }
+      addLog(`기본 API 연결 실패: ${connectionResult.error}`, 'warning')
+    }
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    apiTestResult.value = {
+      success: false,
+      source: 'error',
+      responseTime,
+      error: error.message
+    }
+    addLog(`API 테스트 에러: ${error.message}`, 'warning')
+  }
 }
 
 // ChatInteraction 테스트 함수들
@@ -397,6 +523,49 @@ addLog('컴포넌트 테스트 페이지가 로드되었습니다', 'success')
   background: #74a8f7;
   color: white;
   border-color: #74a8f7;
+}
+
+.api-test-btn {
+  background: #28a745 !important;
+  color: white !important;
+  border-color: #28a745 !important;
+}
+
+.api-test-btn:hover {
+  background: #218838 !important;
+  border-color: #1e7e34 !important;
+}
+
+.api-status {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+}
+
+.status-indicator {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.status-indicator.success {
+  color: #28a745;
+}
+
+.status-indicator.error {
+  color: #dc3545;
+}
+
+.status-details {
+  font-size: 0.875rem;
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+.error-message {
+  margin-top: 0.5rem;
+  color: #dc3545;
 }
 
 .test-wrapper {

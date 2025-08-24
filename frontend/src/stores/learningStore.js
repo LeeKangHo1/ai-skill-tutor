@@ -50,6 +50,14 @@ export const useLearningStore = defineStore('learning', () => {
     metadata: {}
   })
   
+  // API 응답 캐시 (새로고침 시에도 유지)
+  const apiContentCache = ref({
+    theory: null,
+    quiz: null,
+    feedback: null,
+    qna: null
+  })
+  
   // 채팅 히스토리
   const chatHistory = ref([
     {
@@ -191,6 +199,27 @@ export const useLearningStore = defineStore('learning', () => {
   // 메인 컨텐츠 업데이트
   const updateMainContent = (content) => {
     mainContent.value = { ...mainContent.value, ...content }
+  }
+  
+  // API 컨텐츠 캐시 업데이트
+  const updateApiContentCache = (contentType, data) => {
+    apiContentCache.value[contentType] = data
+    console.log(`API 컨텐츠 캐시 업데이트: ${contentType}`, data)
+  }
+  
+  // API 컨텐츠 캐시 조회
+  const getApiContentCache = (contentType) => {
+    return apiContentCache.value[contentType]
+  }
+  
+  // API 컨텐츠 캐시 초기화
+  const clearApiContentCache = () => {
+    apiContentCache.value = {
+      theory: null,
+      quiz: null,
+      feedback: null,
+      qna: null
+    }
   }
   
   // 채팅 히스토리 업데이트
@@ -345,6 +374,7 @@ export const useLearningStore = defineStore('learning', () => {
     quizData,
     currentQuizInfo,
     lastWorkflowResponse,
+    apiContentCache,
     
     // 컴퓨티드
     isQuizMode,
@@ -372,6 +402,9 @@ export const useLearningStore = defineStore('learning', () => {
     updateWorkflowResponse,
     initializeSession,
     resetSession,
-    getStateInfo
+    getStateInfo,
+    updateApiContentCache,
+    getApiContentCache,
+    clearApiContentCache
   }
 })

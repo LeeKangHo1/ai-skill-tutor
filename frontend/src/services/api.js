@@ -17,7 +17,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
 // Axios 인스턴스 생성
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 30000, // 30초로 증가 (AI 응답 생성 시간 고려)
   withCredentials: true, // HttpOnly 쿠키 자동 전송 활성화
   headers: {
     'Content-Type': 'application/json'
