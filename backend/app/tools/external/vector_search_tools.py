@@ -1,6 +1,7 @@
-# backend/app/tools/external/vector_search_tools.py
+# backend/app/tools/external/vector_search_tools_fixed.py
 
 import logging
+import os
 from typing import List, Dict, Any
 from chromadb.utils import embedding_functions
 
@@ -80,11 +81,14 @@ def search_quiz_materials(chapter: int, section: int) -> List[Dict[str, Any]]:
         
         for chunk_type in other_chunk_types:
             try:
+                # ChromaDB 최신 문법 사용
                 results = collection.get(
                     where={
-                        "chapter": chapter,
-                        "section": section,
-                        "chunk_type": chunk_type
+                        "$and": [
+                            {"chapter": {"$eq": chapter}},
+                            {"section": {"$eq": section}},
+                            {"chunk_type": {"$eq": chunk_type}}
+                        ]
                     }
                 )
                 
@@ -122,15 +126,16 @@ def search_quiz_materials(chapter: int, section: int) -> List[Dict[str, Any]]:
         return []
 
 
-def search_qna_materials(query_text: str) -> List[Dict[str, Any]]:
+def search_qna_materials(query_text: str, max_distance: float = 1.2) -> List[Dict[str, Any]]:
     """
-    QnA용 벡터 자료 검색 (일반 RAG 시스템)
-    - 유사도 검색 (confidence 0.9 이상)
-    - 최대 5개
+    QnA용 벡터 자료 검색 (개선된 RAG 시스템)
+    - 거리 기반 필터링 (낮은 거리 = 높은 유사도)
+    - 실용적인 거리 임계값 (기본값 1.2)
+    - 정규화된 유사도 점수 제공
     
     Args:
         query_text: 사용자 질문 텍스트
-        chapter: 특정 챕터로 제한 (None이면 전체 검색)
+        max_distance: 최대 허용 거리 (기본값 1.2)
         
     Returns:
         검색된 청크 데이터 리스트 (최대 5개)
@@ -139,6 +144,7 @@ def search_qna_materials(query_text: str) -> List[Dict[str, Any]]:
     
     try:
         logger.info(f"QnA용 벡터 검색 시작 - 질문: {query_text[:50]}...")
+        logger.info(f"최대 거리 임계값: {max_distance}")
         
         # ChromaDB 컬렉션 가져오기
         collection = _get_collection()
@@ -149,10 +155,9 @@ def search_qna_materials(query_text: str) -> List[Dict[str, Any]]:
         # 벡터 유사도 검색 실행
         results = collection.query(
             query_texts=[query_text],
-            n_results=10  # 넉넉하게 가져와서 필터링
+            n_results=15  # 충분한 후보 확보
         )
         
-        # confidence 0.9 이상 필터링
         filtered_chunks = []
         
         if results["documents"] and results["documents"][0]:
@@ -160,11 +165,14 @@ def search_qna_materials(query_text: str) -> List[Dict[str, Any]]:
             metadatas = results["metadatas"][0]
             distances = results["distances"][0]
             
+            logger.info(f"원시 검색 결과: {len(documents)}개")
+            
             for i, (doc, metadata, distance) in enumerate(zip(documents, metadatas, distances)):
-                # distance를 confidence로 변환 (거리가 작을수록 유사도 높음)
-                confidence = 1.0 - distance
-                
-                if confidence >= 0.9:  # confidence 0.9 이상만
+                # 거리 기반 필터링
+                if distance <= max_distance:
+                    # 정규화된 유사도 점수 (0~1 범위)
+                    similarity_score = max(0, 1 - (distance / max_distance))
+                    
                     chunk_data = {
                         "content": doc,
                         "chunk_type": metadata["chunk_type"],
@@ -174,10 +182,13 @@ def search_qna_materials(query_text: str) -> List[Dict[str, Any]]:
                         "chapter": metadata["chapter"],
                         "section": metadata["section"],
                         "id": metadata["id"],
-                        "confidence": confidence,
+                        "distance": distance,
+                        "similarity_score": similarity_score,
                         "search_rank": i + 1
                     }
                     filtered_chunks.append(chunk_data)
+                    
+                    logger.debug(f"순위 {i+1}: 거리={distance:.3f}, 유사도={similarity_score:.3f}")
                     
                     # 최대 5개까지만
                     if len(filtered_chunks) >= 5:
@@ -221,12 +232,14 @@ def _search_core_concept_chunks(collection, chapter: int, section: int) -> List[
     - 최대 3개
     """
     try:
-        # 벡터 검색 실행 (정확한 메타데이터 매칭)
+        # ChromaDB 최신 문법 사용
         results = collection.get(
             where={
-                "chapter": chapter,
-                "section": section,
-                "chunk_type": "core_concept"
+                "$and": [
+                    {"chapter": {"$eq": chapter}},
+                    {"section": {"$eq": section}},
+                    {"chunk_type": {"$eq": "core_concept"}}
+                ]
             }
         )
         
@@ -276,9 +289,11 @@ def _search_other_chunks(collection, chapter: int, section: int) -> List[Dict[st
             try:
                 results = collection.get(
                     where={
-                        "chapter": chapter,
-                        "section": section,
-                        "chunk_type": chunk_type
+                        "$and": [
+                            {"chapter": {"$eq": chapter}},
+                            {"section": {"$eq": section}},
+                            {"chunk_type": {"$eq": chunk_type}}
+                        ]
                     }
                 )
                 
@@ -330,20 +345,37 @@ def get_vector_search_statistics(chapter: int = None, section: int = None) -> Di
             return {"error": "컬렉션을 찾을 수 없음"}
         
         # 검색 조건 설정
-        where_condition = {}
+        where_conditions = []
         if chapter:
-            where_condition["chapter"] = chapter
+            where_conditions.append({"chapter": {"$eq": chapter}})
         if section:
-            where_condition["section"] = section
+            where_conditions.append({"section": {"$eq": section}})
+        
+        # 전체 조건
+        if where_conditions:
+            where_condition = {"$and": where_conditions} if len(where_conditions) > 1 else where_conditions[0]
+        else:
+            where_condition = None
         
         # 청크 타입별 개수 조회
         chunk_type_counts = {}
         for chunk_type in ["core_concept", "analogy", "practical_example", "technical_detail"]:
-            type_condition = {**where_condition, "chunk_type": chunk_type}
-            count = collection.count(where=type_condition)
-            chunk_type_counts[chunk_type] = count
+            type_conditions = where_conditions + [{"chunk_type": {"$eq": chunk_type}}]
+            type_condition = {"$and": type_conditions} if len(type_conditions) > 1 else type_conditions[0]
+            
+            try:
+                type_results = collection.get(where=type_condition)
+                count = len(type_results["documents"]) if type_results["documents"] else 0
+                chunk_type_counts[chunk_type] = count
+            except Exception:
+                chunk_type_counts[chunk_type] = 0
         
-        total_count = collection.count(where=where_condition)
+        # 전체 개수 조회
+        if where_condition:
+            total_results = collection.get(where=where_condition)
+            total_count = len(total_results["documents"]) if total_results["documents"] else 0
+        else:
+            total_count = collection.count()
         
         return {
             "total_chunks": total_count,
@@ -357,7 +389,3 @@ def get_vector_search_statistics(chapter: int = None, section: int = None) -> Di
     except Exception as e:
         logging.getLogger(__name__).error(f"통계 조회 실패: {str(e)}")
         return {"error": str(e)}
-
-
-# 임포트 누락 추가
-import os

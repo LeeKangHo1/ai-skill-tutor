@@ -5,7 +5,7 @@
 """
 
 from .chatgpt_tools import ChatGPTTools
-from .vector_search_tools import VectorSearchTools
+from . import vector_search_tools
 from .web_search_tools import WebSearchTools
 
-__all__ = ['ChatGPTTools', 'VectorSearchTools', 'WebSearchTools']
+__all__ = ['ChatGPTTools', 'vector_search_tools', 'WebSearchTools']
