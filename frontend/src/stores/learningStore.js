@@ -332,6 +332,7 @@ export const useLearningStore = defineStore('learning', () => {
     } else if (response.current_agent === 'evaluation_feedback') {
       completedSteps.value.feedback = true
     }
+    // qna_resolver로 변경될 때는 기존 완료 상태를 유지 (피드백 데이터 보존)
   }
   
   // ===== 초기화 메서드 =====

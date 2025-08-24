@@ -21,14 +21,20 @@
         :is-loading="isLoading" />
 
       <!-- 피드백 컨텐츠 -->
-      <FeedbackContent v-else-if="shouldShowContent('feedback')" :feedback-data="feedbackContent" :qna-data="qnaContent"
-        :should-show-qna="shouldShowContent('qna')" :is-visible="isContentVisible('feedback')" />
+      <FeedbackContent v-else-if="shouldShowContent('feedback')" :feedback-data="feedbackContent"
+        :is-visible="isContentVisible('feedback')" />
 
-      <!-- QnA 컨텐츠 (이론과 함께 표시) -->
+      <!-- QnA 컨텐츠 (피드백 완료 후에는 평가 결과만 표시) -->
       <template v-else-if="shouldShowContent('qna')">
-        <TheoryContent :theory-data="theoryContent" :is-visible="true" />
-        <FeedbackContent :feedback-data="{ scoreText: '', explanation: '', nextStep: '' }" :qna-data="qnaContent"
-          :should-show-qna="true" :is-visible="true" />
+        <!-- 피드백이 완료된 상태라면 평가 결과만 표시 -->
+        <FeedbackContent v-if="hasFeedbackCompleted" :feedback-data="finalPreservedFeedbackData"
+          :is-visible="true" />
+        <!-- 피드백이 완료되지 않은 상태라면 이론과 함께 표시 -->
+        <template v-else>
+          <TheoryContent :theory-data="theoryContent" :is-visible="true" />
+          <FeedbackContent :feedback-data="{ scoreText: '', explanation: '', nextStep: '' }"
+            :is-visible="true" />
+        </template>
       </template>
     </div>
 
@@ -207,11 +213,34 @@ const feedbackContent = computed(() => {
   return dummyFeedbackContent
 })
 
+// 피드백 데이터 보존용 - QnA 응답 후에도 이전 피드백 데이터 유지
+const preservedFeedbackData = ref(null)
+
+// 피드백 데이터가 있을 때 보존
+watch(() => learningStore.feedbackData, (newFeedbackData) => {
+  if (newFeedbackData && newFeedbackData.scoreText && newFeedbackData.scoreText.trim() !== '') {
+    console.log('🔍 MainContentArea: 피드백 데이터 보존:', newFeedbackData)
+    preservedFeedbackData.value = { ...newFeedbackData }
+  }
+}, { deep: true, immediate: true })
+
+// preservedFeedbackData가 없으면 현재 feedbackContent 사용
+const finalPreservedFeedbackData = computed(() => {
+  return preservedFeedbackData.value || feedbackContent.value
+})
+
 const qnaContent = computed(() => {
   if (apiContentData.value?.qna) {
     return apiContentData.value.qna
   }
   return dummyQnaContent
+})
+
+// 피드백 완료 상태 확인 - 한 번 피드백이 완료되면 QnA 시에도 유지
+const hasFeedbackCompleted = computed(() => {
+  // completedSteps.feedback이 true이면 피드백이 완료된 것으로 간주
+  // (QnA 응답 후 피드백 데이터가 초기화되어도 상태는 유지)
+  return learningStore.completedSteps.feedback
 })
 
 // 컨텐츠 표시/숨김 로직
@@ -232,9 +261,15 @@ const shouldShowContent = (contentType) => {
     return contentType === 'quiz'
   }
 
-  // QnA의 경우 이론도 함께 표시
+  // QnA의 경우: 피드백이 완료된 상태라면 QnA만, 아니라면 이론과 함께 표시
   if (currentContentType === 'qna') {
-    return contentType === 'qna' || contentType === 'theory'
+    if (hasFeedbackCompleted.value) {
+      // 피드백 완료 후 QnA: 오직 QnA만 표시
+      return contentType === 'qna'
+    } else {
+      // 피드백 완료 전 QnA: 이론과 함께 표시
+      return contentType === 'qna' || contentType === 'theory'
+    }
   }
 
   return contentType === currentContentType
@@ -250,24 +285,24 @@ const canShowNavigationButton = (buttonType) => {
   const completedSteps = learningStore.completedSteps
 
   if (buttonType === 'theory') {
-    // 피드백 단계에서 이론이 완료된 경우만
-    return props.currentAgent === 'evaluation_feedback' &&
+    // 피드백 단계 또는 QnA 단계에서 이론이 완료된 경우
+    return (props.currentAgent === 'evaluation_feedback' || props.currentAgent === 'qna_resolver') &&
       props.currentContentMode === 'current' &&
       completedSteps.theory
   }
 
   if (buttonType === 'quiz') {
-    // 피드백 단계에서 퀴즈가 완료된 경우만
+    // 피드백 단계 또는 QnA 단계에서 퀴즈가 완료된 경우
     console.log('🔍 퀴즈 다시 보기 버튼 조건 확인:', {
       currentAgent: props.currentAgent,
       currentContentMode: props.currentContentMode,
       completedStepsQuiz: completedSteps.quiz,
-      shouldShow: props.currentAgent === 'evaluation_feedback' &&
+      shouldShow: (props.currentAgent === 'evaluation_feedback' || props.currentAgent === 'qna_resolver') &&
         props.currentContentMode === 'current' &&
         completedSteps.quiz
     })
 
-    return props.currentAgent === 'evaluation_feedback' &&
+    return (props.currentAgent === 'evaluation_feedback' || props.currentAgent === 'qna_resolver') &&
       props.currentContentMode === 'current' &&
       completedSteps.quiz
   }

@@ -16,19 +16,7 @@
       <div class="feedback-details" v-html="parsedFeedback.feedbackContent"></div>
     </div>
 
-    <!-- QnA 컨텐츠 (이론 유지하면서 질답 추가) -->
-    <div v-if="qnaData && shouldShowQna" class="qna-section">
-      <h4>❓ 질문 답변</h4>
-      <div class="qna-item">
-        <p><strong>질문:</strong> {{ qnaData.question }}</p>
-        <div><strong>답변:</strong></div>
-        <p class="qna-answer">{{ qnaData.answer }}</p>
-      </div>
-      <div v-if="qnaData.relatedInfo" class="qna-related">
-        <p><strong>🔗 관련 학습:</strong></p>
-        <p class="qna-related-text">{{ qnaData.relatedInfo }}</p>
-      </div>
-    </div>
+
   </div>
 </template>
 
@@ -46,14 +34,7 @@ const props = defineProps({
       nextStep: ''
     })
   },
-  qnaData: {
-    type: Object,
-    default: null
-  },
-  shouldShowQna: {
-    type: Boolean,
-    default: false
-  },
+
   isVisible: {
     type: Boolean,
     default: true
@@ -161,47 +142,7 @@ const formatText = (text) => {
 
 /* 다음 단계 안내 섹션은 제거됨 - 2개 섹션으로 단순화 */
 
-/* QnA 섹션 스타일 */
-.qna-section {
-  background: linear-gradient(135deg, #f3e5f5, #fce4ec);
-  border-left: 4px solid #9c27b0;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-top: 1.5rem;
-}
 
-.qna-item {
-  margin-bottom: 1rem;
-  line-height: 1.6;
-}
-
-.qna-item p {
-  margin-bottom: 0.75rem;
-}
-
-.qna-related {
-  background: rgba(255, 255, 255, 0.7);
-  padding: 1rem;
-  border-radius: 0.375rem;
-  border: 1px solid rgba(156, 39, 176, 0.3);
-}
-
-.qna-related p {
-  margin-bottom: 0.5rem;
-}
-
-.qna-answer {
-  line-height: 1.6;
-  color: #495057;
-  margin-top: 0.5rem;
-}
-
-.qna-related-text {
-  line-height: 1.6;
-  color: #6c757d;
-  margin-top: 0.5rem;
-  margin-bottom: 0;
-}
 
 /* 컨텐츠 표시/숨김 */
 .content-active {
