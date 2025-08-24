@@ -84,6 +84,13 @@ export const useLearningStore = defineStore('learning', () => {
     metadata: {}
   })
   
+  // 피드백 데이터
+  const feedbackData = ref({
+    scoreText: '',
+    explanation: '',
+    nextStep: ''
+  })
+  
   // ===== 컴퓨티드 속성 =====
   
   // UI 모드 판단
@@ -128,29 +135,25 @@ export const useLearningStore = defineStore('learning', () => {
   
   // ===== 액션 메서드 =====
   
-  // 에이전트 업데이트
+  // 에이전트 업데이트 - 자동 UI 모드 설정 제거 (워크플로우에서 처리)
   const updateAgent = (agentName) => {
     console.log(`에이전트 업데이트: ${currentAgent.value} → ${agentName}`)
     currentAgent.value = agentName
     
-    // 에이전트별 기본 설정
+    // 에이전트별 완료 단계만 업데이트 (UI 모드는 워크플로우에서 결정)
     switch (agentName) {
       case 'theory_educator':
-        currentUIMode.value = 'chat'
         sessionProgressStage.value = 'theory_completed'
         break
       case 'quiz_generator':
-        currentUIMode.value = 'quiz'
         sessionProgressStage.value = 'theory_completed'
         completedSteps.value.quiz = true
         break
       case 'evaluation_feedback':
-        currentUIMode.value = 'chat'
         sessionProgressStage.value = 'quiz_and_feedback_completed'
         completedSteps.value.feedback = true
         break
       case 'qna_resolver':
-        currentUIMode.value = 'chat'
         // 진행 단계는 변경하지 않음
         break
     }
@@ -200,23 +203,11 @@ export const useLearningStore = defineStore('learning', () => {
     return currentApiResponse.value
   }
   
-  // API 응답 데이터 초기화
-  const clearCurrentApiResponse = () => {
-    currentApiResponse.value = null
-    console.log('API 응답 데이터 초기화됨')
-  }
-  
   // 채팅 히스토리 업데이트 (기존 히스토리 완전 대체)
   const updateChatHistory = (history) => {
     if (Array.isArray(history)) {
       chatHistory.value = [...history] // 새로운 배열로 완전 대체
     }
-  }
-
-  // 채팅 히스토리 완전 초기화
-  const clearChatHistory = () => {
-    chatHistory.value = []
-    console.log('채팅 히스토리 완전 초기화됨')
   }
   
   // 채팅 메시지 추가
@@ -227,9 +218,8 @@ export const useLearningStore = defineStore('learning', () => {
     })
   }
   
-  // 퀴즈 데이터 업데이트 (기존 데이터 완전 대체)
+  // 퀴즈 데이터 업데이트
   const updateQuizData = (quiz) => {
-    // 캐시 없이 새로운 데이터로 완전 대체
     quizData.value = {
       question: quiz.question || '',
       type: quiz.type || '',
@@ -240,48 +230,32 @@ export const useLearningStore = defineStore('learning', () => {
     }
   }
 
-  // 퀴즈 데이터 완전 초기화
-  const clearQuizData = () => {
-    quizData.value = {
-      question: '',
-      type: '',
-      options: [],
-      hint: '',
-      correct_answer: '',
-      user_answer: ''
-    }
-    currentQuizInfo.value = {
-      quiz_type: 'multiple_choice',
-      is_quiz_active: false,
-      is_answer_submitted: false,
-      hint_usage_count: 0,
-      score: null
-    }
-    console.log('퀴즈 데이터 완전 초기화됨')
-  }
-
-  // API 응답에서 퀴즈 데이터 저장 (캐시 없이 새로운 데이터로 대체)
+  // API 응답에서 퀴즈 데이터 저장 - 자동 UI 모드 전환 포함
   const setQuizDataFromAPI = (apiResponse) => {
-    // 기존 퀴즈 데이터 완전 초기화
-    clearQuizData()
+    console.log('🔍 setQuizDataFromAPI 호출됨:', apiResponse)
     
     if (apiResponse?.workflow_response?.content) {
       const content = apiResponse.workflow_response.content
+      console.log('📋 컨텐츠 상세 분석:', content)
       
-      // 새로운 퀴즈 데이터 매핑
+      // 퀴즈 데이터 매핑 (실제 API 응답 구조에 맞게)
       const mappedQuizData = {
         question: content.question || '',
         type: content.quiz_type || 'multiple_choice',
-        options: content.options || [],
+        options: Array.isArray(content.options) ? content.options : [],
         hint: content.hint || '',
         correct_answer: content.correct_answer || '',
-        user_answer: ''
+        user_answer: '',
+        refined_content: content.refined_content || '' // 추가 컨텐츠 정보
       }
       
-      // 새로운 퀴즈 데이터로 완전 대체
-      quizData.value = mappedQuizData
+      console.log('🎯 매핑된 퀴즈 데이터:', mappedQuizData)
       
-      // 새로운 퀴즈 상태 설정
+      // 퀴즈 데이터 업데이트
+      quizData.value = mappedQuizData
+      console.log('💾 Store quizData 업데이트 후:', quizData.value)
+      
+      // 퀴즈 상태 설정
       currentQuizInfo.value = {
         quiz_type: mappedQuizData.type,
         is_quiz_active: true,
@@ -290,9 +264,23 @@ export const useLearningStore = defineStore('learning', () => {
         score: null
       }
       
-      console.log('새로운 퀴즈 데이터로 완전 대체:', mappedQuizData)
+      console.log('✅ 퀴즈 데이터 Store에 저장 완료:', mappedQuizData)
+      console.log('📝 퀴즈 옵션:', mappedQuizData.options)
+      
+      // 퀴즈 데이터가 설정되면 자동으로 UI 모드를 퀴즈로 전환
+      if (currentUIMode.value !== 'quiz') {
+        console.log('🔄 퀴즈 데이터 설정으로 인한 UI 모드 자동 전환: chat → quiz')
+        currentUIMode.value = 'quiz'
+      }
+      
       return mappedQuizData
     }
+    
+    console.warn('⚠️ 퀴즈 데이터를 찾을 수 없습니다. API 응답 구조:', {
+      hasWorkflowResponse: !!apiResponse?.workflow_response,
+      hasContent: !!apiResponse?.workflow_response?.content,
+      apiResponse: apiResponse
+    })
     return null
   }
   
@@ -306,19 +294,43 @@ export const useLearningStore = defineStore('learning', () => {
     quizData.value.user_answer = answer
   }
   
-  // 워크플로우 응답 업데이트
+  // 피드백 데이터 업데이트
+  const updateFeedbackData = (feedback) => {
+    feedbackData.value = {
+      scoreText: feedback.scoreText || '',
+      explanation: feedback.explanation || '',
+      nextStep: feedback.nextStep || ''
+    }
+    console.log('피드백 데이터 업데이트:', feedbackData.value)
+  }
+  
+  // 워크플로우 응답 업데이트 - 자동 상태 동기화
   const updateWorkflowResponse = (response) => {
+    console.log('워크플로우 응답 업데이트:', response)
+    
     lastWorkflowResponse.value = { ...lastWorkflowResponse.value, ...response }
     
-    // 워크플로우 응답에 따른 상태 동기화
+    // 워크플로우 응답에 따른 상태 자동 동기화
     if (response.current_agent) {
-      updateAgent(response.current_agent)
+      console.log(`에이전트 자동 업데이트: ${currentAgent.value} → ${response.current_agent}`)
+      currentAgent.value = response.current_agent
     }
+    
     if (response.ui_mode) {
-      updateUIMode(response.ui_mode)
+      console.log(`UI 모드 자동 업데이트: ${currentUIMode.value} → ${response.ui_mode}`)
+      currentUIMode.value = response.ui_mode
     }
+    
     if (response.session_progress_stage) {
-      updateSessionProgress(response.session_progress_stage)
+      console.log(`세션 진행 단계 자동 업데이트: ${sessionProgressStage.value} → ${response.session_progress_stage}`)
+      sessionProgressStage.value = response.session_progress_stage
+    }
+    
+    // 에이전트별 추가 상태 설정
+    if (response.current_agent === 'quiz_generator') {
+      completedSteps.value.quiz = true
+    } else if (response.current_agent === 'evaluation_feedback') {
+      completedSteps.value.feedback = true
     }
   }
   
@@ -356,9 +368,9 @@ export const useLearningStore = defineStore('learning', () => {
     })
   }
   
-  // 세션 완전 리셋 (모든 캐시 데이터 삭제)
-  const resetSession = () => {
-    console.log('세션 완전 리셋 - 모든 데이터 초기화')
+  // 세션 시작 시에만 사용하는 초기화 (POST /learning/session/start 호출 시에만)
+  const initializeNewSession = () => {
+    console.log('새로운 학습 세션 초기화')
     
     currentAgent.value = 'theory_educator'
     currentUIMode.value = 'chat'
@@ -372,10 +384,22 @@ export const useLearningStore = defineStore('learning', () => {
       feedback: false
     }
     
-    // 모든 데이터 완전 초기화
-    clearChatHistory()
-    clearQuizData()
-    clearCurrentApiResponse()
+    // 세션 시작 시에만 데이터 초기화
+    chatHistory.value = []
+    quizData.value = {
+      question: '',
+      type: '',
+      options: [],
+      hint: '',
+      correct_answer: '',
+      user_answer: ''
+    }
+    feedbackData.value = {
+      scoreText: '',
+      explanation: '',
+      nextStep: ''
+    }
+    currentApiResponse.value = null
     
     mainContent.value = {
       agent_name: 'theory_educator',
@@ -390,22 +414,6 @@ export const useLearningStore = defineStore('learning', () => {
       session_progress_stage: 'session_start',
       ui_mode: 'chat',
       content: {},
-      metadata: {}
-    }
-  }
-
-  // 모든 데이터 완전 초기화
-  const clearAllData = () => {
-    console.log('모든 store 데이터 완전 초기화')
-    clearChatHistory()
-    clearQuizData()
-    clearCurrentApiResponse()
-    
-    mainContent.value = {
-      agent_name: '',
-      content_type: '',
-      title: '',
-      content: '',
       metadata: {}
     }
   }
@@ -440,6 +448,7 @@ export const useLearningStore = defineStore('learning', () => {
     currentQuizInfo,
     lastWorkflowResponse,
     currentApiResponse,
+    feedbackData,
     
     // 컴퓨티드
     isQuizMode,
@@ -460,20 +469,17 @@ export const useLearningStore = defineStore('learning', () => {
     updateSessionInfo,
     updateMainContent,
     updateChatHistory,
-    clearChatHistory,
     addChatMessage,
     updateQuizData,
-    clearQuizData,
     setQuizDataFromAPI,
     updateQuizInfo,
     updateUserAnswer,
+    updateFeedbackData,
     updateWorkflowResponse,
     initializeSession,
-    resetSession,
-    clearAllData,
+    initializeNewSession,
     getStateInfo,
     updateCurrentApiResponse,
-    getCurrentApiResponse,
-    clearCurrentApiResponse
+    getCurrentApiResponse
   }
 })

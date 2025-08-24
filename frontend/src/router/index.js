@@ -94,7 +94,7 @@ const routes = [
   // 대시보드 (인증 + 진단 완료 필요)
   {
     path: '/dashboard',
-    name: 'dashboard', 
+    name: 'dashboard',
     component: DashboardPage,
     beforeEnter: requireDiagnosis,
     meta: {
@@ -125,7 +125,7 @@ const routes = [
   //   name: 'ComponentTest',
   //   component: () => import('@/views/test/ComponentTest.vue')
   // },
-  
+
 ]
 
 const router = createRouter({
@@ -146,7 +146,7 @@ router.beforeEach(async (to, from, next) => {
   try {
     // 로딩 표시 (필요시)
     // store.commit('setLoading', true)
-    
+
     // 메타 정보 기반 자동 가드 적용
     await applyMetaGuards(to, from, next)
   } catch (error) {
@@ -161,10 +161,10 @@ router.afterEach((to, from) => {
   if (to.meta.title) {
     document.title = `${to.meta.title} | AI 활용법 학습 튜터`
   }
-  
+
   // 로딩 해제 (필요시)
   // store.commit('setLoading', false)
-  
+
   // 페이지 조회 로그 (필요시)
   console.log(`페이지 이동: ${from.name || 'unknown'} → ${to.name}`)
 })
@@ -172,7 +172,7 @@ router.afterEach((to, from) => {
 // 네비게이션 에러 처리
 router.onError((error) => {
   console.error('라우터 에러:', error)
-  
+
   // 에러 페이지로 리다이렉트 또는 알림 표시
   if (error.message.includes('ChunkLoadError')) {
     // 청크 로딩 실패 시 새로고침 권장

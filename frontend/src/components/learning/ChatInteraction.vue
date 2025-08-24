@@ -3,12 +3,8 @@
   <div class="chat-mode" :class="{ active: !isLoading }">
     <!-- 채팅 히스토리 -->
     <div class="chat-history" ref="chatHistoryRef">
-      <div 
-        v-for="(message, index) in chatHistory" 
-        :key="index"
-        class="chat-message"
-        :class="getMessageClass(message.type)"
-      >
+      <div v-for="(message, index) in chatHistory" :key="index" class="chat-message"
+        :class="getMessageClass(message.type)">
         <div class="message-content">
           <strong class="message-sender">{{ message.sender }}:</strong>
           <span class="message-text">{{ message.message }}</span>
@@ -17,7 +13,7 @@
           {{ formatTimestamp(message.timestamp) }}
         </div>
       </div>
-      
+
       <!-- 로딩 메시지 -->
       <div v-if="isLoading" class="chat-message system-message loading-message">
         <div class="message-content">
@@ -30,48 +26,29 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 메시지 입력 영역 -->
     <div class="chat-input-container">
       <div class="quick-actions" v-if="showQuickActions">
-        <button 
-          class="quick-action-btn"
-          @click="sendQuickMessage('다음으로 넘어가주세요')"
-          :disabled="isLoading"
-        >
+        <button class="quick-action-btn" @click="sendQuickMessage('다음으로 넘어가주세요')" :disabled="isLoading">
           ➡️ 다음 단계
         </button>
-        <button 
-          class="quick-action-btn"
-          @click="sendQuickMessage('AI와 머신러닝의 차이가 뭐예요?')"
-          :disabled="isLoading"
-        >
+        <button class="quick-action-btn" @click="sendQuickMessage('AI와 머신러닝의 차이가 뭐예요?')" :disabled="isLoading">
           ❓ 질문하기
         </button>
       </div>
-      
+
       <div class="chat-input">
-        <input 
-          type="text" 
-          v-model="currentMessage"
-          ref="messageInputRef"
-          placeholder="메시지를 입력하세요... (예: 다음으로 넘어가주세요, AI와 머신러닝 차이는?)"
-          @keypress="handleKeyPress"
-          @input="handleInput"
-          :disabled="isLoading"
-          class="message-input"
-        />
-        <button 
-          @click="sendMessage"
-          :disabled="isLoading || !currentMessage.trim()"
-          class="send-button"
-          :class="{ 'btn-disabled': isLoading || !currentMessage.trim() }"
-        >
+        <input type="text" v-model="currentMessage" ref="messageInputRef"
+          placeholder="메시지를 입력하세요 (예: 퀴즈, AI와 머신러닝 차이는?)" @keypress="handleKeyPress" @input="handleInput"
+          :disabled="isLoading" class="message-input" />
+        <button @click="sendMessage" :disabled="isLoading || !currentMessage.trim()" class="send-button"
+          :class="{ 'btn-disabled': isLoading || !currentMessage.trim() }">
           <span v-if="isLoading" class="button-spinner"></span>
           <span v-else>전송</span>
         </button>
       </div>
-      
+
       <!-- 입력 힌트 -->
       <div class="input-hints" v-if="showInputHints">
         <div class="hint-item">
@@ -135,19 +112,19 @@ const getMessageClass = (messageType) => {
 // 타임스탬프 포맷팅
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return ''
-  
+
   const date = new Date(timestamp)
   const now = new Date()
   const diffInMinutes = Math.floor((now - date) / (1000 * 60))
-  
+
   if (diffInMinutes < 1) {
     return '방금 전'
   } else if (diffInMinutes < 60) {
     return `${diffInMinutes}분 전`
   } else {
-    return date.toLocaleTimeString('ko-KR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleTimeString('ko-KR', {
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 }
@@ -170,13 +147,13 @@ const handleInput = (event) => {
 const sendMessage = () => {
   const message = currentMessage.value.trim()
   if (!message || props.isLoading) return
-  
+
   // 부모 컴포넌트로 메시지 전송
   emit('send-message', message)
-  
+
   // 입력창 초기화
   currentMessage.value = ''
-  
+
   // 입력창에 포커스
   nextTick(() => {
     if (messageInputRef.value) {
@@ -187,7 +164,7 @@ const sendMessage = () => {
 
 const sendQuickMessage = (message) => {
   if (props.isLoading) return
-  
+
   currentMessage.value = message
   sendMessage()
 }
@@ -215,7 +192,7 @@ watch(() => props.isLoading, (newValue) => {
 // 라이프사이클 훅
 onMounted(() => {
   scrollToBottom()
-  
+
   // 입력창에 포커스
   if (messageInputRef.value) {
     messageInputRef.value.focus()
@@ -231,7 +208,8 @@ onMounted(() => {
   height: 100%;
   opacity: 0.7;
   transition: opacity 0.3s ease;
-  min-height: 0; /* flexbox 부모에서 overflow가 작동하도록 */
+  min-height: 0;
+  /* flexbox 부모에서 overflow가 작동하도록 */
 }
 
 .chat-mode.active {
@@ -249,7 +227,8 @@ onMounted(() => {
   scroll-behavior: smooth;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* flexbox 자식에서 overflow가 작동하도록 */
+  min-height: 0;
+  /* flexbox 자식에서 overflow가 작동하도록 */
 }
 
 .chat-message {
@@ -266,6 +245,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -350,14 +330,23 @@ onMounted(() => {
   animation: typingBounce 1.4s infinite ease-in-out;
 }
 
-.typing-dot:nth-child(1) { animation-delay: -0.32s; }
-.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+.typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
 
 @keyframes typingBounce {
-  0%, 80%, 100% {
+
+  0%,
+  80%,
+  100% {
     transform: scale(0.8);
     opacity: 0.5;
   }
+
   40% {
     transform: scale(1);
     opacity: 1;
@@ -369,7 +358,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  flex-shrink: 0; /* 입력 영역은 크기가 고정되도록 */
+  flex-shrink: 0;
+  /* 입력 영역은 크기가 고정되도록 */
 }
 
 .quick-actions {
@@ -467,8 +457,13 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 입력 힌트 */

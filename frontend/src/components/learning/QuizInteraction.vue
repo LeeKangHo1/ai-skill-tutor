@@ -29,7 +29,7 @@
           </div>
           <div class="option-content">
             <span class="option-number">{{ index + 1 }}.</span>
-            <span class="option-text">{{ typeof option === 'string' ? option : (option.text || option) }}</span>
+            <span class="option-text">{{ cleanOptionText(option, index) }}</span>
           </div>
         </div>
       </div>
@@ -161,8 +161,10 @@ const storeQuizData = computed(() => learningStore.quizData)
 const actualQuizData = computed(() => {
   // 캐시된 데이터 사용하지 않고 현재 store 데이터만 사용
   if (storeQuizData.value && storeQuizData.value.question && !storeQuizData.value.question.includes('로드 중입니다')) {
+    console.log('QuizInteraction - store에서 퀴즈 데이터 사용:', storeQuizData.value)
     return storeQuizData.value
   }
+  console.log('QuizInteraction - props에서 퀴즈 데이터 사용:', props.quizData)
   return props.quizData
 })
 
@@ -213,16 +215,43 @@ const submitButtonText = computed(() => {
 const hasValidQuizData = computed(() => {
   // 로딩 중인 더미 데이터는 유효하지 않은 것으로 처리
   if (actualQuizData.value.question && actualQuizData.value.question.includes('로드 중입니다')) {
+    console.log('QuizInteraction - 로딩 중인 데이터 감지')
     return false
   }
 
-  return actualQuizData.value.question &&
+  const isValid = actualQuizData.value.question &&
     actualQuizData.value.question !== '' &&
     actualQuizData.value.type &&
     actualQuizData.value.type !== '' &&
     ((actualQuizData.value.type === 'multiple_choice' && actualQuizData.value.options?.length > 0) ||
       actualQuizData.value.type === 'subjective')
+  
+  console.log('QuizInteraction - 퀴즈 데이터 유효성 검사:', {
+    isValid,
+    question: actualQuizData.value.question,
+    type: actualQuizData.value.type,
+    optionsLength: actualQuizData.value.options?.length,
+    actualData: actualQuizData.value
+  })
+  
+  return isValid
 })
+
+// 유틸리티 함수들
+const cleanOptionText = (option, index) => {
+  let text = typeof option === 'string' ? option : (option.text || option)
+  
+  // 텍스트 앞의 번호 패턴 제거 (예: "1.", "2.", "1. ", "2. " 등)
+  const numberPattern = new RegExp(`^${index + 1}\\.\\s*`)
+  text = text.replace(numberPattern, '')
+  
+  // 다른 번호 패턴도 제거 (예: "1)", "(1)", "[1]" 등)
+  text = text.replace(/^\d+[\.\)\]]\s*/, '')
+  text = text.replace(/^\[\d+\]\s*/, '')
+  text = text.replace(/^\(\d+\)\s*/, '')
+  
+  return text.trim()
+}
 
 // 이벤트 핸들러들
 const selectOption = (value) => {
@@ -265,9 +294,6 @@ const submitAnswer = async () => {
   // 로딩 상태 시작
   isSubmitted.value = true
 
-  // store에 사용자 답변 저장
-  learningStore.updateUserAnswer(answer)
-
   try {
     // 백엔드 API 호출 (v2.0 API 사용)
     const result = await learningService.submitQuizAnswerV2(answer)
@@ -275,6 +301,9 @@ const submitAnswer = async () => {
     if (result.success) {
       // API 성공 시 응답 데이터를 기존 구조로 매핑
       const mappedResult = mapApiResponseToQuizResult(result.data)
+
+      // store에 사용자 답변 저장 (API 성공 후에만)
+      learningStore.updateUserAnswer(answer)
 
       emit('submit-answer', {
         answer: answer,
@@ -334,30 +363,49 @@ const submitAnswer = async () => {
 
 // API 응답을 기존 퀴즈 결과 구조로 매핑하는 함수
 const mapApiResponseToQuizResult = (apiResponse) => {
-  // 안전한 접근을 위한 null 체크
-  if (!apiResponse || !apiResponse.data || !apiResponse.data.workflow_response) {
-    console.warn('API 응답에 workflow_response가 없습니다:', apiResponse)
+  console.log('🔍 mapApiResponseToQuizResult 호출됨:', apiResponse)
+  
+  // 실제 API 응답 구조 확인
+  if (apiResponse && apiResponse.feedback && apiResponse.explanation) {
+    // 직접적인 피드백 구조인 경우
+    console.log('📋 직접 피드백 구조 감지:', apiResponse)
     return {
-      isCorrect: false,
+      isCorrect: true, // 임시로 true 설정
       correctAnswer: '',
-      explanation: 'API 응답 구조가 올바르지 않습니다.',
-      feedback: '응답을 처리할 수 없습니다.',
-      score: 0,
-      nextStep: 'continue'
+      explanation: apiResponse.explanation || '설명이 없습니다.',
+      feedback: apiResponse.feedback || '피드백이 없습니다.',
+      score: 100, // 임시로 100점 설정
+      nextStep: apiResponse.nextStep || 'continue'
     }
   }
+  
+  // workflow_response 구조인 경우
+  if (apiResponse && apiResponse.data && apiResponse.data.workflow_response) {
+    console.log('📋 workflow_response 구조 감지:', apiResponse.data.workflow_response)
+    const workflow_response = apiResponse.data.workflow_response
+    const evaluationResult = workflow_response.evaluation_result || {}
+    const feedback = evaluationResult.feedback || {}
 
-  const workflow_response = apiResponse.data.workflow_response
-  const evaluationResult = workflow_response.evaluation_result || {}
-  const feedback = evaluationResult.feedback || {}
-
+    return {
+      isCorrect: evaluationResult.is_answer_correct || false,
+      correctAnswer: '',
+      explanation: feedback.explanation || '설명이 없습니다.',
+      feedback: feedback.content || feedback.title || '피드백이 없습니다.',
+      score: evaluationResult.score || 0,
+      nextStep: feedback.next_step_decision || 'continue'
+    }
+  }
+  
+  // 다른 구조들 확인
+  console.log('⚠️ 알 수 없는 API 응답 구조:', apiResponse)
+  
   return {
-    isCorrect: evaluationResult.is_answer_correct || false,
-    correctAnswer: '', // API 응답에서 정답은 별도로 제공되지 않음
-    explanation: feedback.explanation || '설명이 없습니다.',
-    feedback: feedback.content || feedback.title || '피드백이 없습니다.',
-    score: evaluationResult.score || 0,
-    nextStep: feedback.next_step_decision || 'continue'
+    isCorrect: false,
+    correctAnswer: '',
+    explanation: 'API 응답 구조가 올바르지 않습니다.',
+    feedback: '응답을 처리할 수 없습니다.',
+    score: 0,
+    nextStep: 'continue'
   }
 }
 

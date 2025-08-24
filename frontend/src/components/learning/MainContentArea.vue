@@ -13,41 +13,22 @@
       </div>
 
       <!-- 이론 설명 컨텐츠 -->
-      <TheoryContent 
-        v-else-if="shouldShowContent('theory')"
-        :theory-data="theoryContent"
-        :is-visible="isContentVisible('theory')"
-      />
+      <TheoryContent v-else-if="shouldShowContent('theory')" :theory-data="theoryContent"
+        :is-visible="isContentVisible('theory')" />
 
       <!-- 퀴즈 컨텐츠 -->
-      <QuizContent 
-        v-else-if="shouldShowContent('quiz')"
-        :quiz-data="quizContent"
-        :is-visible="isContentVisible('quiz')"
-        :is-loading="isLoading"
-      />
+      <QuizContent v-else-if="shouldShowContent('quiz')" :quiz-data="quizContent" :is-visible="isContentVisible('quiz')"
+        :is-loading="isLoading" />
 
       <!-- 피드백 컨텐츠 -->
-      <FeedbackContent 
-        v-else-if="shouldShowContent('feedback')"
-        :feedback-data="feedbackContent"
-        :qna-data="qnaContent"
-        :should-show-qna="shouldShowContent('qna')"
-        :is-visible="isContentVisible('feedback')"
-      />
+      <FeedbackContent v-else-if="shouldShowContent('feedback')" :feedback-data="feedbackContent" :qna-data="qnaContent"
+        :should-show-qna="shouldShowContent('qna')" :is-visible="isContentVisible('feedback')" />
 
       <!-- QnA 컨텐츠 (이론과 함께 표시) -->
       <template v-else-if="shouldShowContent('qna')">
-        <TheoryContent 
-          :theory-data="theoryContent"
-          :is-visible="true"
-        />
-        <FeedbackContent 
-          :feedback-data="{ scoreText: '', explanation: '', nextStep: '' }"
-          :qna-data="qnaContent"
-          :should-show-qna="true"
-          :is-visible="true"
-        />
+        <TheoryContent :theory-data="theoryContent" :is-visible="true" />
+        <FeedbackContent :feedback-data="{ scoreText: '', explanation: '', nextStep: '' }" :qna-data="qnaContent"
+          :should-show-qna="true" :is-visible="true" />
       </template>
     </div>
 
@@ -61,7 +42,7 @@
       </button>
       <button v-if="canShowNavigationButton('current')" class="btn btn-outline"
         @click="handleNavigationClick('current')">
-        ← 현재 단계로
+        ← 돌아가기
       </button>
     </div>
   </div>
@@ -197,21 +178,15 @@ const dummyQnaContent = {
   relatedInfo: '3챕터에서 AI의 역사와 발전 과정을 더 자세히 다룹니다.'
 }
 
-// API 데이터와 더미 데이터 (캐시 없이 현재 데이터만 사용)
+// API 데이터와 더미 데이터
 const theoryContent = computed(() => {
-  // 캐시 사용하지 않고 현재 API 데이터만 확인
   if (apiContentData.value?.theory) {
-    console.log('🔍 theoryContent - 현재 API 데이터:', apiContentData.value.theory)
     return apiContentData.value.theory
   }
-
-  // 캐시 확인 제거 - 더미데이터 직접 사용
-  console.log('🔍 theoryContent - 더미 데이터 사용 (캐시 없음):', dummyTheoryContent)
   return dummyTheoryContent
 })
 
 const quizContent = computed(() => {
-  // 캐시 없이 현재 데이터만 사용
   if (apiContentData.value?.quiz) {
     return apiContentData.value.quiz
   }
@@ -219,15 +194,20 @@ const quizContent = computed(() => {
 })
 
 const feedbackContent = computed(() => {
-  // 캐시 없이 현재 데이터만 사용
+  // Store에서 피드백 데이터를 우선적으로 사용
+  if (learningStore.feedbackData && learningStore.feedbackData.scoreText) {
+    console.log('🔍 MainContentArea: feedbackContent computed - store 데이터 사용:', learningStore.feedbackData)
+    return learningStore.feedbackData
+  }
   if (apiContentData.value?.feedback) {
+    console.log('🔍 MainContentArea: feedbackContent computed - API 데이터 사용:', apiContentData.value.feedback)
     return apiContentData.value.feedback
   }
+  console.log('🔍 MainContentArea: feedbackContent computed - 더미 데이터 사용:', dummyFeedbackContent)
   return dummyFeedbackContent
 })
 
 const qnaContent = computed(() => {
-  // 캐시 없이 현재 데이터만 사용
   if (apiContentData.value?.qna) {
     return apiContentData.value.qna
   }
@@ -239,8 +219,13 @@ const shouldShowContent = (contentType) => {
   // 현재 에이전트의 컨텐츠이거나, 리뷰 모드인 경우
   const currentContentType = agentContentMap[props.currentAgent]
 
+  // 디버깅용 로그
+  console.log(`shouldShowContent 체크: contentType=${contentType}, currentAgent=${props.currentAgent}, currentContentType=${currentContentType}, currentContentMode=${props.currentContentMode}`)
+
   if (props.currentContentMode === 'current') {
-    return contentType === currentContentType
+    const result = contentType === currentContentType
+    console.log(`shouldShowContent 결과: ${contentType} === ${currentContentType} = ${result}`)
+    return result
   } else if (props.currentContentMode === 'review_theory') {
     return contentType === 'theory'
   } else if (props.currentContentMode === 'review_quiz') {
@@ -261,18 +246,30 @@ const isContentVisible = (contentType) => {
 
 // 네비게이션 버튼 표시 로직
 const canShowNavigationButton = (buttonType) => {
+  // store에서 직접 completedSteps 가져오기
+  const completedSteps = learningStore.completedSteps
+
   if (buttonType === 'theory') {
     // 피드백 단계에서 이론이 완료된 경우만
     return props.currentAgent === 'evaluation_feedback' &&
       props.currentContentMode === 'current' &&
-      props.completedSteps.theory
+      completedSteps.theory
   }
 
   if (buttonType === 'quiz') {
     // 피드백 단계에서 퀴즈가 완료된 경우만
+    console.log('🔍 퀴즈 다시 보기 버튼 조건 확인:', {
+      currentAgent: props.currentAgent,
+      currentContentMode: props.currentContentMode,
+      completedStepsQuiz: completedSteps.quiz,
+      shouldShow: props.currentAgent === 'evaluation_feedback' &&
+        props.currentContentMode === 'current' &&
+        completedSteps.quiz
+    })
+
     return props.currentAgent === 'evaluation_feedback' &&
       props.currentContentMode === 'current' &&
-      props.completedSteps.quiz
+      completedSteps.quiz
   }
 
   if (buttonType === 'current') {
@@ -300,30 +297,29 @@ const loadInitialContent = async () => {
     )
 
     if (success && data) {
-      // API 응답을 컴포넌트 데이터로 변환 (캐시 없이 현재 데이터만 저장)
+      // API 응답을 컴포넌트 데이터로 변환
       const mappedContent = mapApiResponseToComponent(data, 'theory')
       if (mappedContent) {
         apiContentData.value = { theory: mappedContent }
-        // 캐시 저장 제거 - 현재 응답만 저장
         learningStore.updateCurrentApiResponse(data)
         emit('content-loaded', { type: 'theory', data: mappedContent, source: 'api' })
-        console.log('MainContentArea: API 데이터 로드 성공 (캐시 없음)', mappedContent)
+        console.log('MainContentArea: API 데이터 로드 성공', mappedContent)
       } else {
         throw new Error('API 응답 매핑 실패')
       }
     } else {
-      // 더미데이터 fallback (캐시 저장하지 않음)
+      // 더미데이터 fallback
       apiContentData.value = { theory: dummyTheoryContent }
       emit('content-loaded', { type: 'theory', data: dummyTheoryContent, source: 'fallback' })
       emit('api-error', { message: error || 'API 호출 실패', fallback: true })
-      console.warn('MainContentArea: 더미데이터로 fallback (캐시 없음)', error)
+      console.warn('MainContentArea: 더미데이터로 fallback', error)
     }
   } catch (error) {
-    // 에러 발생 시 더미데이터 사용 (캐시 저장하지 않음)
+    // 에러 발생 시 더미데이터 사용
     apiContentData.value = { theory: dummyTheoryContent }
     emit('content-loaded', { type: 'theory', data: dummyTheoryContent, source: 'fallback' })
     emit('api-error', { message: error.message, fallback: true })
-    console.error('MainContentArea: 컨텐츠 로드 에러 (캐시 없음)', error)
+    console.error('MainContentArea: 컨텐츠 로드 에러', error)
   } finally {
     isLoading.value = false
   }
@@ -385,29 +381,28 @@ const loadAgentContent = async (agent) => {
     }
 
     if (apiResult.success && apiResult.data) {
-      // API 응답을 컴포넌트 데이터로 변환 (캐시 없이 현재 데이터만 저장)
+      // API 응답을 컴포넌트 데이터로 변환
       const mappedContent = mapApiResponseToComponent(apiResult.data, contentType)
       if (mappedContent) {
         if (!apiContentData.value) apiContentData.value = {}
         apiContentData.value[contentType] = mappedContent
-        // 캐시 저장 제거 - 현재 응답만 저장
         learningStore.updateCurrentApiResponse(apiResult.data)
         emit('content-loaded', { type: contentType, data: mappedContent, source: 'api' })
         lastApiCall.value = agent
-        console.log(`MainContentArea: ${agent} API 데이터 로드 성공 (캐시 없음)`, mappedContent)
+        console.log(`MainContentArea: ${agent} API 데이터 로드 성공`, mappedContent)
       } else {
         throw new Error('API 응답 매핑 실패')
       }
     } else {
-      // 더미데이터 fallback (캐시 저장하지 않음)
+      // 더미데이터 fallback
       if (!apiContentData.value) apiContentData.value = {}
       apiContentData.value[contentType] = fallbackData
       emit('content-loaded', { type: contentType, data: fallbackData, source: 'fallback' })
       emit('api-error', { message: apiResult.error || 'API 호출 실패', fallback: true })
-      console.warn(`MainContentArea: ${agent} 더미데이터로 fallback (캐시 없음)`, apiResult.error)
+      console.warn(`MainContentArea: ${agent} 더미데이터로 fallback`, apiResult.error)
     }
   } catch (error) {
-    // 에러 발생 시 더미데이터 사용 (캐시 저장하지 않음)
+    // 에러 발생 시 더미데이터 사용
     const contentType = agentContentMap[agent]
     const fallbackData = {
       theory: dummyTheoryContent,
@@ -420,7 +415,7 @@ const loadAgentContent = async (agent) => {
     apiContentData.value[contentType] = fallbackData
     emit('content-loaded', { type: contentType, data: fallbackData, source: 'fallback' })
     emit('api-error', { message: error.message, fallback: true })
-    console.error(`MainContentArea: ${agent} 컨텐츠 로드 에러 (캐시 없음)`, error)
+    console.error(`MainContentArea: ${agent} 컨텐츠 로드 에러`, error)
   } finally {
     isLoading.value = false
   }
@@ -428,16 +423,35 @@ const loadAgentContent = async (agent) => {
 
 // 라이프사이클 훅
 onMounted(() => {
-  console.log('MainContentArea: 컴포넌트 마운트됨 (캐시 없이 새로운 데이터 로드)')
-
-  // 캐시 확인 제거 - 항상 새로운 API 호출
+  console.log('MainContentArea: 컴포넌트 마운트됨')
   loadInitialContent()
 })
 
-// 에이전트 변경 감지
+// 에이전트 변경 감지 (quiz_generator와 evaluation_feedback은 별도 처리)
 watch(() => props.currentAgent, (newAgent, oldAgent) => {
   if (newAgent !== oldAgent) {
     console.log(`MainContentArea: 에이전트 변경 감지 - ${oldAgent} → ${newAgent}`)
+
+    // quiz_generator는 UI에 직접적인 영향을 주지 않으므로 API 호출하지 않음
+    if (newAgent === 'quiz_generator') {
+      console.log('MainContentArea: quiz_generator는 UI 업데이트 스킵')
+      return
+    }
+
+    // evaluation_feedback은 이미 store에 피드백 데이터가 있으므로 별도 API 호출하지 않음
+    if (newAgent === 'evaluation_feedback') {
+      console.log('MainContentArea: evaluation_feedback - store 피드백 데이터 사용')
+      // 피드백 데이터가 store에 있는지 확인
+      if (learningStore.feedbackData && learningStore.feedbackData.scoreText) {
+        console.log('MainContentArea: evaluation_feedback API 데이터 로드 성공', learningStore.feedbackData)
+        emit('content-loaded', { type: 'feedback', data: learningStore.feedbackData, source: 'store' })
+      } else {
+        console.log('MainContentArea: evaluation_feedback - store에 피드백 데이터 없음, API 호출')
+        loadAgentContent(newAgent)
+      }
+      return
+    }
+
     loadAgentContent(newAgent)
   }
 }, { immediate: false })
@@ -446,6 +460,15 @@ watch(() => props.currentAgent, (newAgent, oldAgent) => {
 const handleNavigationClick = (navigationType) => {
   emit('navigation-click', navigationType)
 }
+
+// 피드백 데이터 변화 감지
+watch(() => learningStore.feedbackData, (newFeedbackData) => {
+  if (newFeedbackData && newFeedbackData.scoreText) {
+    console.log('🔍 MainContentArea: 피드백 데이터 변화 감지:', newFeedbackData)
+    console.log('🔍 MainContentArea: 현재 에이전트:', props.currentAgent)
+    console.log('🔍 MainContentArea: shouldShowContent(feedback):', shouldShowContent('feedback'))
+  }
+}, { deep: true })
 </script>
 
 <style scoped>

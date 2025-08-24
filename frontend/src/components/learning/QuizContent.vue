@@ -71,8 +71,10 @@ const storeQuizData = computed(() => learningStore.quizData)
 const actualQuizData = computed(() => {
   // 캐시된 데이터 사용하지 않고 현재 store 데이터만 사용
   if (storeQuizData.value && storeQuizData.value.question && !storeQuizData.value.question.includes('로드 중입니다')) {
+    console.log('QuizContent - store에서 퀴즈 데이터 사용:', storeQuizData.value)
     return storeQuizData.value
   }
+  console.log('QuizContent - props에서 퀴즈 데이터 사용:', props.quizData)
   return props.quizData
 })
 

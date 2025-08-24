@@ -22,8 +22,8 @@
     <div class="learning-content">
       <!-- 왼쪽: 메인 컨텐츠 (50%) -->
       <MainContentArea :current-agent="currentAgent" :content-data="contentData"
-        :current-content-mode="currentContentMode" @navigation-click="handleNavigationClick"
-        @content-loaded="handleContentLoaded" @api-error="handleApiError" />
+        :current-content-mode="currentContentMode" :completed-steps="learningStore.completedSteps"
+        @navigation-click="handleNavigationClick" @content-loaded="handleContentLoaded" @api-error="handleApiError" />
 
       <!-- 오른쪽: 상호작용 영역 (50%) -->
       <div class="interaction-area">
@@ -57,6 +57,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLearningStore } from '@/stores/learningStore'
+import { learningService } from '@/services/learningService'
 import MainContentArea from '@/components/learning/MainContentArea.vue'
 import ChatInteraction from '@/components/learning/ChatInteraction.vue'
 import QuizInteraction from '@/components/learning/QuizInteraction.vue'
@@ -109,8 +110,8 @@ const handleSendMessage = async (message) => {
       timestamp: new Date()
     })
 
-    // 백엔드 API 호출 시뮬레이션
-    await simulateAPICall(message)
+    // 실제 백엔드 API 호출
+    await sendMessageToAPI(message)
 
   } catch (error) {
     console.error('메시지 전송 오류:', error)
@@ -125,16 +126,49 @@ const handleSendMessage = async (message) => {
   }
 }
 
-const handleSubmitAnswer = async (answer) => {
+const handleSubmitAnswer = async (submitData) => {
   try {
     isLoading.value = true
-    loadingMessage.value = '새로운 평가를 진행하고 있습니다...'
+    loadingMessage.value = '평가를 진행하고 있습니다...'
 
-    // 답변 제출 시 기존 데이터 초기화
-    learningStore.clearQuizData()
+    console.log('퀴즈 답안 제출 처리:', submitData)
 
-    // 백엔드 API 호출 시뮬레이션 (매번 새로운 평가)
-    await simulateQuizSubmission()
+    // API 결과가 있으면 처리, 없으면 시뮬레이션
+    if (submitData.apiResult) {
+      // 실제 API 응답 처리
+      const { apiResult } = submitData
+      
+      // 피드백 데이터를 store에 저장 (채팅에 추가하지 않음)
+      console.log('🔍 API 결과 상세 분석:', {
+        apiResult: apiResult,
+        feedback: apiResult.feedback,
+        explanation: apiResult.explanation,
+        nextStep: apiResult.nextStep
+      })
+      
+      learningStore.updateFeedbackData({
+        scoreText: apiResult.feedback,
+        explanation: apiResult.explanation,
+        nextStep: apiResult.nextStep || '다음 단계로 진행하세요.'
+      })
+
+      // UI 모드를 채팅 모드로 전환 (피드백 표시를 위해)
+      learningStore.updateUIMode('chat')
+      
+      // 에이전트를 evaluation_feedback으로 변경
+      console.log('🔄 퀴즈 제출 후 에이전트를 evaluation_feedback으로 변경')
+      learningStore.updateAgent('evaluation_feedback')
+      
+      console.log('🔍 현재 상태 확인:', {
+        currentAgent: learningStore.currentAgent,
+        currentUIMode: learningStore.currentUIMode,
+        feedbackData: learningStore.feedbackData
+      })
+      
+    } else {
+      // 백엔드 API 호출 시뮬레이션 (fallback)
+      await simulateQuizSubmission()
+    }
 
   } catch (error) {
     console.error('퀴즈 제출 오류:', error)
@@ -166,20 +200,19 @@ const handleNavigationClick = (navigationType) => {
 const handleContentLoaded = (eventData) => {
   const { type, data } = eventData
 
-  // 캐시 없이 매번 새로운 데이터로 UI 업데이트
+  // 자연스러운 데이터 전환 (초기화 최소화)
   if (type === 'quiz' && data) {
     learningStore.updateUIMode('quiz')
-    // 기존 퀴즈 데이터 완전 초기화 후 새 데이터 설정
-    learningStore.clearQuizData()
+    // 새 데이터로 업데이트 (기존 데이터 초기화하지 않음)
     updateQuizData(data)
   } else if (type === 'theory') {
     learningStore.updateUIMode('chat')
-    // 기존 컨텐츠 데이터 초기화
-    contentData.value = { title: '', subtitle: '', content: '', type: 'theory' }
+    // 컨텐츠 타입만 업데이트
+    contentData.value.type = 'theory'
   } else if (type === 'feedback') {
     learningStore.updateUIMode('chat')
-    // 기존 컨텐츠 데이터 초기화
-    contentData.value = { title: '', subtitle: '', content: '', type: 'feedback' }
+    // 컨텐츠 타입만 업데이트
+    contentData.value.type = 'feedback'
   }
 }
 
@@ -187,10 +220,9 @@ const handleApiError = (errorData) => {
   const { message, fallback } = errorData
   console.warn(`API 오류: ${message} ${fallback ? '(더미데이터 사용)' : ''}`)
 
-  // 에러 발생 시 모든 데이터 초기화 후 새로 로드
+  // 에러 발생 시 fallback 데이터 사용 (초기화하지 않음)
   if (fallback) {
-    // 캐시된 데이터 사용하지 않고 새로운 더미데이터 생성
-    learningStore.clearQuizData()
+    // 더미데이터로 업데이트 (기존 데이터 유지)
     updateQuizData()
   }
 }
@@ -199,28 +231,136 @@ const goToDashboard = () => {
   router.push('/dashboard')
 }
 
-// 유틸리티 함수들
+// 실제 API 호출 함수 - Store 중심 구조
+const sendMessageToAPI = async (message) => {
+  try {
+    // v2.0 API 사용: POST /learning/session/message
+    const result = await learningService.sendSessionMessage(message, 'user')
+    
+    if (result.success && result.data) {
+      const apiResponse = result.data
+      console.log('API 응답 수신:', apiResponse)
+      
+      // 1. API 응답을 store에 저장 (가장 먼저)
+      learningStore.updateCurrentApiResponse(apiResponse)
+      
+      // 2. API 응답 구조 확인 및 처리
+      console.log('📦 전체 API 응답 구조:', apiResponse)
+      
+      // data.workflow_response 구조 확인
+      if (apiResponse.data?.workflow_response) {
+        const workflowResponse = apiResponse.data.workflow_response
+        console.log('🔄 워크플로우 응답 (data.workflow_response):', workflowResponse)
+        
+        // Store에 워크플로우 응답 저장
+        learningStore.updateWorkflowResponse(workflowResponse)
+        
+        // 퀴즈 데이터 확인 및 저장
+        const content = workflowResponse.content
+        console.log('📋 컨텐츠 확인:', content)
+        
+        if (content) {
+          console.log('🔍 컨텐츠 속성 상세:', {
+            quiz_type: content.quiz_type,
+            question: content.question,
+            options: content.options,
+            current_agent: workflowResponse.current_agent,
+            hasOptions: Array.isArray(content.options),
+            optionsLength: content.options?.length
+          })
+          
+          // 퀴즈 데이터 조건 확인 - 더 관대한 조건으로 설정
+          if (workflowResponse.current_agent === 'quiz_generator' || 
+              content.quiz_type || 
+              content.question || 
+              (content.options && content.options.length > 0)) {
+            console.log('🎯 퀴즈 데이터 조건 만족 - setQuizDataFromAPI 호출')
+            
+            // API 응답을 올바른 구조로 전달
+            const formattedResponse = {
+              workflow_response: workflowResponse
+            }
+            learningStore.setQuizDataFromAPI(formattedResponse)
+          } else {
+            console.log('❌ 퀴즈 데이터 조건 불만족')
+          }
+        }
+        
+        // 채팅 메시지 처리 (퀴즈 생성 시에는 채팅에 추가하지 않음)
+        if (content && content.refined_content && workflowResponse.current_agent !== 'quiz_generator') {
+          chatHistory.value.push({
+            sender: '튜터',
+            message: content.refined_content,
+            type: 'system',
+            timestamp: new Date()
+          })
+        }
+      }
+      // 직접 workflow_response가 있는 경우 (이전 구조)
+      else if (apiResponse.workflow_response) {
+        console.log('🔄 워크플로우 응답 (직접):', apiResponse.workflow_response)
+        learningStore.updateWorkflowResponse(apiResponse.workflow_response)
+        
+        const content = apiResponse.workflow_response.content
+        if (content && (content.quiz_type || content.question || content.options)) {
+          console.log('🎯 직접 구조에서 퀴즈 데이터 발견')
+          learningStore.setQuizDataFromAPI(apiResponse)
+        }
+        
+        // 채팅 메시지 처리 (퀴즈 생성 시에는 채팅에 추가하지 않음)
+        if (content && content.refined_content && apiResponse.workflow_response.current_agent !== 'quiz_generator') {
+          chatHistory.value.push({
+            sender: '튜터',
+            message: content.refined_content,
+            type: 'system',
+            timestamp: new Date()
+          })
+        }
+      } else {
+        console.log('⚠️ workflow_response를 찾을 수 없습니다:', apiResponse)
+        
+        // API 응답에 직접 메시지가 있는 경우
+        if (apiResponse.message) {
+          chatHistory.value.push({
+            sender: '튜터',
+            message: apiResponse.message,
+            type: 'system',
+            timestamp: new Date()
+          })
+        }
+      }
+      
+    } else {
+      // API 호출 실패 시 fallback
+      console.warn('API 호출 실패, 시뮬레이션으로 대체:', result.error)
+      await simulateAPICall(message)
+    }
+    
+  } catch (error) {
+    console.error('API 호출 중 오류 발생:', error)
+    // 오류 발생 시 시뮬레이션으로 fallback
+    await simulateAPICall(message)
+  }
+}
+
+// 유틸리티 함수들 (fallback용)
 const simulateAPICall = async (message) => {
   if (message.includes('다음') || message.includes('퀴즈')) {
-    // 1. 모든 기존 데이터 초기화 후 퀴즈 모드로 전환
-    learningStore.clearAllData()
+    // 퀴즈 모드로 전환
     learningStore.updateAgent('quiz_generator')
     learningStore.updateUIMode('quiz')
 
-    // 2. 컨텐츠 데이터 완전 초기화
-    contentData.value = { title: '', subtitle: '', content: '', type: 'quiz' }
-
     chatHistory.value.push({
       sender: '튜터',
-      message: '새로운 퀴즈를 생성하고 있습니다. 잠시만 기다려주세요...',
+      message: '퀴즈를 생성하고 있습니다. 잠시만 기다려주세요...',
       type: 'system',
       timestamp: new Date()
     })
 
-    // 3. API 호출 시뮬레이션 (매번 새로운 데이터 생성)
+    // API 호출 시뮬레이션
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    // 4. 매번 새로운 API 응답 생성 (캐시 사용하지 않음)
+    // API 응답 생성
     const mockApiResponse = {
       success: true,
       data: {
@@ -242,15 +382,15 @@ const simulateAPICall = async (message) => {
           }
         }
       },
-      message: "새로운 퀴즈가 준비되었습니다."
+      message: "퀴즈가 준비되었습니다."
     }
 
-    // 5. 새로운 퀴즈 데이터를 store에 저장 (기존 데이터 완전 대체)
+    // 퀴즈 데이터를 store에 저장
     learningStore.setQuizDataFromAPI(mockApiResponse.data)
 
     chatHistory.value.push({
       sender: '튜터',
-      message: '새로운 퀴즈를 준비했습니다. 오른쪽에서 답변해주세요.',
+      message: '퀴즈를 준비했습니다. 오른쪽에서 답변해주세요.',
       type: 'system',
       timestamp: new Date()
     })
@@ -269,21 +409,19 @@ const simulateAPICall = async (message) => {
 const simulateQuizSubmission = async () => {
   await new Promise(resolve => setTimeout(resolve, 1500))
 
-  // 퀴즈 제출 시 기존 데이터 모두 초기화 후 새로운 피드백 생성
-  learningStore.clearAllData()
+  // 피드백 모드로 전환
   learningStore.updateAgent('evaluation_feedback')
   learningStore.updateUIMode('chat')
 
-  // 컨텐츠 데이터 완전 초기화 후 새로운 피드백 데이터 설정
-  contentData.value = { title: '', subtitle: '', content: '', type: 'feedback' }
-  updateContentData('feedback')
-
-  chatHistory.value.push({
-    sender: '튜터',
-    message: '정답입니다! 새로운 피드백을 확인해주세요.',
-    type: 'system',
-    timestamp: new Date()
+  // 피드백 데이터를 store에 저장 (채팅에 추가하지 않음)
+  learningStore.updateFeedbackData({
+    scoreText: '정답입니다! (100점)',
+    explanation: '훌륭합니다! 정확한 답변을 선택하셨습니다.',
+    nextStep: '다음 단계로 진행하세요.'
   })
+
+  // 피드백 컨텐츠 설정
+  updateContentData('feedback')
 }
 
 const updateContentData = (type) => {
@@ -317,11 +455,8 @@ const updateContentData = (type) => {
 }
 
 const updateQuizData = (apiQuizData = null) => {
-  // 기존 퀴즈 데이터 완전 초기화
-  learningStore.clearQuizData()
-
   if (apiQuizData) {
-    // 새로운 API 응답 데이터를 store에 저장 (캐시 사용하지 않음)
+    // API 응답 데이터를 store에 저장
     learningStore.updateQuizData({
       question: apiQuizData.question || '',
       options: apiQuizData.options || [],
@@ -329,9 +464,9 @@ const updateQuizData = (apiQuizData = null) => {
       hint: apiQuizData.hint || ''
     })
   } else {
-    // 매번 새로운 로딩 상태 데이터 생성
+    // 로딩 상태 데이터
     learningStore.updateQuizData({
-      question: '새로운 퀴즈를 로드 중입니다...',
+      question: '퀴즈를 로드 중입니다...',
       options: [
         '로드 중입니다...',
         '로드 중입니다...',
@@ -348,31 +483,31 @@ const updateContentMode = (mode) => {
   learningStore.updateContentMode(mode)
 }
 
-// 라이프사이클 훅 - 캐시 없이 매번 새로운 세션 시작
+// 라이프사이클 훅 - 학습 세션 시작 (POST /learning/session/start 호출)
 onMounted(async () => {
   try {
     isLoading.value = true
-    loadingMessage.value = '새로운 학습 세션을 시작하고 있습니다...'
+    loadingMessage.value = '학습 세션을 시작하고 있습니다...'
 
-    // 모든 기존 데이터 완전 초기화
-    learningStore.clearAllData()
+    // 새로운 세션 시작 시에만 초기화 (POST /learning/session/start)
+    learningStore.initializeNewSession()
     contentData.value = { title: '', subtitle: '', content: '', type: 'theory' }
     chatHistory.value = []
 
-    // 새로운 초기 컨텐츠 설정
+    // 초기 컨텐츠 설정
     updateContentData('theory')
 
-    // 새로운 세션 시작 (실제로는 API 호출)
+    // 세션 시작 API 호출 시뮬레이션 (실제로는 POST /learning/session/start)
     await new Promise(resolve => setTimeout(resolve, 1000))
 
-    // 새로운 초기 상태 설정
+    // 초기 상태 설정
     learningStore.updateAgent('theory_educator')
     learningStore.updateUIMode('chat')
 
-    // 새로운 세션 시작 메시지 추가
+    // 세션 시작 메시지 추가
     chatHistory.value.push({
       sender: '튜터',
-      message: 'LLM에 대해 새로운 학습을 시작합니다. 왼쪽 내용을 확인해주세요!',
+      message: '학습을 시작합니다. 왼쪽 내용을 확인해주세요!',
       type: 'system',
       timestamp: new Date()
     })
@@ -384,24 +519,43 @@ onMounted(async () => {
   }
 })
 
-// 감시자 - 상태 변경 시 캐시 초기화
-watch(currentAgent, (newAgent) => {
-  console.log('에이전트 변경:', newAgent)
-  // 에이전트 변경 시 관련 캐시 데이터 초기화
+// 감시자 - Store 상태 변화 감지하여 UI 자동 업데이트
+watch(currentAgent, (newAgent, oldAgent) => {
+  console.log(`🔄 에이전트 변경 감지: ${oldAgent} → ${newAgent}`)
+  
+  // 에이전트별 컨텐츠 데이터 업데이트
   if (newAgent === 'quiz_generator') {
-    learningStore.clearQuizData()
+    updateContentData('quiz')
+  } else if (newAgent === 'evaluation_feedback') {
+    updateContentData('feedback')
+  } else if (newAgent === 'theory_educator') {
+    updateContentData('theory')
   }
 })
 
-watch(uiMode, (newMode) => {
-  console.log('UI 모드 변경:', newMode)
-  // UI 모드 변경 시 이전 모드의 데이터 초기화
+watch(uiMode, (newMode, oldMode) => {
+  console.log(`🔄 UI 모드 변경 감지: ${oldMode} → ${newMode}`)
+  
+  // UI 모드 변경 시 추가 처리
   if (newMode === 'quiz') {
-    chatHistory.value = []
+    console.log('퀴즈 모드로 전환됨 - 퀴즈 데이터 확인:', learningStore.quizData)
   } else if (newMode === 'chat') {
-    learningStore.clearQuizData()
+    console.log('채팅 모드로 전환됨')
   }
 })
+
+// 퀴즈 데이터 변화 감지
+watch(() => learningStore.quizData, (newQuizData, oldQuizData) => {
+  if (newQuizData && newQuizData.question && newQuizData.question !== oldQuizData?.question) {
+    console.log('🔄 퀴즈 데이터 변경 감지:', newQuizData)
+    
+    // 퀴즈 데이터가 업데이트되면 자동으로 퀴즈 모드로 전환
+    if (learningStore.currentUIMode !== 'quiz') {
+      console.log('퀴즈 데이터 감지로 인한 UI 모드 자동 전환')
+      learningStore.updateUIMode('quiz')
+    }
+  }
+}, { deep: true })
 </script>
 
 <style scoped>
