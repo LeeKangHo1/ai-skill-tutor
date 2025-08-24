@@ -315,17 +315,47 @@ Authorization: Bearer {access_token}
       "ui_mode": "chat",
       "content": {
         "type": "theory",
-        "title": "LLM(Large Language Model)이란?",
-        "content": "LLM은 대규모 언어 모델로, 방대한 텍스트 데이터를 학습하여 인간과 유사한 언어 이해와 생성 능력을 가진 AI 모델입니다...",
-        "key_points": [
-          "대규모 데이터 학습",
-          "언어 이해 및 생성",
-          "문맥 파악 능력"
-        ],
-        "examples": [
-          "ChatGPT (OpenAI)",
-          "Claude (Anthropic)",
-          "Bard (Google)"
+        "chapter_info": "📚 2챕터 1섹션",
+        "title": "LLM(Large Language Model)이란? 🤖",
+        "sections": [
+          {
+            "type": "introduction",
+            "content": "안녕하세요! 오늘은 AI의 핵심 기술 중 하나인 LLM에 대해 알아보겠습니다. 여러분이 자주 사용하는 ChatGPT도 바로 LLM 기술로 만들어진 거예요! 😊"
+          },
+          {
+            "type": "definition",
+            "title": "LLM이 뭔가요? 🔍",
+            "content": "LLM은 Large Language Model의 줄임말로, '대규모 언어 모델'이라는 뜻입니다. 엄청나게 많은 텍스트 데이터를 학습해서 인간처럼 언어를 이해하고 생성할 수 있는 AI 모델이에요.",
+            "analogy": {
+              "concept": "LLM",
+              "comparison": "도서관의 박학다식한 사서",
+              "details": [
+                "수많은 책을 읽고 기억하는 사서처럼, LLM도 인터넷의 방대한 텍스트를 학습해요",
+                "질문하면 적절한 답변을 찾아주는 사서처럼, LLM도 맥락에 맞는 응답을 생성합니다"
+              ]
+            }
+          },
+          {
+            "type": "examples",
+            "title": "실생활 LLM 예시들 💡",
+            "items": [
+              {
+                "category": "대화형 AI 🗣️",
+                "description": "ChatGPT, Claude, Bard 같은 챗봇들",
+                "benefit": "자연스러운 대화로 정보를 얻고 문제를 해결할 수 있어요"
+              },
+              {
+                "category": "글쓰기 도우미 ✍️",
+                "description": "이메일, 보고서, 창작 글 작성 지원",
+                "benefit": "글쓰기 시간을 단축하고 더 나은 표현을 찾을 수 있어요"
+              },
+              {
+                "category": "번역 서비스 🌍",
+                "description": "DeepL, Google 번역의 고급 기능들",
+                "benefit": "문맥을 이해한 자연스러운 번역이 가능해요"
+              }
+            ]
+          }
         ]
       }
     }
