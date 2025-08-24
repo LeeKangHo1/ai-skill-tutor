@@ -42,12 +42,13 @@ def quiz_generation_tool(
         
         # 데이터 소스에 따른 퀴즈 타입 결정
         if content_source == "theory_draft":
-            # theory_draft 기반: ChatGPT가 자동으로 적절한 타입 결정
-            quiz_type = "auto"  # 자동 결정 모드
+            # theory_draft 기반: 섹션 데이터에서 퀴즈 타입 추출 (개선된 _load_section_data 활용)
+            quiz_type = section_data.get('quiz_type', 'multiple_choice')
+            logger.info(f"theory_draft 모드 - 섹션 데이터에서 퀴즈 타입 추출: {quiz_type}")
         else:
             # 폴백 모드: 기존 섹션 데이터에서 퀴즈 타입 추출
-            quiz_data = section_data.get('quiz', {})
-            quiz_type = quiz_data.get('type', 'multiple_choice')
+            quiz_type = section_data.get('quiz_type') or section_data.get('quiz', {}).get('type', 'multiple_choice')
+            logger.info(f"폴백 모드 - 퀴즈 타입: {quiz_type}")
         
         # LangChain 구성 요소 초기화
         model = _get_chatgpt_model()
@@ -97,8 +98,10 @@ def _create_prompt_template(quiz_type: str, user_type: str, is_retry_session: bo
 """
     
     # theory_draft 기반 모드 처리
-    if content_source == "theory_draft" and quiz_type == "auto":
-        return _create_theory_draft_prompt_template(user_type, is_retry_session, retry_note, format_instructions)
+    if content_source == "theory_draft":
+        if quiz_type == "auto":
+            return _create_theory_draft_prompt_template(user_type, is_retry_session, retry_note, format_instructions)
+        # quiz_type이 지정된 경우 아래 일반 로직으로 진행
     
     if quiz_type == "multiple_choice":
         # 객관식 템플릿
@@ -272,17 +275,33 @@ def _prepare_input_data(section_data: Dict[str, Any], quiz_type: str, theory_con
     PromptTemplate에 전달할 입력 데이터 준비
     """
     
-    if content_source == "theory_draft" and quiz_type == "auto":
-        # theory_draft 기반 모드
-        section_title = section_data.get('section_title', '')
+    if content_source == "theory_draft":
+        # theory_draft 기반 모드 - 개선된 섹션 데이터 활용
+        section_title = section_data.get('section_title', '') or section_data.get('title', '')
         
-        return {
-            "section_title": section_title,
-            "theory_content": theory_content
-        }
+        if quiz_type == "auto":
+            # 자동 결정 모드 (기존 로직 유지)
+            return {
+                "section_title": section_title,
+                "theory_content": theory_content
+            }
+        else:
+            # 특정 퀴즈 타입 지정 모드
+            quiz_data = section_data.get('quiz', {})
+            reference_question = quiz_data.get('question', '')
+            
+            # 이론 내용 컨텍스트 생성
+            theory_context = f"\n학습한 이론 내용:\n{theory_content[:300]}..." if theory_content else ""
+            
+            return {
+                "section_title": section_title,
+                "quiz_type": quiz_type,
+                "reference_question": reference_question,
+                "theory_context": theory_context
+            }
     else:
-        # 기존 폴백 모드
-        section_title = section_data.get('title', '')
+        # 폴백 모드 - 개선된 섹션 데이터 활용
+        section_title = section_data.get('section_title', '') or section_data.get('title', '')
         quiz_data = section_data.get('quiz', {})
         reference_question = quiz_data.get('question', '')
         

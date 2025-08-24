@@ -46,21 +46,17 @@ class QuizGenerator:
             # 2. theory_draft 우선 확인
             theory_draft = self._get_theory_draft_from_state(updated_state)
             
-            # 3. 메타데이터 로드 (항상 필요)
-            section_metadata = self._load_section_metadata(updated_state["current_chapter"], updated_state["current_section"])
-            if not section_metadata:
-                raise ValueError(f"챕터 {updated_state['current_chapter']} 섹션 {updated_state['current_section']} 메타데이터를 찾을 수 없습니다.")
+            # 3. 섹션 데이터 로드 (챕터 제목, 섹션 제목, 퀴즈 타입 포함)
+            section_data = self._load_section_data(updated_state["current_chapter"], updated_state["current_section"])
+            if not section_data:
+                raise ValueError(f"챕터 {updated_state['current_chapter']} 섹션 {updated_state['current_section']} 데이터를 찾을 수 없습니다.")
             
-            # 4. 데이터 소스 결정 및 로드
+            # 4. 데이터 소스 결정
             if theory_draft:
-                print(f"[{self.agent_name}] theory_draft 기반 퀴즈 생성 모드")
-                section_data = section_metadata  # 메타데이터만 사용
+                print(f"[{self.agent_name}] theory_draft 기반 퀴즈 생성 모드 - 퀴즈 타입: {section_data.get('quiz_type', 'unknown')}")
                 content_source = "theory_draft"
             else:
-                print(f"[{self.agent_name}] 폴백 전략: 기존 JSON 파일 사용")
-                section_data = self._load_section_data(updated_state["current_chapter"], updated_state["current_section"])
-                if not section_data:
-                    raise ValueError(f"폴백 데이터도 찾을 수 없습니다.")
+                print(f"[{self.agent_name}] 폴백 전략: 기존 JSON 파일 사용 - 퀴즈 타입: {section_data.get('quiz_type', 'unknown')}")
                 content_source = "fallback"
             
             # 5. 재학습 여부 확인
@@ -170,14 +166,14 @@ class QuizGenerator:
 
     def _load_section_data(self, chapter_number: int, section_number: int) -> Dict[str, Any]:
         """
-        JSON 파일에서 특정 섹션 데이터만 로드 (폴백 전략용)
+        JSON 파일에서 특정 섹션 데이터 로드 (챕터 제목, 섹션 제목, 퀴즈 타입 포함)
         
         Args:
             chapter_number: 챕터 번호
             section_number: 섹션 번호
             
         Returns:
-            섹션 데이터 딕셔너리
+            섹션 데이터 딕셔너리 (챕터 제목, 섹션 제목, 퀴즈 타입 포함)
         """
         try:
             chapter_file = os.path.join(
@@ -192,12 +188,24 @@ class QuizGenerator:
             with open(chapter_file, 'r', encoding='utf-8') as f:
                 chapter_data = json.load(f)
             
-            # 특정 섹션만 찾아서 반환
+            # 챕터 정보 추출
+            chapter_title = chapter_data.get('title', '')
+            
+            # 특정 섹션 찾기
             sections = chapter_data.get('sections', [])
             for section in sections:
                 if section.get('section_number') == section_number:
-                    print(f"[{self.agent_name}] 폴백 섹션 {section_number} 데이터 로드 완료")
-                    return section
+                    # 섹션 데이터에 챕터 정보 추가
+                    enhanced_section = section.copy()
+                    enhanced_section.update({
+                        'chapter_number': chapter_number,
+                        'chapter_title': chapter_title,
+                        'section_title': section.get('title', ''),
+                        'quiz_type': section.get('quiz', {}).get('type', 'multiple_choice')
+                    })
+                    
+                    print(f"[{self.agent_name}] 섹션 데이터 로드 완료 - {chapter_title} > {section.get('title', '')}, 퀴즈 타입: {enhanced_section['quiz_type']}")
+                    return enhanced_section
             
             print(f"[{self.agent_name}] 섹션 {section_number}를 찾을 수 없음")
             return None
