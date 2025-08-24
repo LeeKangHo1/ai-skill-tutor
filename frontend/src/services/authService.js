@@ -148,11 +148,32 @@ class AuthService {
   async getCurrentUser() {
     try {
       const response = await api.get('/auth/me')
+      console.log('getCurrentUser - 원본 응답:', response)
+      console.log('getCurrentUser - response.data:', response.data)
+      console.log('getCurrentUser - response.data.success:', response.data.success)
+      console.log('getCurrentUser - response.data.data:', response.data.data)
       
-      if (response.data.success && response.data.data) {
-        // 사용자 정보 업데이트
-        tokenManager.setUserInfo(response.data.data)
-        return response.data
+      if (response.data.success) {
+        // 서버 응답 구조 확인: data.data가 있으면 사용, 없으면 data 사용
+        const userData = response.data.data || response.data
+        console.log('getCurrentUser - 사용할 사용자 데이터:', userData)
+        
+        // 사용자 정보 업데이트 (success, message 등 제외하고 실제 사용자 정보만)
+        const userInfo = response.data.data ? response.data.data : {
+          user_id: userData.user_id,
+          login_id: userData.login_id,
+          username: userData.username,
+          email: userData.email,
+          user_type: userData.user_type,
+          diagnosis_completed: userData.diagnosis_completed,
+          current_chapter: userData.current_chapter,
+          current_section: userData.current_section,
+          created_at: userData.created_at,
+          updated_at: userData.updated_at
+        }
+        
+        tokenManager.setUserInfo(userInfo)
+        return { success: true, data: userInfo }
       }
       
       throw new Error('사용자 정보 조회 실패')

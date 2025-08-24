@@ -319,9 +319,21 @@ export const useAuthStore = defineStore('auth', {
     async updateUserInfo() {
       try {
         const response = await authService.getCurrentUser()
+        console.log('updateUserInfo - 전체 응답:', response)
+        console.log('updateUserInfo - response.success:', response.success)
+        console.log('updateUserInfo - response.data:', response.data)
+        
         if (response.success) {
-          this.user = response.data.data
+          // 서버 응답 구조에 맞게 수정: response.data에 사용자 정보가 바로 있음
+          this.user = response.data
+          console.log('updateUserInfo - 설정된 사용자 정보:', this.user)
+          
+          // localStorage에도 사용자 정보 저장
+          tokenManager.setUserInfo(this.user)
+          
           return response
+        } else {
+          console.error('updateUserInfo - 응답 실패:', response)
         }
       } catch (error) {
         console.error('사용자 정보 업데이트 실패:', error)

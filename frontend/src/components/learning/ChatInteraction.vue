@@ -71,8 +71,10 @@
           <p>학습 세션이 완료되었습니다. 다음 단계를 선택해주세요.</p>
         </div>
         <div class="modal-footer">
-          <button class="modal-btn dashboard-btn" @click="goToDashboard">
-            📊 대시보드
+          <button class="modal-btn dashboard-btn" @click="goToDashboard" :disabled="isDashboardLoading">
+            <span v-if="isDashboardLoading" class="button-spinner"></span>
+            <span v-else>📊</span>
+            {{ isDashboardLoading ? '이동 중...' : '대시보드' }}
           </button>
           <button class="modal-btn start-learning-btn" @click="startNewLearning" :disabled="isProcessing">
             <span v-if="isProcessing" class="button-spinner"></span>
@@ -126,6 +128,7 @@ const chatHistoryRef = ref(null)
 const messageInputRef = ref(null)
 const showCompletionModal = ref(false)
 const isProcessing = ref(false)
+const isDashboardLoading = ref(false)
 
 // 메시지 클래스 결정
 const getMessageClass = (messageType) => {
@@ -276,9 +279,26 @@ const closeModal = () => {
 }
 
 // 대시보드로 이동
-const goToDashboard = () => {
-  closeModal()
-  router.push('/dashboard')
+const goToDashboard = async () => {
+  if (isDashboardLoading.value) return
+
+  try {
+    isDashboardLoading.value = true
+
+    // 대시보드 이동 전 사용자 정보 갱신
+    await authStore.updateUserInfo()
+    console.log('대시보드 이동 전 사용자 정보 갱신 완료:', authStore.user)
+
+    closeModal()
+    router.push('/dashboard')
+  } catch (error) {
+    console.error('대시보드 이동 중 사용자 정보 갱신 실패:', error)
+    // 갱신 실패해도 대시보드로 이동 시도 (라우터 가드에서 처리)
+    closeModal()
+    router.push('/dashboard')
+  } finally {
+    isDashboardLoading.value = false
+  }
 }
 
 // 새로운 학습 시작
