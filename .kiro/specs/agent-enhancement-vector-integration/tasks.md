@@ -1,25 +1,36 @@
 # Implementation Plan
 
-- [ ] 1. 퀴즈 생성 에이전트 데이터 소스 개선
+- [x] 1. 퀴즈 생성 에이전트 데이터 소스 개선
+
+
+
+
+
   - State의 theory_draft를 우선 참조하도록 process() 메서드 수정
   - chapters_metadata.json에서 챕터/섹션 제목을 로드하는 _load_section_metadata() 메서드 구현
   - theory_draft와 메타데이터를 결합한 퀴즈 생성 로직 추가
   - 기존 JSON 파일을 폴백 전략으로 활용하는 조건부 로직 구현
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 1.1 퀴즈 생성 에이전트 메타데이터 로더 구현
+- [x] 1.1 퀴즈 생성 에이전트 메타데이터 로더 구현
+
+
   - chapters_metadata.json 파일을 읽어서 특정 챕터/섹션의 제목 정보만 추출하는 _load_section_metadata() 메서드 작성
   - 메타데이터 파일 경로 설정 및 오류 처리 로직 포함
   - 이론 생성 에이전트의 동일한 메서드를 참고하여 구현
   - _Requirements: 1.2_
 
-- [ ] 1.2 theory_draft 우선 참조 로직 구현
+- [x] 1.2 theory_draft 우선 참조 로직 구현
+
+
   - State에서 theory_draft 내용을 추출하는 _get_theory_draft_from_state() 메서드 작성
   - theory_draft 존재 여부를 확인하고 우선순위를 결정하는 조건부 로직 구현
   - theory_draft가 비어있거나 없을 경우 폴백 전략으로 전환하는 로직 추가
   - _Requirements: 1.1, 1.3_
 
-- [ ] 1.3 퀴즈 도구 theory_draft 지원 추가
+- [x] 1.3 퀴즈 도구 theory_draft 지원 추가
+
+
   - quiz_tools_chatgpt.py에서 theory_draft를 입력으로 받는 새로운 파라미터 추가
   - theory_draft 기반 퀴즈 생성을 위한 프롬프트 템플릿 작성
   - 기존 섹션 데이터 기반 프롬프트와 분기 처리하는 로직 구현

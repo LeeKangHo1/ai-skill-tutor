@@ -18,16 +18,18 @@ def quiz_generation_tool(
     section_data: Dict[str, Any],
     user_type: str,
     is_retry_session: bool = False,
-    theory_content: str = ""
+    theory_content: str = "",
+    content_source: str = "fallback"
 ) -> str:
     """
     ChatGPT를 활용한 사용자 맞춤형 퀴즈 생성 (LangChain LCEL 사용)
     
     Args:
-        section_data: 특정 섹션 데이터 (퀴즈 타입 포함)
+        section_data: 특정 섹션 데이터 또는 메타데이터
         user_type: 사용자 유형 ("beginner" or "advanced")
         is_retry_session: 재학습 여부
-        theory_content: 이론 설명 내용 (참고용)
+        theory_content: 이론 설명 내용 (theory_draft)
+        content_source: 데이터 소스 ("theory_draft" or "fallback")
         
     Returns:
         생성된 퀴즈 JSON 문자열
@@ -38,20 +40,25 @@ def quiz_generation_tool(
     try:
         logger.info("ChatGPT 퀴즈 생성 도구 시작 (LCEL 파이프라인)")
         
-        # 섹션에서 퀴즈 타입 추출
-        quiz_data = section_data.get('quiz', {})
-        quiz_type = quiz_data.get('type', 'multiple_choice')
+        # 데이터 소스에 따른 퀴즈 타입 결정
+        if content_source == "theory_draft":
+            # theory_draft 기반: ChatGPT가 자동으로 적절한 타입 결정
+            quiz_type = "auto"  # 자동 결정 모드
+        else:
+            # 폴백 모드: 기존 섹션 데이터에서 퀴즈 타입 추출
+            quiz_data = section_data.get('quiz', {})
+            quiz_type = quiz_data.get('type', 'multiple_choice')
         
         # LangChain 구성 요소 초기화
         model = _get_chatgpt_model()
         parser = JsonOutputParser(pydantic_object=QuizSchema)
-        prompt_template = _create_prompt_template(quiz_type, user_type, is_retry_session)
+        prompt_template = _create_prompt_template(quiz_type, user_type, is_retry_session, content_source)
         
         # LCEL 파이프라인 구성: prompt | model | parser
         chain = prompt_template | model | parser
         
         # 입력 데이터 준비
-        input_data = _prepare_input_data(section_data, quiz_type, theory_content)
+        input_data = _prepare_input_data(section_data, quiz_type, theory_content, content_source)
         
         # 파이프라인 실행
         result = chain.invoke(input_data)
@@ -76,7 +83,7 @@ def _get_chatgpt_model() -> ChatOpenAI:
     )
 
 
-def _create_prompt_template(quiz_type: str, user_type: str, is_retry_session: bool) -> PromptTemplate:
+def _create_prompt_template(quiz_type: str, user_type: str, is_retry_session: bool, content_source: str = "fallback") -> PromptTemplate:
     """
     퀴즈 타입과 사용자 유형에 따른 PromptTemplate 생성
     """
@@ -88,6 +95,10 @@ def _create_prompt_template(quiz_type: str, user_type: str, is_retry_session: bo
     format_instructions = """
 반드시 유효한 JSON 형식으로만 응답해주세요. 다른 텍스트는 포함하지 마세요.
 """
+    
+    # theory_draft 기반 모드 처리
+    if content_source == "theory_draft" and quiz_type == "auto":
+        return _create_theory_draft_prompt_template(user_type, is_retry_session, retry_note, format_instructions)
     
     if quiz_type == "multiple_choice":
         # 객관식 템플릿
@@ -181,26 +192,111 @@ def _create_prompt_template(quiz_type: str, user_type: str, is_retry_session: bo
     )
 
 
-def _prepare_input_data(section_data: Dict[str, Any], quiz_type: str, theory_content: str) -> Dict[str, str]:
+def _create_theory_draft_prompt_template(user_type: str, is_retry_session: bool, retry_note: str, format_instructions: str) -> PromptTemplate:
+    """
+    theory_draft 기반 퀴즈 생성을 위한 전용 프롬프트 템플릿
+    """
+    
+    # 자동 타입 결정을 위한 JSON 형식 (객관식/주관식 모두 가능)
+    json_format_auto = """다음 중 하나의 형식으로 응답하세요:
+
+객관식인 경우:
+{{
+  "quiz": {{
+    "type": "multiple_choice",
+    "question": "문제 내용",
+    "options": ["선택지1", "선택지2", "선택지3", "선택지4"],
+    "correct_answer": 정답번호(1-4),
+    "explanation": "정답 해설",
+    "hint": "도움이 되는 힌트"
+  }}
+}}
+
+주관식인 경우:
+{{
+  "quiz": {{
+    "type": "subjective",
+    "question": "프롬프트 작성 문제 내용",
+    "sample_answer": "모범 답안 예시",
+    "evaluation_criteria": ["평가기준1", "평가기준2", "평가기준3"],
+    "hint": "도움이 되는 힌트"
+  }}
+}}"""
+    
+    if user_type == "beginner":
+        system_message = f"""당신은 AI 입문자를 위한 친근한 퀴즈 출제자입니다. {retry_note}
+
+다음 지침에 따라 퀴즈를 만드세요:
+- 제공된 이론 설명 내용을 바탕으로 퀴즈 생성
+- 이론 내용의 핵심 개념을 이해했는지 확인하는 문제
+- 친근하고 이해하기 쉬운 문제 (이모지 활용)
+- 일상생활과 연관된 예시 활용
+- 이론 내용에 따라 객관식 또는 주관식(프롬프트 작성) 중 적절한 타입 선택
+
+{json_format_auto}
+
+{format_instructions}"""
+    else:  # advanced
+        system_message = f"""당신은 실무 응용형 사용자를 위한 효율적인 퀴즈 출제자입니다. {retry_note}
+
+다음 지침에 따라 퀴즈를 만드세요:
+- 제공된 이론 설명 내용을 바탕으로 퀴즈 생성
+- 실무 적용 관점에서 이론을 활용할 수 있는지 확인하는 문제
+- 논리적이고 체계적인 문제 구성
+- 핵심을 파악하는 능력 테스트
+- 이론 내용에 따라 객관식 또는 주관식(프롬프트 작성) 중 적절한 타입 선택
+
+{json_format_auto}
+
+{format_instructions}"""
+    
+    # theory_draft 전용 템플릿
+    template = f"""{system_message}
+
+주제: "{{section_title}}"에 대한 퀴즈를 만들어주세요.
+
+학습한 이론 내용:
+{{theory_content}}
+
+위 이론 설명을 바탕으로 학습자가 핵심 개념을 제대로 이해했는지 확인할 수 있는 퀴즈를 만들어주세요.
+이론 내용의 특성에 따라 객관식 또는 주관식(프롬프트 작성) 중 적절한 타입을 선택하세요."""
+    
+    return PromptTemplate(
+        input_variables=["section_title", "theory_content"],
+        template=template
+    )
+
+
+def _prepare_input_data(section_data: Dict[str, Any], quiz_type: str, theory_content: str, content_source: str = "fallback") -> Dict[str, str]:
     """
     PromptTemplate에 전달할 입력 데이터 준비
     """
     
-    section_title = section_data.get('title', '')
-    quiz_data = section_data.get('quiz', {})
-    reference_question = quiz_data.get('question', '')
-    
-    # 이론 내용 컨텍스트 생성
-    theory_context = ""
-    if theory_content:
-        theory_context = f"\n학습한 이론 내용:\n{theory_content[:300]}..."
-    
-    return {
-        "section_title": section_title,
-        "quiz_type": quiz_type,
-        "reference_question": reference_question,
-        "theory_context": theory_context
-    }
+    if content_source == "theory_draft" and quiz_type == "auto":
+        # theory_draft 기반 모드
+        section_title = section_data.get('section_title', '')
+        
+        return {
+            "section_title": section_title,
+            "theory_content": theory_content
+        }
+    else:
+        # 기존 폴백 모드
+        section_title = section_data.get('title', '')
+        quiz_data = section_data.get('quiz', {})
+        reference_question = quiz_data.get('question', '')
+        
+        # 이론 내용 컨텍스트 생성
+        theory_context = ""
+        if theory_content:
+            theory_context = f"\n학습한 이론 내용:\n{theory_content[:300]}..."
+        
+        return {
+            "section_title": section_title,
+            "quiz_type": quiz_type,
+            "reference_question": reference_question,
+            "theory_context": theory_context
+        }
 
 
 def _generate_fallback_response(section_data: Dict[str, Any], quiz_type: str, error_msg: str) -> str:

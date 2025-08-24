@@ -43,21 +43,36 @@ class QuizGenerator:
             # 1. UI 모드를 quiz로 변경 (퀴즈 생성 시작 시점)
             updated_state = state_manager.update_ui_mode(state, "quiz")
             
-            # 2. 특정 섹션 데이터만 로드
-            section_data = self._load_section_data(updated_state["current_chapter"], updated_state["current_section"])
-            if not section_data:
-                raise ValueError(f"챕터 {updated_state['current_chapter']} 섹션 {updated_state['current_section']} 데이터를 찾을 수 없습니다.")
+            # 2. theory_draft 우선 확인
+            theory_draft = self._get_theory_draft_from_state(updated_state)
             
-            # 3. 재학습 여부 확인
+            # 3. 메타데이터 로드 (항상 필요)
+            section_metadata = self._load_section_metadata(updated_state["current_chapter"], updated_state["current_section"])
+            if not section_metadata:
+                raise ValueError(f"챕터 {updated_state['current_chapter']} 섹션 {updated_state['current_section']} 메타데이터를 찾을 수 없습니다.")
+            
+            # 4. 데이터 소스 결정 및 로드
+            if theory_draft:
+                print(f"[{self.agent_name}] theory_draft 기반 퀴즈 생성 모드")
+                section_data = section_metadata  # 메타데이터만 사용
+                content_source = "theory_draft"
+            else:
+                print(f"[{self.agent_name}] 폴백 전략: 기존 JSON 파일 사용")
+                section_data = self._load_section_data(updated_state["current_chapter"], updated_state["current_section"])
+                if not section_data:
+                    raise ValueError(f"폴백 데이터도 찾을 수 없습니다.")
+                content_source = "fallback"
+            
+            # 5. 재학습 여부 확인
             is_retry_session = updated_state["current_session_count"] > 0
             
-            # 4. 순수 퀴즈 대본 생성 (힌트 포함, 사용자 대면 메시지 없음)
-            # 퀴즈 타입은 ChatGPT가 섹션 데이터를 보고 자동으로 결정
+            # 6. 순수 퀴즈 대본 생성 (힌트 포함, 사용자 대면 메시지 없음)
             quiz_content = quiz_generation_tool(
                 section_data=section_data,
                 user_type=updated_state["user_type"],
                 is_retry_session=is_retry_session,
-                theory_content=updated_state.get("theory_draft", "")
+                theory_content=theory_draft,
+                content_source=content_source
             )
             
             # 5. 퀴즈 정보 파싱 및 State 업데이트 (v2.0 새로운 메서드 사용)
@@ -78,15 +93,16 @@ class QuizGenerator:
                 self.agent_name
             )
             
-            # 8. 대화 기록 추가 (시스템 로그용)
+            # 8. 대화 기록 추가 (데이터 소스 정보 포함)
+            source_info = "theory_draft 기반" if content_source == "theory_draft" else "폴백 JSON 파일"
             updated_state = state_manager.add_conversation(
                 updated_state,
                 agent_name=self.agent_name,
-                message=f"챕터 {state['current_chapter']} 섹션 {state['current_section']} 퀴즈 생성 완료",
+                message=f"챕터 {state['current_chapter']} 섹션 {state['current_section']} 퀴즈 생성 완료 (출처: {source_info})",
                 message_type="system"
             )
             
-            print(f"[{self.agent_name}] 퀴즈 생성 완료")
+            print(f"[{self.agent_name}] 퀴즈 생성 완료 (출처: {source_info})")
             return updated_state
             
         except Exception as e:
@@ -104,9 +120,57 @@ class QuizGenerator:
             )
             return error_state
     
+    def _load_section_metadata(self, chapter_number: int, section_number: int) -> Dict[str, Any]:
+        """
+        chapters_metadata.json에서 특정 섹션의 메타데이터만 로드
+        
+        Args:
+            chapter_number: 챕터 번호
+            section_number: 섹션 번호
+            
+        Returns:
+            섹션 메타데이터 딕셔너리 (제목 정보만)
+        """
+        try:
+            metadata_file = os.path.join(self.chapter_data_path, "chapters_metadata.json")
+            
+            if not os.path.exists(metadata_file):
+                print(f"[{self.agent_name}] 메타데이터 파일이 존재하지 않음: {metadata_file}")
+                return None
+            
+            with open(metadata_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+            
+            # 특정 챕터 찾기
+            for chapter in metadata.get('chapters', []):
+                if chapter.get('chapter_number') == chapter_number:
+                    chapter_title = chapter.get('chapter_title', '')
+                    
+                    # 특정 섹션 찾기
+                    for section in chapter.get('sections', []):
+                        if section.get('section_number') == section_number:
+                            section_title = section.get('section_title', '')
+                            
+                            print(f"[{self.agent_name}] 메타데이터 로드 완료 - {chapter_title} > {section_title}")
+                            
+                            return {
+                                "chapter_number": chapter_number,
+                                "chapter_title": chapter_title,
+                                "section_number": section_number,
+                                "section_title": section_title,
+                                "estimated_duration": chapter.get('estimated_duration_minutes', 0)
+                            }
+            
+            print(f"[{self.agent_name}] 챕터 {chapter_number} 섹션 {section_number} 메타데이터를 찾을 수 없음")
+            return None
+            
+        except Exception as e:
+            print(f"[{self.agent_name}] 메타데이터 로드 실패: {str(e)}")
+            return None
+
     def _load_section_data(self, chapter_number: int, section_number: int) -> Dict[str, Any]:
         """
-        JSON 파일에서 특정 섹션 데이터만 로드
+        JSON 파일에서 특정 섹션 데이터만 로드 (폴백 전략용)
         
         Args:
             chapter_number: 챕터 번호
@@ -132,7 +196,7 @@ class QuizGenerator:
             sections = chapter_data.get('sections', [])
             for section in sections:
                 if section.get('section_number') == section_number:
-                    print(f"[{self.agent_name}] 섹션 {section_number} 데이터 로드 완료")
+                    print(f"[{self.agent_name}] 폴백 섹션 {section_number} 데이터 로드 완료")
                     return section
             
             print(f"[{self.agent_name}] 섹션 {section_number}를 찾을 수 없음")
@@ -141,6 +205,30 @@ class QuizGenerator:
         except Exception as e:
             print(f"[{self.agent_name}] 섹션 데이터 로드 실패: {str(e)}")
             return None
+    
+    def _get_theory_draft_from_state(self, state: TutorState) -> str:
+        """
+        State에서 theory_draft 내용을 추출
+        
+        Args:
+            state: 현재 TutorState
+            
+        Returns:
+            theory_draft 내용 (없으면 빈 문자열)
+        """
+        try:
+            theory_draft = state.get("theory_draft", "")
+            
+            if theory_draft and theory_draft.strip():
+                print(f"[{self.agent_name}] theory_draft 발견 - 길이: {len(theory_draft)}자")
+                return theory_draft.strip()
+            else:
+                print(f"[{self.agent_name}] theory_draft가 비어있거나 없음")
+                return ""
+                
+        except Exception as e:
+            print(f"[{self.agent_name}] theory_draft 추출 실패: {str(e)}")
+            return ""
     
     def _get_quiz_type_from_section(self, section_data: Dict[str, Any]) -> str:
         """
