@@ -3,7 +3,6 @@
   <div class="main-content-area">
     <div class="content-header">
       <h2 class="content-title">{{ chapterTitle }}</h2>
-      <p class="content-subtitle">{{ sectionTitle }}</p>
     </div>
 
     <div class="content-body">
@@ -13,124 +12,42 @@
         <p>컨텐츠를 불러오는 중...</p>
       </div>
 
-      <!-- 이론 설명 컨텐츠 (구조화된 JSON 형태) -->
-      <div v-else-if="shouldShowContent('theory')" class="theory-content content-active"
-        :class="{ 'content-hidden': !isContentVisible('theory') }">
-
-        <!-- 디버깅 정보 -->
-        <div style="background: #f8f9fa; padding: 0.5rem; margin-bottom: 1rem; font-size: 0.8rem; border-radius: 0.25rem;">
-          <strong>🔍 디버깅:</strong> 
-          <div>타입: {{ typeof theoryContent }}</div>
-          <div>sections 존재: {{ !!theoryContent.sections }}</div>
-          <div>sections 타입: {{ typeof theoryContent.sections }}</div>
-          <div>전체 데이터: {{ JSON.stringify(theoryContent, null, 2) }}</div>
-        </div>
-
-        <!-- 챕터 정보 -->
-        <div v-if="theoryContent.chapter_info" class="chapter-info">
-          {{ theoryContent.chapter_info }}
-        </div>
-
-        <!-- 제목 -->
-        <h3 class="theory-title">{{ theoryContent.title || '🧠 LLM(Large Language Model)이란?' }}</h3>
-
-        <!-- 섹션들 -->
-        <div v-if="theoryContent.sections" class="theory-sections">
-          <div v-for="(section, index) in theoryContent.sections" :key="index" class="theory-section"
-            :class="`section-${section.type}`">
-
-            <!-- 소개 섹션 -->
-            <div v-if="section.type === 'introduction'" class="introduction-section">
-              <p class="introduction-text">{{ section.content }}</p>
-            </div>
-
-            <!-- 정의 섹션 -->
-            <div v-else-if="section.type === 'definition'" class="definition-section">
-              <h4 v-if="section.title" class="section-title">{{ section.title }}</h4>
-              <p class="definition-content">{{ section.content }}</p>
-
-              <!-- 비유 설명 -->
-              <div v-if="section.analogy" class="analogy-box">
-                <h5 class="analogy-title">💡 쉬운 비유</h5>
-                <div class="analogy-content">
-                  <p><strong>{{ section.analogy.concept }}</strong>는 <strong>{{ section.analogy.comparison }}</strong>와
-                    같아요!</p>
-                  <ul v-if="section.analogy.details" class="analogy-details">
-                    <li v-for="(detail, idx) in section.analogy.details" :key="idx">{{ detail }}</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <!-- 예시 섹션 -->
-            <div v-else-if="section.type === 'examples'" class="examples-section">
-              <h4 v-if="section.title" class="section-title">{{ section.title }}</h4>
-              <div v-if="section.items" class="examples-grid">
-                <div v-for="(item, idx) in section.items" :key="idx" class="example-item">
-                  <h5 class="example-category">{{ item.category }}</h5>
-                  <p class="example-description">{{ item.description }}</p>
-                  <div class="example-benefit">
-                    <span class="benefit-label">💡 효과:</span>
-                    <span class="benefit-text">{{ item.benefit }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- 폴백: 기존 형태의 데이터인 경우 -->
-        <div v-else class="theory-body">
-          <div class="theory-description">{{ theoryContent.description || theoryContent.content }}</div>
-        </div>
-
-      </div>
+      <!-- 이론 설명 컨텐츠 -->
+      <TheoryContent 
+        v-else-if="shouldShowContent('theory')"
+        :theory-data="theoryContent"
+        :is-visible="isContentVisible('theory')"
+      />
 
       <!-- 퀴즈 컨텐츠 -->
-      <div v-else-if="shouldShowContent('quiz')" class="quiz-content"
-        :class="{ 'content-active': isContentVisible('quiz'), 'content-hidden': !isContentVisible('quiz') }">
-        <h3>📝 퀴즈 문제</h3>
-        <div class="quiz-question-display">
-          <p><strong>{{ quizContent.question }}</strong></p>
-          <div class="quiz-description">
-            <p>💡 오른쪽 상호작용 영역에서 답변을 선택해주세요.</p>
-            <p>⚠️ 답변을 제출하기 전까지는 다른 내용을 볼 수 없습니다.</p>
-          </div>
-        </div>
-      </div>
+      <QuizContent 
+        v-else-if="shouldShowContent('quiz')"
+        :quiz-data="quizContent"
+        :is-visible="isContentVisible('quiz')"
+      />
 
       <!-- 피드백 컨텐츠 -->
-      <div v-else-if="shouldShowContent('feedback')" class="feedback-content"
-        :class="{ 'content-active': isContentVisible('feedback'), 'content-hidden': !isContentVisible('feedback') }">
-        <h3>✅ 평가 결과</h3>
-        <div class="feedback-score">
-          <p><strong>{{ feedbackContent.scoreText }}</strong></p>
-        </div>
-        <div class="feedback-explanation">
-          <p><strong>📝 상세 피드백:</strong></p>
-          <p class="feedback-text">{{ feedbackContent.explanation }}</p>
-        </div>
-        <div class="feedback-next-steps">
-          <p><strong>🎯 다음 단계 결정:</strong></p>
-          <p class="feedback-text">{{ feedbackContent.nextStep }}</p>
-        </div>
-      </div>
+      <FeedbackContent 
+        v-else-if="shouldShowContent('feedback')"
+        :feedback-data="feedbackContent"
+        :qna-data="qnaContent"
+        :should-show-qna="shouldShowContent('qna')"
+        :is-visible="isContentVisible('feedback')"
+      />
 
-      <!-- QnA 컨텐츠 (이론 유지하면서 질답 추가) -->
-      <div v-else-if="shouldShowContent('qna')" class="qna-content"
-        :class="{ 'content-active': isContentVisible('qna'), 'content-hidden': !isContentVisible('qna') }">
-        <h4>❓ 질문 답변</h4>
-        <div class="qna-item">
-          <p><strong>질문:</strong> {{ qnaContent.question }}</p>
-          <div><strong>답변:</strong></div>
-          <p class="qna-answer">{{ qnaContent.answer }}</p>
-        </div>
-        <div v-if="qnaContent.relatedInfo" class="qna-related">
-          <p><strong>🔗 관련 학습:</strong></p>
-          <p class="qna-related-text">{{ qnaContent.relatedInfo }}</p>
-        </div>
-      </div>
+      <!-- QnA 컨텐츠 (이론과 함께 표시) -->
+      <template v-else-if="shouldShowContent('qna')">
+        <TheoryContent 
+          :theory-data="theoryContent"
+          :is-visible="true"
+        />
+        <FeedbackContent 
+          :feedback-data="{ scoreText: '', explanation: '', nextStep: '' }"
+          :qna-data="qnaContent"
+          :should-show-qna="true"
+          :is-visible="true"
+        />
+      </template>
     </div>
 
     <!-- 이전 컨텐츠 접근 버튼 -->
@@ -155,6 +72,9 @@ import { learningService } from '@/services/learningService.js'
 import { mapApiResponseToComponent, safeApiCall } from '@/utils/dataMappers.js'
 import { useAuthStore } from '@/stores/authStore.js'
 import { useLearningStore } from '@/stores/learningStore.js'
+import TheoryContent from './TheoryContent.vue'
+import QuizContent from './QuizContent.vue'
+import FeedbackContent from './FeedbackContent.vue'
 
 // Props 정의
 const props = defineProps({
@@ -213,7 +133,6 @@ const agentContentMap = {
 
 // 컴퓨티드 속성들
 const chapterTitle = computed(() => `${currentChapterNumber.value}챕터 ${currentSectionNumber.value}섹션`)
-const sectionTitle = computed(() => 'LLM이란 무엇인가')
 
 // 더미 데이터 (fallback용) - 새로운 JSON 구조
 const dummyTheoryContent = {
@@ -571,10 +490,7 @@ const handleNavigationClick = (navigationType) => {
   margin-bottom: 0.5rem;
 }
 
-.content-subtitle {
-  color: #6c757d;
-  font-size: 1rem;
-}
+
 
 .content-body {
   min-height: 400px;
@@ -610,290 +526,7 @@ const handleNavigationClick = (navigationType) => {
   }
 }
 
-/* 에이전트별 컨텐츠 스타일 */
-.theory-content {
-  background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
-  border-left: 4px solid #2196f3;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.theory-body {
-  line-height: 1.6;
-}
-
-/* 새로운 JSON 구조 스타일 */
-.chapter-info {
-  font-size: 0.9rem;
-  color: #6c757d;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.theory-title {
-  font-size: 1.4rem;
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
-  font-weight: 600;
-}
-
-.theory-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.theory-section {
-  border-radius: 0.375rem;
-  padding: 1rem;
-}
-
-/* 소개 섹션 */
-.section-introduction {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(33, 150, 243, 0.2);
-}
-
-.introduction-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  color: #495057;
-  margin: 0;
-}
-
-/* 정의 섹션 */
-.section-definition {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(33, 150, 243, 0.3);
-}
-
-.section-title {
-  font-size: 1.2rem;
-  color: #2c3e50;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-}
-
-.definition-content {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #495057;
-  margin-bottom: 1rem;
-}
-
-.analogy-box {
-  background: linear-gradient(135deg, #fff9c4, #f0f4c3);
-  border: 1px solid #dce775;
-  border-radius: 0.375rem;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
-.analogy-title {
-  font-size: 1rem;
-  color: #558b2f;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.analogy-content p {
-  margin-bottom: 0.5rem;
-  color: #33691e;
-}
-
-.analogy-details {
-  list-style: none;
-  padding-left: 0;
-  margin: 0.5rem 0 0 0;
-}
-
-.analogy-details li {
-  background: rgba(255, 255, 255, 0.7);
-  padding: 0.25rem 0.5rem;
-  margin-bottom: 0.25rem;
-  border-radius: 0.25rem;
-  font-size: 0.9rem;
-  color: #33691e;
-}
-
-/* 예시 섹션 */
-.section-examples {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(33, 150, 243, 0.3);
-}
-
-.examples-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.example-item {
-  background: linear-gradient(135deg, #e8f5e8, #f1f8e9);
-  border: 1px solid #c8e6c9;
-  border-radius: 0.375rem;
-  padding: 1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.example-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.example-category {
-  font-size: 1.1rem;
-  color: #2e7d32;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.example-description {
-  color: #424242;
-  line-height: 1.5;
-  margin-bottom: 0.75rem;
-}
-
-.example-benefit {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.benefit-label {
-  color: #558b2f;
-  font-weight: 500;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.benefit-text {
-  color: #33691e;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-
-
-.quiz-content {
-  background: linear-gradient(135deg, #fff3e0, #fce4ec);
-  border-left: 4px solid #ff9800;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.quiz-question-display p {
-  margin-bottom: 1rem;
-}
-
-.quiz-description {
-  background: rgba(255, 255, 255, 0.7);
-  padding: 1rem;
-  border-radius: 0.375rem;
-  border: 1px solid rgba(255, 152, 0, 0.3);
-}
-
-.quiz-description p {
-  margin-bottom: 0.5rem;
-}
-
-.quiz-description p:last-child {
-  margin-bottom: 0;
-}
-
-.feedback-content {
-  background: linear-gradient(135deg, #e8f5e8, #f1f8e9);
-  border-left: 4px solid #4caf50;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.feedback-score {
-  margin-bottom: 1.5rem;
-}
-
-.feedback-score p {
-  font-size: 1.2rem;
-  color: #2e7d32;
-}
-
-.feedback-explanation,
-.feedback-next-steps {
-  margin-bottom: 1rem;
-}
-
-.feedback-text {
-  line-height: 1.6;
-  color: #2e7d32;
-  margin-top: 0.5rem;
-}
-
-.qna-content {
-  background: linear-gradient(135deg, #f3e5f5, #fce4ec);
-  border-left: 4px solid #9c27b0;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.qna-item {
-  margin-bottom: 1rem;
-  line-height: 1.6;
-}
-
-.qna-item p {
-  margin-bottom: 0.75rem;
-}
-
-.qna-related {
-  background: rgba(255, 255, 255, 0.7);
-  padding: 1rem;
-  border-radius: 0.375rem;
-  border: 1px solid rgba(156, 39, 176, 0.3);
-}
-
-.qna-related p {
-  margin-bottom: 0.5rem;
-}
-
-.qna-answer {
-  line-height: 1.6;
-  color: #495057;
-  margin-top: 0.5rem;
-}
-
-.qna-related-text {
-  line-height: 1.6;
-  color: #6c757d;
-  margin-top: 0.5rem;
-  margin-bottom: 0;
-}
-
-/* 컨텐츠 표시/숨김 */
-.content-active {
-  display: block;
-  animation: fadeIn 0.3s ease-in;
-}
-
-.content-hidden {
-  display: none;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* 컨테이너 스타일만 유지 */
 
 /* 이전 컨텐츠 접근 버튼 */
 .content-navigation {
@@ -939,31 +572,12 @@ const handleNavigationClick = (navigationType) => {
     font-size: 1.25rem;
   }
 
-  .theory-content,
-  .quiz-content,
-  .feedback-content,
-  .qna-content {
-    padding: 1rem;
-  }
-
   .content-navigation {
     flex-direction: column;
   }
 
   .btn {
     width: 100%;
-  }
-
-  .examples-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .theory-title {
-    font-size: 1.2rem;
-  }
-
-  .section-title {
-    font-size: 1.1rem;
   }
 }
 </style>

@@ -25,7 +25,9 @@
   - **작업 완료 후 반드시 ComponentTest.vue로 동작 확인**
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [x] 3. MainContentArea 연동 테스트
+- [ ] 3. MainContentArea 연동 테스트
+
+
 
 
 
@@ -39,9 +41,37 @@
   - **MainContentArea 작업이 완전히 완료되었는지 최종 확인**
   - _Requirements: 1.4_
 
-- [ ] 4. QuizInteraction.vue 백엔드 연동
-  - 퀴즈 모드 활성화 시 learningService.sendSessionMessage() 호출
-  - 답안 제출 시 learningService.submitQuizAnswerV2() 호출
+- [x] 3.1 MainContentArea 컴포넌트 분리
+
+
+
+
+
+  - MainContentArea.vue를 3개의 하위 컴포넌트로 분리
+  - TheoryContent.vue: 이론 설명 파트 담당
+  - QuizContent.vue: 퀴즈 문제 파트 담당  
+  - FeedbackContent.vue: 평가 및 피드백 파트 담당
+  - 각 컴포넌트는 props를 통해 데이터 수신
+  - MainContentArea는 상위 컨테이너 역할로 변경
+  - 기존 API 연동 로직은 MainContentArea에서 유지
+  - _Requirements: 1.1, 1.2, 1.3_
+
+- [ ] 3.2 ComponentTest.vue 분리된 컴포넌트 테스트 추가
+  - 새로 분리된 TheoryContent, QuizContent, FeedbackContent 컴포넌트 테스트 추가
+  - 각 컴포넌트별 props 전달 및 렌더링 테스트
+  - 분리된 컴포넌트들의 독립적인 동작 검증
+  - MainContentArea 컨테이너의 하위 컴포넌트 관리 테스트
+  - **컴포넌트 분리 작업 완료 후 전체 동작 확인**
+  - _Requirements: 1.1, 1.2, 1.3_
+
+- [x] 4. QuizInteraction.vue 백엔드 연동
+
+
+
+
+
+  - response에서 ui_mode가 'quiz'로 변경되는 경우 퀴즈 컨텐츠 렌더링
+  - 답안 제출 시 learningService.submitQuizAnswerV2() 호출 (sendSessionMessage 아님)
   - API 응답을 기존 퀴즈 데이터 구조로 직접 매핑
   - 에러 발생 시 더미데이터 fallback 처리
   - **작업 완료 후 반드시 ComponentTest.vue로 동작 확인**
