@@ -53,7 +53,7 @@ def qna_generation_tool(user_question: str, current_context: Dict[str, Any] = No
             tools=tools,
             verbose=True,  # 디버깅용
             handle_parsing_errors=True,
-            max_iterations=3,  # 최대 3번의 도구 호출 허용
+            max_iterations=1,  # 최대 1번의 도구 호출 허용
             early_stopping_method="generate"  # 답변 생성 후 중단
         )
         

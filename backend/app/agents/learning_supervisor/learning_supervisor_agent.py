@@ -55,6 +55,12 @@ class LearningSupervisor:
             if session_stage == "session_start":
                 return self._handle_session_start(state)
             
+            # Complete 요청인 경우 의도 분석 건너뛰기 (retry_decision_result가 있으면 Complete 요청)
+            retry_decision = state.get("retry_decision_result", "")
+            if retry_decision and user_intent == "next_step":
+                print(f"[DEBUG] Complete 요청 감지 (decision: {retry_decision}) - 의도 분석 건너뛰기")
+                return self._handle_predefined_intent(state)
+            
             # 이론 완료 후 또는 피드백 완료 후에는 의도 분석 수행
             if session_stage in ["theory_completed", "quiz_and_feedback_completed"]:
                 print(f"[DEBUG] 의도 분석이 필요한 단계: {session_stage}")

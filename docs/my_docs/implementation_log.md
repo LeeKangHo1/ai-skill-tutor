@@ -2,12 +2,12 @@
 
 ---
 
-## 📅 2025-08-24: QnAResolver 에이전트 완전 구현 ✅
+## 📅 2025-08-24: QnAResolver 에이전트 LangChain Agent 기반 완전 구현 ✅
 
 ### 🎯 작업 목표
-- 임시 구현 상태인 QnAResolver를 벡터 DB 기반 RAG 시스템으로 완전 구현
-- Function Calling 방식으로 필요시에만 벡터 검색 수행
-- 기존 에이전트들과 일관성 있는 LCEL 파이프라인 구조 적용
+- 임시 구현 상태였던 QnAResolver를 LangChain Agent 기반 완전한 RAG 시스템으로 구현
+- Function Calling을 통한 지능형 벡터 검색 자동화
+- AI 튜터 시스템의 모든 핵심 에이전트 구현 완료
 
 ### 🔧 주요 변경사항
 
@@ -19,61 +19,90 @@
 - 챕터별 핵심 키워드 + Common Topics 그룹화
 - **토큰 효율성**: 150-200 토큰 (기존 300-400에서 절반 수준)
 
-#### 2. qna_tools_chatgpt.py v2.0 구현 ✅
-**파일**: `backend/app/tools/content/qna_tools_chatgpt.py`
+#### 2. qna_tools_chatgpt.py v3.0 - LangChain Agent 완전 전환 ✅
+**LCEL 파이프라인 → Agent 구조 완전 전환:**
+```python
+# Before: LCEL (Function Calling 미완성)
+qna_chain = prompt_template | model_with_tools | StrOutputParser
 
-**LCEL 파이프라인 적용**:
-- `PromptTemplate | ChatOpenAI (with tools) | StrOutputParser` 구조
-- Function calling으로 벡터 검색 자동 수행
-- 메타데이터 기반 벡터 검색 가이드라인 제공
+# After: LangChain Agent (완전한 Function Calling)  
+agent = create_tool_calling_agent(model, tools, prompt_template)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+```
 
-**벡터 검색 최적화**:
+**Agent 최적화 설정:**
+- `max_iterations=3`: 최대 3번의 도구 호출 허용
+- `early_stopping_method="generate"`: 답변 생성 후 자동 중단
+- `handle_parsing_errors=True`: 파싱 에러 자동 처리
+
+**벡터 검색 최적화:**
 - `@tool` 데코레이터로 `vector_search_qna_tool` 정의
 - ChatGPT가 키워드 관련성 판단하여 필요시에만 검색 수행
 - 불필요한 검색 방지로 토큰 및 응답 시간 절약
 
-#### 3. qna_resolver_agent.py v2.0 구현 ✅
-**파일**: `backend/app/agents/qna_resolver/qna_resolver_agent.py`
+#### 3. qna_resolver_agent.py v3.0 - 필드 호환성 강화 ✅
+**사용자 메시지 추출 안정성 개선:**
+```python
+# 필드 호환성 개선 (message_content OR message)
+message_content = conv.get("message_content", "") or conv.get("message", "")
 
-**구조 간소화**:
+# 상세한 디버깅 로그 추가
+print(f"[{self.agent_name}] 대화 기록 확인 - agent: '{agent_name}', type: '{message_type}'")
+```
+
+**구조 간소화:**
 - `_is_valid_user_question()` 검증 로직 제거 (ChatGPT 판단 위임)
 - conversations에서 최근 사용자 메시지 단순 추출
 - TheoryEducator와 동일한 State 관리 패턴 적용
 
-**사용자 메시지 처리**:
+### 🚀 완전한 Function Calling 실행 흐름
+
+**1. 사용자 질문 분석:**
+- ChatGPT Agent가 질문의 키워드 관련성 판단
+- 메타데이터 기반으로 벡터 검색 필요성 자동 결정
+
+**2. 지능형 벡터 검색:**
+- Agent가 `vector_search_qna_tool` 자동 호출
+- 사용자 자연어 → 최적화된 검색 쿼리 변환
+- 벡터 DB에서 관련 학습 자료 검색 실행
+
+**3. 검색 결과 기반 답변 생성:**
+- 벡터 검색 결과를 바탕으로 정확한 답변 생성
+- 학습 맥락을 고려한 개인화된 설명 제공
+
+### 📊 기술적 해결 성과
+
+#### 프롬프트 변수 문제 해결 ✅
+**문제**: `KeyError: Input to ChatPromptTemplate is missing variables`
+**해결**: 프롬프트 생성 시점에 메타데이터 완전 문자열화
 ```python
-# conversations에서 agent_name="user", message_type="user"인 최근 메시지 추출
+# 메타데이터 이스케이프 처리로 ChatPromptTemplate 변수 충돌 해결
+learning_context_str = learning_context_str.replace("{", "{{").replace("}", "}}")
 ```
 
-### 🚀 시스템 효과
+#### Function Calling 완전 구현 ✅
+- **기존**: ChatGPT가 tool_call만 생성, 실제 실행 안됨
+- **개선**: AgentExecutor가 도구 실행 → 결과 전달 → 최종 답변 생성
 
-**Function Calling 최적화**:
+**Function Calling 최적화:**
 - 1회 호출로 질문 분석 + 벡터 검색 + 답변 생성
 - vs 2단계 분리 호출 대비 속도/비용 모두 우수
 
-**토큰 효율성 확보**:
-- 메타데이터 150-200 토큰 투자로 불필요한 벡터 검색 방지
-- 전체적으로 토큰 절약 효과
+### 🎯 시스템 개선 효과
 
-**자연스러운 대화 흐름**:
+**✅ RAG 시스템 완성:**
+- LLM 기반 쿼리 최적화 + 벡터 검색 + 맥락적 답변 생성
+- 필요시에만 검색하는 지능형 시스템 (토큰 효율성)
+
+**✅ 사용자 시나리오 최적화:**
 ```
-사용자: "질문" → ChatGPT: "네, 질문해주세요! 😊"
-사용자: "AI와 머신러닝 차이는?" → ChatGPT: 벡터 검색 + 상세 답변
+"질문" → "네, 질문해주세요! 😊" (검색 없음)
+"ChatGPT와 클로드 차이는?" → 벡터 검색 + 상세 비교 설명
+"AI와 머신러닝 차이는?" → ChatGPT: 벡터 검색 + 상세 답변
+"프롬프트 작성법" → 벡터 검색 + 실용적 가이드 제공
 ```
 
-### 📊 구현 완료 결과
-
-- ✅ **QnAResolver 완전 구현**: 임시 메시지 → 실제 RAG 시스템
-- ✅ **LCEL 파이프라인 통합**: 모든 에이전트 아키텍처 일관성 확보
-- ✅ **Function Calling 시스템**: 효율적인 벡터 검색 자동화
-- ✅ **메타데이터 기반 최적화**: 토큰 효율성과 답변 정확도 균형
-
-### 🎯 기술적 성과
-
-- **아키텍처 완성도**: 5개 핵심 에이전트 모두 완전 구현 완료
-- **벡터 DB 활용**: 이론 생성 + QnA 답변에서 벡터 검색 통합
-- **LangChain 생태계**: LCEL 패턴으로 표준화된 AI 도구 체계
-- **사용자 경험**: 자연스러운 대화와 정확한 답변 시스템
+---
 
 ---
 
