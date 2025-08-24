@@ -30,74 +30,56 @@ export const mapApiResponseToComponent = (apiResponse, componentType) => {
 }
 
 /**
- * 이론 컨텐츠 매핑
+ * 이론 컨텐츠 매핑 (새로운 JSON 구조 지원)
  * @param {Object} workflowResponse - 워크플로우 응답
  * @returns {Object} 이론 컨텐츠 데이터
  */
 export const mapTheoryContent = (workflowResponse) => {
   const content = workflowResponse.content || {}
   
-  // API 응답에서 실제 컨텐츠 추출
+  console.log('🔍 mapTheoryContent - 원본 content:', content)
+  
+  // 새로운 JSON 구조인지 확인 (chapter_info, title, sections 필드 존재)
+  if (content.chapter_info && content.title && content.sections) {
+    console.log('🔍 mapTheoryContent - 직접 구조 감지')
+    // 새로운 구조화된 JSON 형태 - 그대로 반환
+    return {
+      chapter_info: content.chapter_info,
+      title: content.title,
+      sections: content.sections,
+      rawContent: content // 원본 데이터도 보관
+    }
+  }
+  
+  // 기존 마크다운/텍스트 형태 처리
   let description = content.content || content.description || content.message || ''
   let title = content.title || 'LLM(Large Language Model)이란?'
   
-  // 텍스트 포맷팅 개선 (줄바꿈 처리)
-  if (description) {
+  console.log('🔍 mapTheoryContent - description 타입:', typeof description)
+  console.log('🔍 mapTheoryContent - description 내용:', description)
+  
+  // description이 객체이고 새로운 JSON 구조를 포함하는 경우
+  if (description && typeof description === 'object' && description.chapter_info && description.sections) {
+    console.log('🔍 mapTheoryContent - description 내부에서 구조 감지')
+    return {
+      chapter_info: description.chapter_info,
+      title: description.title || title,
+      sections: description.sections,
+      rawContent: content // 원본 데이터도 보관
+    }
+  }
+  
+  // 텍스트 포맷팅 개선 (줄바꿈 처리) - description이 문자열인 경우만
+  if (description && typeof description === 'string') {
     description = description
       .replace(/\n\n/g, '\n\n') // 이중 줄바꿈 유지
       .replace(/\n/g, '\n') // 단일 줄바꿈 유지
       .trim()
   }
   
-  // API 응답에서 핵심 포인트와 예시 추출 시도
-  let keyPoints = content.key_points || content.keyPoints || []
-  let examples = content.examples || []
-  
-  // 만약 API에서 구조화된 데이터가 없다면 텍스트에서 추출 시도
-  if (keyPoints.length === 0 && description) {
-    // 텍스트에서 핵심 포인트 패턴 찾기
-    const keyPointsMatch = description.match(/💡 핵심 포인트:?\s*([\s\S]*?)(?=📋|$)/i)
-    if (keyPointsMatch) {
-      keyPoints = keyPointsMatch[1]
-        .split('\n')
-        .map(point => point.replace(/^[-•*]\s*/, '').trim())
-        .filter(point => point.length > 0)
-    }
-  }
-  
-  if (examples.length === 0 && description) {
-    // 텍스트에서 예시 패턴 찾기
-    const examplesMatch = description.match(/📋 대표 예시:?\s*([\s\S]*?)(?=💡|$)/i)
-    if (examplesMatch) {
-      examples = examplesMatch[1]
-        .split('\n')
-        .map(example => example.replace(/^[-•*]\s*/, '').trim())
-        .filter(example => example.length > 0)
-    }
-  }
-  
-  // 기본값 설정 (API에서 데이터를 추출하지 못한 경우)
-  if (keyPoints.length === 0) {
-    keyPoints = [
-      '대규모 데이터 학습',
-      '언어 이해 및 생성',
-      '문맥 파악 능력'
-    ]
-  }
-  
-  if (examples.length === 0) {
-    examples = [
-      'ChatGPT (OpenAI)',
-      'Claude (Anthropic)',
-      'Bard (Google)'
-    ]
-  }
-  
   return {
     title,
     description,
-    keyPoints,
-    examples,
     rawContent: content // 원본 데이터도 보관
   }
 }
