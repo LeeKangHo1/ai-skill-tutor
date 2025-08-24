@@ -62,16 +62,16 @@ export const useLearningStore = defineStore('learning', () => {
   const chatHistory = ref([
     {
       sender: '튜터',
-      message: 'LLM에 대해 학습해보겠습니다. 위 내용을 확인해주세요!',
+      message: 'LLM에 대해 학습해보겠습니다. 왼쪽 내용을 확인해주세요!',
       type: 'system',
       timestamp: new Date()
     }
   ])
   
-  // 퀴즈 데이터
+  // 퀴즈 데이터 (초기값은 완전히 비워둠)
   const quizData = ref({
     question: '',
-    type: 'multiple_choice',
+    type: '',
     options: [],
     hint: '',
     correct_answer: '',
@@ -241,6 +241,39 @@ export const useLearningStore = defineStore('learning', () => {
   const updateQuizData = (quiz) => {
     quizData.value = { ...quizData.value, ...quiz }
   }
+
+  // API 응답에서 퀴즈 데이터 저장 (백엔드 응답 형태 처리)
+  const setQuizDataFromAPI = (apiResponse) => {
+    if (apiResponse?.workflow_response?.content) {
+      const content = apiResponse.workflow_response.content
+      
+      // 퀴즈 데이터 매핑
+      const mappedQuizData = {
+        question: content.question || '',
+        type: content.quiz_type || 'multiple_choice',
+        options: content.options || [],
+        hint: content.hint || '',
+        correct_answer: content.correct_answer || '',
+        user_answer: ''
+      }
+      
+      // store에 퀴즈 데이터 저장
+      quizData.value = mappedQuizData
+      
+      // 퀴즈 상태 업데이트
+      currentQuizInfo.value = {
+        quiz_type: mappedQuizData.type,
+        is_quiz_active: true,
+        is_answer_submitted: false,
+        hint_usage_count: 0,
+        score: null
+      }
+      
+      console.log('API 응답에서 퀴즈 데이터 저장:', mappedQuizData)
+      return mappedQuizData
+    }
+    return null
+  }
   
   // 퀴즈 상태 업데이트
   const updateQuizInfo = (info) => {
@@ -329,7 +362,7 @@ export const useLearningStore = defineStore('learning', () => {
     
     quizData.value = {
       question: '',
-      type: 'multiple_choice',
+      type: '',
       options: [],
       hint: '',
       correct_answer: '',
@@ -397,6 +430,7 @@ export const useLearningStore = defineStore('learning', () => {
     updateChatHistory,
     addChatMessage,
     updateQuizData,
+    setQuizDataFromAPI,
     updateQuizInfo,
     updateUserAnswer,
     updateWorkflowResponse,

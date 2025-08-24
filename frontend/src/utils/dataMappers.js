@@ -93,18 +93,16 @@ export const mapQuizData = (workflowResponse) => {
   const content = workflowResponse.content || {}
   
   return {
-    question: content.question || '다음 중 LLM의 특징이 아닌 것은?',
+    question: content.question || '퀴즈를 로드 중입니다...',
     type: content.quiz_type || content.type || 'multiple_choice',
-    options: content.options?.map((option, index) => ({
-      value: (index + 1).toString(),
-      text: option
-    })) || [
-      { value: '1', text: '대규모 데이터 학습' },
-      { value: '2', text: '실시간 인터넷 검색' },
-      { value: '3', text: '언어 이해 능력' },
-      { value: '4', text: '텍스트 생성 능력' }
+    // 백엔드 응답은 문자열 배열 형태이므로 그대로 사용
+    options: content.options || [
+      '로드 중입니다...',
+      '로드 중입니다...',
+      '로드 중입니다...',
+      '로드 중입니다...'
     ],
-    hint: content.hint || 'LLM의 핵심 특징을 생각해보세요.'
+    hint: content.hint || '잠시만 기다려주세요.'
   }
 }
 

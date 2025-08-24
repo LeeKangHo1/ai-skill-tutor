@@ -1,9 +1,9 @@
 <!-- frontend/src/components/learning/QuizInteraction.vue -->
 <template>
-  <div class="quiz-mode" :class="{ active: !isLoading }">
-    <!-- 퀴즈 헤더 -->
-    <div class="quiz-header">
-      <div class="quiz-progress" v-if="showProgress">
+  <div class="quiz-interaction" :class="{ active: !isLoading }">
+    <!-- 퀴즈 진행률 (선택적) -->
+    <div class="quiz-header" v-if="showProgress">
+      <div class="quiz-progress">
         <span class="progress-text">{{ progressText }}</span>
         <div class="progress-bar">
           <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
@@ -11,92 +11,75 @@
       </div>
     </div>
 
-    <!-- 퀴즈 질문 -->
-    <div class="quiz-question-container">
-      <div class="quiz-question">
-        {{ quizData.question || '퀴즈를 준비하고 있습니다...' }}
-      </div>
-      
-      <!-- 퀴즈 타입별 설명 -->
-      <div class="quiz-type-info" v-if="quizData.type">
-        <span class="quiz-type-badge" :class="quizTypeBadgeClass">
-          {{ quizTypeText }}
-        </span>
-        <span class="quiz-instruction">{{ quizInstruction }}</span>
-      </div>
-    </div>
-    
-    <!-- 객관식 옵션 -->
-    <div 
-      v-if="quizData.type === 'multiple_choice' && quizData.options?.length"
-      class="quiz-options"
-    >
-      <div 
-        v-for="(option, index) in quizData.options" 
-        :key="option.value"
-        class="quiz-option"
-        :class="{ 
-          'selected': selectedAnswer === option.value,
-          'disabled': isLoading || isSubmitted
-        }"
-        @click="selectOption(option.value)"
-      >
-        <div class="option-indicator">
-          {{ selectedAnswer === option.value ? '●' : '○' }}
+    <!-- 퀴즈 상호작용 영역 -->
+    <div class="interaction-content">
+      <!-- 객관식 옵션 -->
+      <div v-if="hasValidQuizData && actualQuizData.type === 'multiple_choice'" class="quiz-options">
+        <div class="options-header">
+          <h4>답안을 선택해주세요</h4>
+          <span class="options-count">{{ actualQuizData.options?.length || 0 }}개 선택지</span>
         </div>
-        <div class="option-content">
-          <span class="option-number">{{ option.value }}.</span>
-          <span class="option-text">{{ option.text }}</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- 주관식 입력 -->
-    <div 
-      v-else-if="quizData.type === 'subjective'"
-      class="subjective-input-container"
-    >
-      <textarea
-        v-model="subjectiveAnswer"
-        ref="subjectiveInputRef"
-        class="subjective-input"
-        :placeholder="subjectivePlaceholder"
-        :disabled="isLoading || isSubmitted"
-        rows="4"
-        maxlength="500"
-      ></textarea>
-      <div class="character-count">
-        {{ subjectiveAnswer.length }}/500
+        <div v-for="(option, index) in actualQuizData.options" :key="index" class="quiz-option" :class="{
+          'selected': selectedAnswer === (index + 1).toString(),
+          'disabled': isLoading || isSubmitted
+        }" @click="selectOption((index + 1).toString())">
+          <div class="option-indicator">
+            {{ selectedAnswer === (index + 1).toString() ? '●' : '○' }}
+          </div>
+          <div class="option-content">
+            <span class="option-number">{{ index + 1 }}.</span>
+            <span class="option-text">{{ typeof option === 'string' ? option : (option.text || option) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 주관식 입력 -->
+      <div v-else-if="hasValidQuizData && actualQuizData.type === 'subjective'" class="subjective-input-container">
+        <div class="input-header">
+          <h4>답안을 작성해주세요</h4>
+          <span class="input-guide">자세하고 구체적으로 작성해주세요</span>
+        </div>
+
+        <textarea v-model="subjectiveAnswer" ref="subjectiveInputRef" class="subjective-input"
+          :placeholder="subjectivePlaceholder" :disabled="isLoading || isSubmitted" rows="4" maxlength="500"></textarea>
+        <div class="character-count">
+          {{ subjectiveAnswer.length }}/500
+        </div>
+      </div>
+
+      <!-- 퀴즈 데이터가 없는 경우 - 로딩 인디케이터 -->
+      <div v-else-if="!hasValidQuizData" class="quiz-loading">
+        <div class="loading-spinner"></div>
+        <p v-if="!actualQuizData.question">퀴즈를 로드 중입니다...</p>
+        <p v-else>퀴즈를 로드 중입니다...</p>
+        <div class="loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </div>
     </div>
 
     <!-- 힌트 표시 -->
-    <div v-if="showHint && currentHint" class="hint-container">
+    <div v-if="hasValidQuizData && showHint && currentHint" class="hint-container">
       <div class="hint-content">
         <div class="hint-icon">💡</div>
         <div class="hint-text">{{ currentHint }}</div>
       </div>
     </div>
-    
+
     <!-- 액션 버튼들 -->
-    <div class="quiz-actions">
-      <button 
-        class="btn btn-secondary hint-btn"
-        @click="requestHint"
-        :disabled="isLoading || hintUsed"
-        v-if="!isSubmitted"
-      >
-        <span v-if="hintUsed">✅ 힌트 사용됨</span>
-        <span v-else-if="isLoading">⏳ 로딩중...</span>
-        <span v-else>💡 힌트</span>
+    <div v-if="hasValidQuizData" class="quiz-actions">
+      <button class="btn btn-secondary hint-btn" @click="toggleHint" :disabled="isLoading"
+        v-if="!isSubmitted && actualQuizData.hint">
+        <span v-if="isLoading">⏳ 로딩중...</span>
+        <span v-else-if="showHint">🔍 힌트 숨기기</span>
+        <span v-else>💡 힌트 보기</span>
       </button>
-      
-      <button 
-        class="btn btn-primary submit-btn"
-        @click="submitAnswer"
-        :disabled="!canSubmit || isLoading"
-        v-if="!isSubmitted"
-      >
+
+      <button class="btn btn-primary submit-btn" @click="submitAnswer" :disabled="!canSubmit || isLoading"
+        v-if="!isSubmitted">
         <span v-if="isLoading" class="button-spinner"></span>
         <span v-else>{{ submitButtonText }}</span>
       </button>
@@ -106,11 +89,7 @@
         <div class="submit-success">
           ✅ 답변이 제출되었습니다!
         </div>
-        <button 
-          class="btn btn-outline"
-          @click="resetQuiz"
-          v-if="allowRetry"
-        >
+        <button class="btn btn-outline" @click="resetQuiz" v-if="allowRetry">
           🔄 다시 풀기
         </button>
       </div>
@@ -119,11 +98,7 @@
     <!-- 추가 정보 -->
     <div class="quiz-footer" v-if="showFooter">
       <div class="quiz-tips">
-        <div class="tip-item">
-          <span class="tip-icon">⚠️</span>
-          <span class="tip-text">신중하게 답변을 선택한 후 제출해주세요.</span>
-        </div>
-        <div class="tip-item" v-if="quizData.type === 'subjective'">
+        <div class="tip-item" v-if="actualQuizData.type === 'subjective'">
           <span class="tip-icon">📝</span>
           <span class="tip-text">자세하고 구체적으로 작성해주세요.</span>
         </div>
@@ -134,12 +109,17 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, defineProps, defineEmits } from 'vue'
+import { learningService } from '@/services/learningService.js'
+import { useLearningStore } from '@/stores/learningStore'
+
+// Store 사용
+const learningStore = useLearningStore()
 
 // Props 정의
 const props = defineProps({
   quizData: {
     type: Object,
-    required: true,
+    required: false,
     default: () => ({
       question: '',
       type: 'multiple_choice', // 'multiple_choice' | 'subjective'
@@ -153,7 +133,7 @@ const props = defineProps({
   },
   showProgress: {
     type: Boolean,
-    default: true
+    default: false
   },
   showFooter: {
     type: Boolean,
@@ -174,7 +154,17 @@ const props = defineProps({
 })
 
 // Emits 정의
-const emit = defineEmits(['submit-answer', 'request-hint', 'quiz-reset'])
+const emit = defineEmits(['submit-answer', 'request-hint', 'quiz-reset', 'api-error'])
+
+// store에서 퀴즈 데이터 가져오기 (props보다 우선)
+const storeQuizData = computed(() => learningStore.quizData)
+const actualQuizData = computed(() => {
+  // store에 퀴즈 데이터가 있으면 store 데이터 사용, 없으면 props 사용
+  if (storeQuizData.value && storeQuizData.value.question) {
+    return storeQuizData.value
+  }
+  return props.quizData
+})
 
 // 반응형 상태
 const selectedAnswer = ref('')
@@ -186,107 +176,204 @@ const isSubmitted = ref(false)
 const subjectiveInputRef = ref(null)
 
 // 컴퓨티드 속성들
-const progressText = computed(() => 
+const progressText = computed(() =>
   `${props.currentQuestionNumber}/${props.totalQuestions}`
 )
 
-const progressPercentage = computed(() => 
+const progressPercentage = computed(() =>
   (props.currentQuestionNumber / props.totalQuestions) * 100
 )
 
-const quizTypeText = computed(() => {
-  switch (props.quizData.type) {
-    case 'multiple_choice':
-      return '객관식'
-    case 'subjective':
-      return '주관식'
-    default:
-      return '문제'
-  }
-})
 
-const quizTypeBadgeClass = computed(() => {
-  switch (props.quizData.type) {
-    case 'multiple_choice':
-      return 'badge-multiple'
-    case 'subjective':
-      return 'badge-subjective'
-    default:
-      return 'badge-default'
-  }
-})
 
-const quizInstruction = computed(() => {
-  switch (props.quizData.type) {
-    case 'multiple_choice':
-      return '하나의 정답을 선택해주세요.'
-    case 'subjective':
-      return '자유롭게 답변을 작성해주세요.'
-    default:
-      return ''
-  }
-})
-
-const subjectivePlaceholder = computed(() => 
+const subjectivePlaceholder = computed(() =>
   '답변을 입력해주세요... (최대 500자)'
 )
 
 const canSubmit = computed(() => {
   if (props.isLoading || isSubmitted.value) return false
-  
-  if (props.quizData.type === 'multiple_choice') {
+
+  if (actualQuizData.value.type === 'multiple_choice') {
     return selectedAnswer.value !== ''
-  } else if (props.quizData.type === 'subjective') {
+  } else if (actualQuizData.value.type === 'subjective') {
     return subjectiveAnswer.value.trim().length > 0
   }
-  
+
   return false
 })
 
 const submitButtonText = computed(() => {
-  if (props.quizData.type === 'subjective') {
+  if (actualQuizData.value.type === 'subjective') {
     return '답안 제출'
   }
   return '정답 제출'
 })
 
+// 퀴즈 데이터가 유효한지 확인
+const hasValidQuizData = computed(() => {
+  // 로딩 중인 더미 데이터는 유효하지 않은 것으로 처리
+  if (actualQuizData.value.question && actualQuizData.value.question.includes('로드 중입니다')) {
+    return false
+  }
+
+  return actualQuizData.value.question &&
+    actualQuizData.value.question !== '' &&
+    actualQuizData.value.type &&
+    actualQuizData.value.type !== '' &&
+    ((actualQuizData.value.type === 'multiple_choice' && actualQuizData.value.options?.length > 0) ||
+      actualQuizData.value.type === 'subjective')
+})
+
 // 이벤트 핸들러들
 const selectOption = (value) => {
   if (props.isLoading || isSubmitted.value) return
-  
+
   selectedAnswer.value = selectedAnswer.value === value ? '' : value
 }
 
-const requestHint = () => {
-  if (props.isLoading || hintUsed.value) return
-  
-  hintUsed.value = true
-  
-  if (props.quizData.hint) {
-    currentHint.value = props.quizData.hint
-    showHint.value = true
+const toggleHint = () => {
+  if (props.isLoading) return
+
+  if (showHint.value) {
+    // 힌트 숨기기
+    showHint.value = false
+    currentHint.value = ''
+  } else {
+    // 힌트 보이기
+    if (actualQuizData.value.hint) {
+      currentHint.value = actualQuizData.value.hint
+      showHint.value = true
+      hintUsed.value = true // 힌트를 한 번이라도 본 경우 기록
+    }
   }
-  
-  emit('request-hint')
+
+  emit('request-hint', {
+    action: showHint.value ? 'show' : 'hide',
+    hintUsed: hintUsed.value
+  })
 }
 
-const submitAnswer = () => {
+const submitAnswer = async () => {
   if (!canSubmit.value) return
-  
-  const answer = props.quizData.type === 'multiple_choice' 
-    ? selectedAnswer.value 
+
+  const answer = actualQuizData.value.type === 'multiple_choice'
+    ? selectedAnswer.value
     : subjectiveAnswer.value.trim()
-  
+
   if (!answer) return
-  
+
+  // 로딩 상태 시작
   isSubmitted.value = true
-  
-  emit('submit-answer', {
-    answer: answer,
-    type: props.quizData.type,
-    hintUsed: hintUsed.value,
-    questionNumber: props.currentQuestionNumber
-  })
+
+  // store에 사용자 답변 저장
+  learningStore.updateUserAnswer(answer)
+
+  try {
+    // 백엔드 API 호출 (v2.0 API 사용)
+    const result = await learningService.submitQuizAnswerV2(answer)
+
+    if (result.success) {
+      // API 성공 시 응답 데이터를 기존 구조로 매핑
+      const mappedResult = mapApiResponseToQuizResult(result.data)
+
+      emit('submit-answer', {
+        answer: answer,
+        type: actualQuizData.value.type,
+        hintUsed: hintUsed.value,
+        questionNumber: props.currentQuestionNumber,
+        apiResult: mappedResult,
+        success: true
+      })
+    } else {
+      // API 실패 시 더미데이터로 fallback
+      console.warn('퀴즈 답안 제출 API 실패:', result.error)
+
+      const fallbackResult = createFallbackQuizResult(answer)
+
+      emit('submit-answer', {
+        answer: answer,
+        type: actualQuizData.value.type,
+        hintUsed: hintUsed.value,
+        questionNumber: props.currentQuestionNumber,
+        apiResult: fallbackResult,
+        success: false,
+        error: result.error
+      })
+
+      // 에러 이벤트 발생
+      emit('api-error', {
+        type: 'quiz-submit',
+        error: result.error,
+        fallbackUsed: true
+      })
+    }
+  } catch (error) {
+    // 예외 발생 시 더미데이터로 fallback
+    console.error('퀴즈 답안 제출 중 오류:', error)
+
+    const fallbackResult = createFallbackQuizResult(answer)
+
+    emit('submit-answer', {
+      answer: answer,
+      type: actualQuizData.value.type,
+      hintUsed: hintUsed.value,
+      questionNumber: props.currentQuestionNumber,
+      apiResult: fallbackResult,
+      success: false,
+      error: error.message
+    })
+
+    // 에러 이벤트 발생
+    emit('api-error', {
+      type: 'quiz-submit',
+      error: error.message,
+      fallbackUsed: true
+    })
+  }
+}
+
+// API 응답을 기존 퀴즈 결과 구조로 매핑하는 함수
+const mapApiResponseToQuizResult = (apiResponse) => {
+  // 안전한 접근을 위한 null 체크
+  if (!apiResponse || !apiResponse.data || !apiResponse.data.workflow_response) {
+    console.warn('API 응답에 workflow_response가 없습니다:', apiResponse)
+    return {
+      isCorrect: false,
+      correctAnswer: '',
+      explanation: 'API 응답 구조가 올바르지 않습니다.',
+      feedback: '응답을 처리할 수 없습니다.',
+      score: 0,
+      nextStep: 'continue'
+    }
+  }
+
+  const workflow_response = apiResponse.data.workflow_response
+  const evaluationResult = workflow_response.evaluation_result || {}
+  const feedback = evaluationResult.feedback || {}
+
+  return {
+    isCorrect: evaluationResult.is_answer_correct || false,
+    correctAnswer: '', // API 응답에서 정답은 별도로 제공되지 않음
+    explanation: feedback.explanation || '설명이 없습니다.',
+    feedback: feedback.content || feedback.title || '피드백이 없습니다.',
+    score: evaluationResult.score || 0,
+    nextStep: feedback.next_step_decision || 'continue'
+  }
+}
+
+// 더미데이터 fallback 결과 생성 함수
+const createFallbackQuizResult = (userAnswer) => {
+  // 간단한 더미 평가 로직 (실제로는 백엔드에서 처리)
+  const isCorrect = Math.random() > 0.5 // 임시로 랜덤 결과
+
+  return {
+    isCorrect: isCorrect,
+    correctAnswer: actualQuizData.value.options?.[0] || '1',
+    explanation: '네트워크 연결 문제로 임시 결과입니다.',
+    feedback: isCorrect ? '정답입니다!' : '다시 한번 생각해보세요.',
+    score: isCorrect ? 100 : 0,
+    nextStep: 'continue'
+  }
 }
 
 const resetQuiz = () => {
@@ -296,14 +383,14 @@ const resetQuiz = () => {
   currentHint.value = ''
   hintUsed.value = false
   isSubmitted.value = false
-  
+
   emit('quiz-reset')
 }
 
 // 감시자들
-watch(() => props.quizData, (newQuizData) => {
+watch(() => actualQuizData.value, (newQuizData) => {
   // 새로운 퀴즈 데이터가 들어오면 상태 리셋
-  if (newQuizData) {
+  if (newQuizData && newQuizData.question) {
     resetQuiz()
   }
 }, { deep: true })
@@ -320,7 +407,7 @@ watch(subjectiveAnswer, () => {
 </script>
 
 <style scoped>
-.quiz-mode {
+.quiz-interaction {
   background: white;
   border-radius: 0.5rem;
   padding: 1rem;
@@ -331,10 +418,45 @@ watch(subjectiveAnswer, () => {
   gap: 1rem;
   opacity: 0.7;
   transition: opacity 0.3s ease;
+  overflow: hidden;
+  /* 전체 컨테이너 오버플로우 제어 */
 }
 
-.quiz-mode.active {
+.quiz-interaction.active {
   opacity: 1;
+}
+
+/* 상호작용 컨텐츠 */
+.interaction-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+  /* 세로 스크롤 추가 */
+  min-height: 0;
+  /* flex 아이템이 축소될 수 있도록 */
+  padding-right: 0.5rem;
+  /* 스크롤바 공간 확보 */
+}
+
+/* 스크롤바 스타일링 */
+.interaction-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.interaction-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.interaction-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.interaction-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 /* 퀴즈 헤더 */
@@ -419,12 +541,39 @@ watch(subjectiveAnswer, () => {
   color: #6c757d;
 }
 
+/* 옵션 헤더 */
+.options-header,
+.input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.options-header h4,
+.input-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.options-count,
+.input-guide {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
 /* 객관식 옵션들 */
 .quiz-options {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   flex: 1;
+  min-height: 0;
+  /* flex 아이템이 축소될 수 있도록 */
 }
 
 .quiz-option {
@@ -484,8 +633,84 @@ watch(subjectiveAnswer, () => {
 .subjective-input-container {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   flex: 1;
+  min-height: 0;
+  /* flex 아이템이 축소될 수 있도록 */
+}
+
+/* 퀴즈 로딩 상태 */
+.quiz-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6c757d;
+  flex: 1;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #74a8f7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.quiz-loading p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+/* 로딩 점들 애니메이션 */
+.loading-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background: #74a8f7;
+  border-radius: 50%;
+  animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1);
+  }
 }
 
 .subjective-input {
@@ -525,6 +750,8 @@ watch(subjectiveAnswer, () => {
   border-radius: 0.5rem;
   padding: 1rem;
   animation: hintSlideIn 0.3s ease-out;
+  flex-shrink: 0;
+  /* 힌트 영역이 축소되지 않도록 */
 }
 
 @keyframes hintSlideIn {
@@ -532,6 +759,7 @@ watch(subjectiveAnswer, () => {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -561,6 +789,12 @@ watch(subjectiveAnswer, () => {
   gap: 0.75rem;
   align-items: center;
   flex-wrap: wrap;
+  flex-shrink: 0;
+  /* 버튼 영역이 축소되지 않도록 */
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+  margin-top: auto;
+  /* 하단에 고정 */
 }
 
 .btn {
@@ -633,8 +867,13 @@ watch(subjectiveAnswer, () => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* 제출 후 액션 */
@@ -687,53 +926,69 @@ watch(subjectiveAnswer, () => {
 
 /* 반응형 */
 @media (max-width: 768px) {
-  .quiz-mode {
+  .quiz-interaction {
     padding: 0.75rem;
   }
-  
-  .quiz-question {
-    font-size: 1rem;
-    padding: 0.75rem;
+
+  .interaction-content {
+    padding-right: 0.25rem;
+    /* 모바일에서 스크롤바 공간 줄임 */
   }
-  
+
+  .options-header,
+  .input-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
   .quiz-option {
     padding: 0.75rem;
   }
-  
+
   .option-content {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
   }
-  
+
   .quiz-actions {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .btn {
     width: 100%;
   }
-  
+
   .subjective-input {
-    font-size: 16px; /* iOS에서 줌 방지 */
+    font-size: 16px;
+    /* iOS에서 줌 방지 */
   }
-  
-  .quiz-type-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+
+  .no-quiz-data {
+    padding: 2rem 1rem;
+  }
+
+  .no-data-icon {
+    font-size: 2rem;
+  }
+
+  /* 모바일에서 스크롤바 숨김 */
+  .interaction-content::-webkit-scrollbar {
+    width: 3px;
   }
 }
 
 /* 접근성 개선 */
 @media (prefers-reduced-motion: reduce) {
+
   .quiz-option,
   .btn,
   .hint-container {
     transition: none;
   }
-  
+
   .button-spinner {
     animation: none;
   }

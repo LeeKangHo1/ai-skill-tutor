@@ -137,13 +137,26 @@
         <div v-if="currentSeparatedTest === 'quiz'" class="separated-component-test">
           <h3>📝 QuizContent 컴포넌트</h3>
           <div class="component-info">
-            <p><strong>Props:</strong> quizData, isVisible</p>
-            <p><strong>기능:</strong> 퀴즈 문제 표시, 상호작용 영역 안내</p>
+            <p><strong>Props:</strong> quizData, isVisible, isLoading</p>
+            <p><strong>기능:</strong> 퀴즈 문제 제목과 내용만 표시 (UI 분리됨)</p>
+            <p><strong>변경사항:</strong> 객관식 선택지는 QuizInteraction에서 처리</p>
+          </div>
+          <div class="test-controls-inline">
+            <button @click="changeQuizContentType('multiple_choice')" :class="{ active: testSeparatedQuizData.type === 'multiple_choice' }">
+              객관식 문제
+            </button>
+            <button @click="changeQuizContentType('subjective')" :class="{ active: testSeparatedQuizData.type === 'subjective' }">
+              주관식 문제
+            </button>
+            <button @click="toggleQuizContentLoading">
+              {{ quizContentLoading ? '로딩 끄기' : '로딩 켜기' }}
+            </button>
           </div>
           <div class="test-wrapper quiz-component-test">
             <QuizContent 
               :quiz-data="testSeparatedQuizData"
               :is-visible="separatedComponentVisible"
+              :is-loading="quizContentLoading"
             />
           </div>
         </div>
@@ -185,6 +198,31 @@
           </button>
           <button @click="toggleQuizLoading">로딩 토글</button>
           <button @click="resetQuiz">퀴즈 리셋</button>
+          <button @click="testQuizApiIntegration" class="api-test-btn">
+            🔌 퀴즈 API 연동 테스트
+          </button>
+        </div>
+        
+        <!-- 퀴즈 API 연동 상태 표시 -->
+        <div class="api-status" v-if="quizApiTestResult">
+          <div :class="['status-indicator', quizApiTestResult.success ? 'success' : 'error']">
+            {{ quizApiTestResult.success ? '✅ 퀴즈 API 연동 성공' : '❌ 퀴즈 API 연동 실패' }}
+          </div>
+          <div class="status-details">
+            <strong>제출된 답안:</strong> {{ quizApiTestResult.submittedAnswer || 'N/A' }}
+            <br>
+            <strong>API 응답:</strong> {{ quizApiTestResult.apiResponse ? 'API 데이터' : '더미데이터 사용' }}
+            <br>
+            <strong>응답 시간:</strong> {{ quizApiTestResult.responseTime || 'N/A' }}ms
+            <div v-if="!quizApiTestResult.success" class="error-message">
+              <strong>오류:</strong> {{ quizApiTestResult.error }}
+            </div>
+            <div v-if="quizApiTestResult.result" class="quiz-result">
+              <strong>평가 결과:</strong> {{ quizApiTestResult.result.isCorrect ? '정답' : '오답' }}
+              <br>
+              <strong>설명:</strong> {{ quizApiTestResult.result.explanation }}
+            </div>
+          </div>
         </div>
         
         <div class="test-wrapper quiz-test">
@@ -193,6 +231,7 @@
             :is-loading="testQuizLoading"
             @submit-answer="handleSubmitAnswer"
             @request-hint="handleRequestHint"
+            @api-error="handleQuizApiError"
           />
         </div>
       </div>
@@ -236,6 +275,7 @@ const currentSeparatedTest = ref('theory')
 const separatedComponentVisible = ref(true)
 const debugMode = ref(true)
 const showQnaInFeedback = ref(false)
+const quizContentLoading = ref(false)
 
 // MainContentArea 테스트 데이터
 const testAgent = ref('theory_educator')
@@ -250,12 +290,13 @@ const testContentData = ref({
 
 // API 테스트 상태
 const apiTestResult = ref(null)
+const quizApiTestResult = ref(null)
 
 // ChatInteraction 테스트 데이터
 const testChatHistory = ref([
   {
     sender: '튜터',
-    message: 'LLM에 대해 학습해보겠습니다. 위 내용을 확인해주세요!',
+    message: 'LLM에 대해 학습해보겠습니다. 왼쪽 내용을 확인해주세요!',
     type: 'system',
     timestamp: new Date()
   }
@@ -571,6 +612,16 @@ const resetQuiz = () => {
 
 const handleSubmitAnswer = (answerData) => {
   addLog(`답변 제출: ${JSON.stringify(answerData)}`, 'event')
+  
+  // API 연동 결과가 있는 경우 표시
+  if (answerData.apiResult) {
+    const { success, apiResult, error } = answerData
+    addLog(`API 연동 ${success ? '성공' : '실패'}: ${success ? '정상 처리' : error}`, success ? 'success' : 'warning')
+    
+    if (apiResult) {
+      addLog(`평가 결과: ${apiResult.isCorrect ? '정답' : '오답'} - ${apiResult.explanation}`, 'info')
+    }
+  }
 }
 
 const handleRequestHint = () => {
@@ -595,6 +646,125 @@ const toggleDebugMode = () => {
 const toggleQnaInFeedback = () => {
   showQnaInFeedback.value = !showQnaInFeedback.value
   addLog(`FeedbackContent QnA 표시: ${showQnaInFeedback.value}`, 'info')
+}
+
+// QuizContent 테스트 함수들
+const changeQuizContentType = (type) => {
+  if (type === 'subjective') {
+    testSeparatedQuizData.value = {
+      question: '컴포넌트 분리 후 QuizContent의 역할에 대해 설명해주세요.',
+      type: 'subjective',
+      hint: '문제 표시와 상호작용 분리에 대해 생각해보세요.'
+    }
+  } else {
+    testSeparatedQuizData.value = {
+      question: 'QuizContent 컴포넌트의 주요 역할은 무엇인가요?',
+      type: 'multiple_choice',
+      options: [
+        { value: '1', text: '문제 제목과 내용 표시' },
+        { value: '2', text: '객관식 선택지 처리' },
+        { value: '3', text: '답안 제출 처리' },
+        { value: '4', text: '모든 퀴즈 기능' }
+      ],
+      hint: '컴포넌트 분리 후 QuizContent는 표시만 담당합니다.'
+    }
+  }
+  
+  addLog(`QuizContent 타입 변경: ${type}`, 'info')
+}
+
+const toggleQuizContentLoading = () => {
+  quizContentLoading.value = !quizContentLoading.value
+  addLog(`QuizContent 로딩 상태: ${quizContentLoading.value}`, 'info')
+}
+
+// QuizInteraction API 테스트 함수들
+const testQuizApiIntegration = async () => {
+  addLog('QuizInteraction API 연동 테스트 시작', 'info')
+  
+  const startTime = Date.now()
+  quizApiTestResult.value = {
+    success: false,
+    submittedAnswer: null,
+    apiResponse: false,
+    responseTime: null,
+    error: null,
+    result: null
+  }
+  
+  try {
+    // learningService를 직접 테스트
+    const { learningService } = await import('@/services/learningService.js')
+    const testAnswer = testQuizData.value.type === 'multiple_choice' ? '1' : '테스트 답안입니다.'
+    
+    addLog(`테스트 답안 제출: "${testAnswer}"`, 'info')
+    
+    const result = await learningService.submitQuizAnswerV2(testAnswer)
+    const responseTime = Date.now() - startTime
+    
+    if (result.success) {
+      // API 응답을 QuizInteraction에서 사용하는 형태로 매핑
+      const mappedResult = {
+        isCorrect: result.data.workflow_response?.content?.is_correct || false,
+        correctAnswer: result.data.workflow_response?.content?.correct_answer || '',
+        explanation: result.data.workflow_response?.content?.explanation || '설명이 없습니다.',
+        feedback: result.data.workflow_response?.content?.feedback || '피드백이 없습니다.',
+        score: result.data.workflow_response?.content?.score || 0
+      }
+      
+      quizApiTestResult.value = {
+        success: true,
+        submittedAnswer: testAnswer,
+        apiResponse: true,
+        responseTime,
+        error: null,
+        result: mappedResult
+      }
+      
+      addLog(`퀴즈 API 테스트 성공 (${responseTime}ms)`, 'success')
+      addLog(`평가 결과: ${mappedResult.isCorrect ? '정답' : '오답'}`, mappedResult.isCorrect ? 'success' : 'warning')
+    } else {
+      quizApiTestResult.value = {
+        success: false,
+        submittedAnswer: testAnswer,
+        apiResponse: false,
+        responseTime,
+        error: result.error || '퀴즈 API 호출 실패',
+        result: null
+      }
+      
+      addLog(`퀴즈 API 테스트 실패: ${result.error}`, 'warning')
+      
+      // 더미데이터 fallback 테스트
+      const fallbackResult = {
+        isCorrect: Math.random() > 0.5,
+        correctAnswer: '1',
+        explanation: '네트워크 연결 문제로 임시 결과입니다.',
+        feedback: '더미데이터로 평가되었습니다.',
+        score: 50
+      }
+      
+      quizApiTestResult.value.result = fallbackResult
+      addLog('더미데이터 fallback 테스트 완료', 'warning')
+    }
+  } catch (error) {
+    const responseTime = Date.now() - startTime
+    quizApiTestResult.value = {
+      success: false,
+      submittedAnswer: 'N/A',
+      apiResponse: false,
+      responseTime,
+      error: error.message,
+      result: null
+    }
+    
+    addLog(`퀴즈 API 테스트 에러: ${error.message}`, 'warning')
+  }
+}
+
+const handleQuizApiError = (errorData) => {
+  const { type, error, fallbackUsed } = errorData
+  addLog(`QuizInteraction API 오류 (${type}): ${error} ${fallbackUsed ? '(더미데이터 사용)' : ''}`, 'warning')
 }
 
 // 초기 로그
@@ -736,6 +906,14 @@ addLog('컴포넌트 테스트 페이지가 로드되었습니다', 'success')
 .error-message {
   margin-top: 0.5rem;
   color: #dc3545;
+}
+
+.quiz-result {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 0.375rem;
+  border-left: 4px solid #28a745;
 }
 
 .test-wrapper {

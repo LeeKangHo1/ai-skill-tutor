@@ -24,6 +24,7 @@
         v-else-if="shouldShowContent('quiz')"
         :quiz-data="quizContent"
         :is-visible="isContentVisible('quiz')"
+        :is-loading="isLoading"
       />
 
       <!-- 피드백 컨텐츠 -->
@@ -173,7 +174,15 @@ const dummyTheoryContent = {
 }
 
 const dummyQuizContent = {
-  question: '다음 중 LLM의 특징이 아닌 것은?'
+  question: '퀴즈를 로드 중입니다...',
+  type: 'multiple_choice',
+  options: [
+    '로드 중입니다...',
+    '로드 중입니다...',
+    '로드 중입니다...',
+    '로드 중입니다...'
+  ],
+  hint: '잠시만 기다려주세요.'
 }
 
 const dummyFeedbackContent = {

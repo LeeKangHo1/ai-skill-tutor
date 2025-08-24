@@ -16,29 +16,14 @@
       </div>
     </div>
 
-    <!-- 진행 상태 표시 -->
-    <div class="session-progress">
-      <div class="progress-info">
-        <div class="progress-steps">
-          <div class="progress-step" :class="getStepClass('theory')" id="theory-step">
-            <div class="step-indicator">이론</div>
-          </div>
-          <div class="progress-step" :class="getStepClass('quiz')" id="quiz-step">
-            <div class="step-indicator">퀴즈</div>
-          </div>
-          <div class="progress-step" :class="getStepClass('feedback')" id="feedback-step">
-            <div class="step-indicator">풀이</div>
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <!-- 메인 컨텐츠 영역 -->
     <div class="learning-content">
       <!-- 왼쪽: 메인 컨텐츠 (50%) -->
       <MainContentArea :current-agent="currentAgent" :content-data="contentData"
-        :current-content-mode="currentContentMode" :completed-steps="completedSteps"
-        @navigation-click="handleNavigationClick" />
+        :current-content-mode="currentContentMode"
+        @navigation-click="handleNavigationClick" @content-loaded="handleContentLoaded" @api-error="handleApiError" />
 
       <!-- 오른쪽: 상호작용 영역 (50%) -->
       <div class="interaction-area">
@@ -92,17 +77,13 @@ const contentData = ref({
   type: 'theory'
 })
 
-const quizData = ref({
-  question: '',
-  options: [],
-  type: 'multiple_choice',
-  hint: ''
-})
+// 퀴즈 데이터는 store에서 가져오기
+const quizData = computed(() => learningStore.quizData)
 
 const chatHistory = ref([
   {
     sender: '튜터',
-    message: 'LLM에 대해 학습해보겠습니다. 위 내용을 확인해주세요!',
+    message: 'LLM에 대해 학습해보겠습니다. 왼쪽 내용을 확인해주세요!',
     type: 'system',
     timestamp: new Date()
   }
@@ -112,40 +93,13 @@ const chatHistory = ref([
 const currentAgent = computed(() => learningStore.currentAgent)
 const uiMode = computed(() => learningStore.currentUIMode)
 const currentContentMode = computed(() => learningStore.currentContentMode || 'current')
-const completedSteps = computed(() => learningStore.completedSteps || { theory: true, quiz: false, feedback: false })
 
 // 세션 정보
 const currentChapter = computed(() => learningStore.sessionInfo?.chapter_number || 2)
 const currentSection = computed(() => learningStore.sessionInfo?.section_number || 1)
 const sectionTitle = computed(() => learningStore.sessionInfo?.section_title || 'LLM이란 무엇인가')
 
-// 진행 단계 클래스 계산
-const getStepClass = (stepType) => {
-  const agent = currentAgent.value
 
-  if (stepType === 'theory') {
-    if (agent === 'theory_educator' || agent === 'qna_resolver') {
-      return 'step-active'
-    }
-    return completedSteps.value.theory ? 'step-completed' : 'step-pending'
-  }
-
-  if (stepType === 'quiz') {
-    if (agent === 'quiz_generator') {
-      return 'step-active'
-    }
-    return completedSteps.value.quiz ? 'step-completed' : 'step-pending'
-  }
-
-  if (stepType === 'feedback') {
-    if (agent === 'evaluation_feedback') {
-      return 'step-active'
-    }
-    return completedSteps.value.feedback ? 'step-completed' : 'step-pending'
-  }
-
-  return 'step-pending'
-}
 
 // 이벤트 핸들러들
 const handleSendMessage = async (message) => {
@@ -183,7 +137,7 @@ const handleSubmitAnswer = async (answer) => {
     loadingMessage.value = '답변을 평가하고 있습니다...'
 
     // 백엔드 API 호출 시뮬레이션
-    await simulateQuizSubmission(answer)
+    await simulateQuizSubmission()
 
   } catch (error) {
     console.error('퀴즈 제출 오류:', error)
@@ -212,21 +166,97 @@ const handleNavigationClick = (navigationType) => {
   }
 }
 
+const handleContentLoaded = (eventData) => {
+  const { type, data, source } = eventData
+
+  console.log(`컨텐츠 로드됨 - 타입: ${type}, 소스: ${source}`)
+
+  // API 응답에 따라 UI 모드와 퀴즈 데이터 업데이트
+  if (type === 'quiz' && data) {
+    // 퀴즈 데이터가 로드되면 UI 모드를 퀴즈로 변경
+    learningStore.updateUIMode('quiz')
+    updateQuizData(data)
+
+    console.log('퀴즈 모드로 전환, 퀴즈 데이터 업데이트:', data)
+  } else if (type === 'theory') {
+    // 이론 데이터가 로드되면 채팅 모드 유지
+    learningStore.updateUIMode('chat')
+  } else if (type === 'feedback') {
+    // 피드백 데이터가 로드되면 채팅 모드로 전환
+    learningStore.updateUIMode('chat')
+  }
+}
+
+const handleApiError = (errorData) => {
+  const { message, fallback } = errorData
+  console.warn(`API 오류: ${message} ${fallback ? '(더미데이터 사용)' : ''}`)
+
+  // 에러 발생 시에도 기본 동작 유지
+  if (fallback) {
+    // 더미데이터 사용 시 기본 퀴즈 데이터 설정
+    updateQuizData()
+  }
+}
+
 const goToDashboard = () => {
   router.push('/dashboard')
 }
 
 // 유틸리티 함수들
 const simulateAPICall = async (message) => {
-  // SupervisorRouter 시뮬레이션
-  await new Promise(resolve => setTimeout(resolve, 1000))
-
   if (message.includes('다음') || message.includes('퀴즈')) {
-    // QuizGenerator로 라우팅
+    // 1. 즉시 퀴즈 모드로 전환 (로딩 상태 표시)
     learningStore.updateAgent('quiz_generator')
     learningStore.updateUIMode('quiz')
     updateContentData('quiz')
-    updateQuizData()
+
+    // 2. store의 퀴즈 데이터를 완전히 비운 상태로 초기화 (로딩 인디케이터 표시)
+    learningStore.updateQuizData({
+      question: '',
+      options: [],
+      type: '',
+      hint: ''
+    })
+
+    chatHistory.value.push({
+      sender: '튜터',
+      message: '퀴즈를 생성하고 있습니다. 잠시만 기다려주세요...',
+      type: 'system',
+      timestamp: new Date()
+    })
+
+    // 3. API 호출 시뮬레이션 (2초 지연)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // 4. API 응답 시뮬레이션 - 백엔드 응답 형태로 수정
+    const mockApiResponse = {
+      success: true,
+      data: {
+        workflow_response: {
+          current_agent: "quiz_generator",
+          session_progress_stage: "theory_completed",
+          ui_mode: "quiz",
+          content: {
+            type: "quiz",
+            quiz_type: "multiple_choice",
+            question: "다음 중 LLM의 특징이 아닌 것은?",
+            options: [
+              "대규모 데이터 학습",
+              "실시간 인터넷 검색",
+              "언어 이해 능력",
+              "텍스트 생성 능력"
+            ],
+            hint: "LLM의 'L'이 무엇을 의미하는지 생각해보세요."
+          }
+        }
+      },
+      message: "퀴즈가 준비되었습니다."
+    }
+
+    // 5. store에 퀴즈 데이터 저장
+    learningStore.setQuizDataFromAPI(mockApiResponse.data)
+
+    // 6. 퀴즈 데이터는 store에서 관리되므로 별도 업데이트 불필요
 
     chatHistory.value.push({
       sender: '튜터',
@@ -236,6 +266,8 @@ const simulateAPICall = async (message) => {
     })
   } else if (message.includes('차이') || message.includes('?')) {
     // QnAResolver로 라우팅
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
     learningStore.updateAgent('qna_resolver')
     updateContentData('qna')
 
@@ -246,6 +278,8 @@ const simulateAPICall = async (message) => {
       timestamp: new Date()
     })
   } else {
+    await new Promise(resolve => setTimeout(resolve, 500))
+
     chatHistory.value.push({
       sender: '튜터',
       message: '무엇을 도와드릴까요? "다음으로 넘어가주세요" 또는 질문을 해주세요.',
@@ -255,7 +289,7 @@ const simulateAPICall = async (message) => {
   }
 }
 
-const simulateQuizSubmission = async (answer) => {
+const simulateQuizSubmission = async () => {
   await new Promise(resolve => setTimeout(resolve, 1500))
 
   // EvaluationFeedbackAgent로 라우팅
@@ -308,17 +342,28 @@ const updateContentData = (type) => {
   }
 }
 
-const updateQuizData = () => {
-  quizData.value = {
-    question: '다음 중 LLM의 특징이 아닌 것은?',
-    options: [
-      { value: '1', text: '대규모 데이터 학습' },
-      { value: '2', text: '실시간 인터넷 검색' },
-      { value: '3', text: '언어 이해 능력' },
-      { value: '4', text: '텍스트 생성 능력' }
-    ],
-    type: 'multiple_choice',
-    hint: 'LLM의 "L"이 무엇을 의미하는지 생각해보세요.'
+const updateQuizData = (apiQuizData = null) => {
+  if (apiQuizData) {
+    // API 응답 데이터가 있으면 store에 저장
+    learningStore.updateQuizData({
+      question: apiQuizData.question || '',
+      options: apiQuizData.options || [],
+      type: apiQuizData.type || 'multiple_choice',
+      hint: apiQuizData.hint || ''
+    })
+  } else {
+    // 로딩 상태를 나타내는 더미데이터를 store에 저장
+    learningStore.updateQuizData({
+      question: '퀴즈를 로드 중입니다...',
+      options: [
+        '로드 중입니다...',
+        '로드 중입니다...',
+        '로드 중입니다...',
+        '로드 중입니다...'
+      ],
+      type: 'multiple_choice',
+      hint: '잠시만 기다려주세요.'
+    })
   }
 }
 
@@ -334,6 +379,14 @@ onMounted(async () => {
 
     // 초기 컨텐츠 설정
     updateContentData('theory')
+
+    // store의 퀴즈 데이터 초기화 (완전히 빈 상태로)
+    learningStore.updateQuizData({
+      question: '',
+      options: [],
+      type: '',
+      hint: ''
+    })
 
     // 세션 시작 (실제로는 API 호출)
     await new Promise(resolve => setTimeout(resolve, 1000))
@@ -400,83 +453,13 @@ watch(uiMode, (newMode) => {
   font-size: 0.9rem;
 }
 
-/* 진행 상태 표시 */
-.session-progress {
-  background: #f8f9fa;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid #dee2e6;
-}
 
-.progress-info {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.progress-steps {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.progress-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.4rem;
-  font-weight: 700;
-  position: relative;
-}
-
-.step-indicator {
-  width: 80px;
-  height: 40px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.75rem;
-  transition: all 0.3s ease;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.step-active .step-indicator {
-  background: #74a8f7;
-  color: white;
-  box-shadow: 0 0 0 3px rgba(116, 168, 247, 0.25);
-}
-
-.step-completed .step-indicator {
-  background: #6bb26b;
-  color: white;
-}
-
-.step-pending .step-indicator {
-  background: #e9ecef;
-  color: #6c757d;
-  border: 2px solid #dee2e6;
-}
-
-.step-active {
-  color: #74a8f7;
-}
-
-.step-completed {
-  color: #6bb26b;
-}
-
-.step-pending {
-  color: #6c757d;
-}
 
 /* 메인 컨텐츠 영역 - 6:4 비율 */
 .learning-content {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 3fr 2fr;
   gap: 0;
   overflow: hidden;
   min-height: 0;

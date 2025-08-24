@@ -2,10 +2,6 @@
 
 - [x] 1. learningService.js에 v2.0 API 메서드 추가
 
-
-
-
-
   - startLearningSession() 메서드 구현
   - sendSessionMessage() 메서드 구현  
   - submitQuizAnswerV2() 메서드 구현
@@ -13,10 +9,6 @@
   - _Requirements: 1.1, 4.1_
 
 - [x] 2. MainContentArea.vue 백엔드 연동
-
-
-
-
 
   - 컴포넌트 마운트 시 learningService.startLearningSession() 호출
   - API 응답을 기존 더미데이터 구조로 직접 매핑
@@ -27,14 +19,6 @@
 
 - [ ] 3. MainContentArea 연동 테스트
 
-
-
-
-
-
-
-
-
   - ComponentTest.vue에서 MainContentArea API 연동 검증
   - API 성공/실패 시나리오 테스트
   - 더미데이터 fallback 동작 확인
@@ -42,10 +26,6 @@
   - _Requirements: 1.4_
 
 - [x] 3.1 MainContentArea 컴포넌트 분리
-
-
-
-
 
   - MainContentArea.vue를 3개의 하위 컴포넌트로 분리
   - TheoryContent.vue: 이론 설명 파트 담당
@@ -64,14 +44,15 @@
   - **컴포넌트 분리 작업 완료 후 전체 동작 확인**
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [x] 4. QuizInteraction.vue 백엔드 연동
+- [x] 4. QuizContent와 QuizInteraction 컴포넌트 역할 분리 및 백엔드 연동
 
 
 
 
-
-  - response에서 ui_mode가 'quiz'로 변경되는 경우 퀴즈 컨텐츠 렌더링
-  - 답안 제출 시 learningService.submitQuizAnswerV2() 호출 (sendSessionMessage 아님)
+  - **QuizContent.vue 수정**: 메인 컨텐츠 영역에서 문제 제목과 문제 내용만 표시
+  - **QuizInteraction.vue 수정**: 객관식 선택지와 제출 버튼만 포함하도록 UI 분리
+  - response에서 ui_mode가 'quiz'로 변경되는 경우 QuizContent에 문제 데이터 전달
+  - 답안 제출 시 QuizInteraction에서 learningService.submitQuizAnswerV2() 호출
   - API 응답을 기존 퀴즈 데이터 구조로 직접 매핑
   - 에러 발생 시 더미데이터 fallback 처리
   - **작업 완료 후 반드시 ComponentTest.vue로 동작 확인**
@@ -84,7 +65,12 @@
   - **QuizInteraction 작업이 완전히 완료되었는지 최종 확인**
   - _Requirements: 2.4_
 
-- [ ] 6. ChatInteraction.vue 백엔드 연동
+- [x] 6. ChatInteraction.vue 백엔드 연동
+
+
+
+
+
   - 메시지 전송 시 learningService.sendSessionMessage() 호출
   - AI 응답을 채팅 히스토리에 실시간 추가
   - 세션 시작 시 기존 대화 기록 로드 구현

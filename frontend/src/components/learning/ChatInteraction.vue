@@ -75,7 +75,7 @@
       <!-- 입력 힌트 -->
       <div class="input-hints" v-if="showInputHints">
         <div class="hint-item">
-          💡 <strong>팁:</strong> "다음으로 넘어가주세요"라고 입력하면 퀴즈로 이동합니다.
+          💡 <strong>팁:</strong> "다음"이라고 입력하면 퀴즈로 이동합니다.
         </div>
         <div class="hint-item">
           🤔 <strong>질문:</strong> 학습 내용에 대해 궁금한 점을 자유롭게 물어보세요.
