@@ -273,22 +273,5 @@ const props = defineProps({
   }
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .theory-content {
-    padding: 1rem;
-  }
-
-  .examples-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .theory-title {
-    font-size: 1.2rem;
-  }
-
-  .section-title {
-    font-size: 1.1rem;
-  }
-}
+/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

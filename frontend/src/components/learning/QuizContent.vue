@@ -66,11 +66,11 @@ const props = defineProps({
   }
 })
 
-// store에서 퀴즈 데이터 가져오기 (props보다 우선)
+// store에서 퀴즈 데이터 가져오기 (캐시 없이 현재 데이터만 사용)
 const storeQuizData = computed(() => learningStore.quizData)
 const actualQuizData = computed(() => {
-  // store에 퀴즈 데이터가 있으면 store 데이터 사용, 없으면 props 사용
-  if (storeQuizData.value && storeQuizData.value.question) {
+  // 캐시된 데이터 사용하지 않고 현재 store 데이터만 사용
+  if (storeQuizData.value && storeQuizData.value.question && !storeQuizData.value.question.includes('로드 중입니다')) {
     return storeQuizData.value
   }
   return props.quizData
@@ -291,27 +291,5 @@ const instructionText = computed(() => {
   }
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .quiz-content {
-    padding: 1rem;
-  }
-  
-  .quiz-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-  
-  .question-text {
-    font-size: 1rem;
-    padding: 0.75rem;
-  }
-  
-  .quiz-instruction {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-}
+/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

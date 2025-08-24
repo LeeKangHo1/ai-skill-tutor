@@ -50,23 +50,11 @@ export const useLearningStore = defineStore('learning', () => {
     metadata: {}
   })
   
-  // API 응답 캐시 (새로고침 시에도 유지)
-  const apiContentCache = ref({
-    theory: null,
-    quiz: null,
-    feedback: null,
-    qna: null
-  })
+  // API 응답 데이터 (캐시 없이 실시간 데이터만 사용)
+  const currentApiResponse = ref(null)
   
-  // 채팅 히스토리
-  const chatHistory = ref([
-    {
-      sender: '튜터',
-      message: 'LLM에 대해 학습해보겠습니다. 왼쪽 내용을 확인해주세요!',
-      type: 'system',
-      timestamp: new Date()
-    }
-  ])
+  // 채팅 히스토리 (세션별로 새로 시작, 이전 대화 저장하지 않음)
+  const chatHistory = ref([])
   
   // 퀴즈 데이터 (초기값은 완전히 비워둠)
   const quizData = ref({
@@ -201,32 +189,34 @@ export const useLearningStore = defineStore('learning', () => {
     mainContent.value = { ...mainContent.value, ...content }
   }
   
-  // API 컨텐츠 캐시 업데이트
-  const updateApiContentCache = (contentType, data) => {
-    apiContentCache.value[contentType] = data
-    console.log(`API 컨텐츠 캐시 업데이트: ${contentType}`, data)
+  // API 응답 데이터 업데이트 (캐시 없이 현재 데이터만 저장)
+  const updateCurrentApiResponse = (data) => {
+    currentApiResponse.value = data
+    console.log('현재 API 응답 데이터 업데이트:', data)
   }
   
-  // API 컨텐츠 캐시 조회
-  const getApiContentCache = (contentType) => {
-    return apiContentCache.value[contentType]
+  // 현재 API 응답 데이터 조회
+  const getCurrentApiResponse = () => {
+    return currentApiResponse.value
   }
   
-  // API 컨텐츠 캐시 초기화
-  const clearApiContentCache = () => {
-    apiContentCache.value = {
-      theory: null,
-      quiz: null,
-      feedback: null,
-      qna: null
-    }
+  // API 응답 데이터 초기화
+  const clearCurrentApiResponse = () => {
+    currentApiResponse.value = null
+    console.log('API 응답 데이터 초기화됨')
   }
   
-  // 채팅 히스토리 업데이트
+  // 채팅 히스토리 업데이트 (기존 히스토리 완전 대체)
   const updateChatHistory = (history) => {
     if (Array.isArray(history)) {
-      chatHistory.value = history
+      chatHistory.value = [...history] // 새로운 배열로 완전 대체
     }
+  }
+
+  // 채팅 히스토리 완전 초기화
+  const clearChatHistory = () => {
+    chatHistory.value = []
+    console.log('채팅 히스토리 완전 초기화됨')
   }
   
   // 채팅 메시지 추가
@@ -237,17 +227,48 @@ export const useLearningStore = defineStore('learning', () => {
     })
   }
   
-  // 퀴즈 데이터 업데이트
+  // 퀴즈 데이터 업데이트 (기존 데이터 완전 대체)
   const updateQuizData = (quiz) => {
-    quizData.value = { ...quizData.value, ...quiz }
+    // 캐시 없이 새로운 데이터로 완전 대체
+    quizData.value = {
+      question: quiz.question || '',
+      type: quiz.type || '',
+      options: quiz.options || [],
+      hint: quiz.hint || '',
+      correct_answer: quiz.correct_answer || '',
+      user_answer: quiz.user_answer || ''
+    }
   }
 
-  // API 응답에서 퀴즈 데이터 저장 (백엔드 응답 형태 처리)
+  // 퀴즈 데이터 완전 초기화
+  const clearQuizData = () => {
+    quizData.value = {
+      question: '',
+      type: '',
+      options: [],
+      hint: '',
+      correct_answer: '',
+      user_answer: ''
+    }
+    currentQuizInfo.value = {
+      quiz_type: 'multiple_choice',
+      is_quiz_active: false,
+      is_answer_submitted: false,
+      hint_usage_count: 0,
+      score: null
+    }
+    console.log('퀴즈 데이터 완전 초기화됨')
+  }
+
+  // API 응답에서 퀴즈 데이터 저장 (캐시 없이 새로운 데이터로 대체)
   const setQuizDataFromAPI = (apiResponse) => {
+    // 기존 퀴즈 데이터 완전 초기화
+    clearQuizData()
+    
     if (apiResponse?.workflow_response?.content) {
       const content = apiResponse.workflow_response.content
       
-      // 퀴즈 데이터 매핑
+      // 새로운 퀴즈 데이터 매핑
       const mappedQuizData = {
         question: content.question || '',
         type: content.quiz_type || 'multiple_choice',
@@ -257,10 +278,10 @@ export const useLearningStore = defineStore('learning', () => {
         user_answer: ''
       }
       
-      // store에 퀴즈 데이터 저장
+      // 새로운 퀴즈 데이터로 완전 대체
       quizData.value = mappedQuizData
       
-      // 퀴즈 상태 업데이트
+      // 새로운 퀴즈 상태 설정
       currentQuizInfo.value = {
         quiz_type: mappedQuizData.type,
         is_quiz_active: true,
@@ -269,7 +290,7 @@ export const useLearningStore = defineStore('learning', () => {
         score: null
       }
       
-      console.log('API 응답에서 퀴즈 데이터 저장:', mappedQuizData)
+      console.log('새로운 퀴즈 데이터로 완전 대체:', mappedQuizData)
       return mappedQuizData
     }
     return null
@@ -335,9 +356,9 @@ export const useLearningStore = defineStore('learning', () => {
     })
   }
   
-  // 세션 리셋
+  // 세션 완전 리셋 (모든 캐시 데이터 삭제)
   const resetSession = () => {
-    console.log('세션 리셋')
+    console.log('세션 완전 리셋 - 모든 데이터 초기화')
     
     currentAgent.value = 'theory_educator'
     currentUIMode.value = 'chat'
@@ -351,30 +372,41 @@ export const useLearningStore = defineStore('learning', () => {
       feedback: false
     }
     
-    chatHistory.value = [
-      {
-        sender: '튜터',
-        message: 'LLM에 대해 학습해보겠습니다. 위 내용을 확인해주세요!',
-        type: 'system',
-        timestamp: new Date()
-      }
-    ]
+    // 모든 데이터 완전 초기화
+    clearChatHistory()
+    clearQuizData()
+    clearCurrentApiResponse()
     
-    quizData.value = {
-      question: '',
-      type: '',
-      options: [],
-      hint: '',
-      correct_answer: '',
-      user_answer: ''
+    mainContent.value = {
+      agent_name: 'theory_educator',
+      content_type: 'theory',
+      title: 'LLM(Large Language Model)이란?',
+      content: '',
+      metadata: {}
     }
     
-    currentQuizInfo.value = {
-      quiz_type: 'multiple_choice',
-      is_quiz_active: false,
-      is_answer_submitted: false,
-      hint_usage_count: 0,
-      score: null
+    lastWorkflowResponse.value = {
+      current_agent: 'theory_educator',
+      session_progress_stage: 'session_start',
+      ui_mode: 'chat',
+      content: {},
+      metadata: {}
+    }
+  }
+
+  // 모든 데이터 완전 초기화
+  const clearAllData = () => {
+    console.log('모든 store 데이터 완전 초기화')
+    clearChatHistory()
+    clearQuizData()
+    clearCurrentApiResponse()
+    
+    mainContent.value = {
+      agent_name: '',
+      content_type: '',
+      title: '',
+      content: '',
+      metadata: {}
     }
   }
   
@@ -407,7 +439,7 @@ export const useLearningStore = defineStore('learning', () => {
     quizData,
     currentQuizInfo,
     lastWorkflowResponse,
-    apiContentCache,
+    currentApiResponse,
     
     // 컴퓨티드
     isQuizMode,
@@ -428,17 +460,20 @@ export const useLearningStore = defineStore('learning', () => {
     updateSessionInfo,
     updateMainContent,
     updateChatHistory,
+    clearChatHistory,
     addChatMessage,
     updateQuizData,
+    clearQuizData,
     setQuizDataFromAPI,
     updateQuizInfo,
     updateUserAnswer,
     updateWorkflowResponse,
     initializeSession,
     resetSession,
+    clearAllData,
     getStateInfo,
-    updateApiContentCache,
-    getApiContentCache,
-    clearApiContentCache
+    updateCurrentApiResponse,
+    getCurrentApiResponse,
+    clearCurrentApiResponse
   }
 })

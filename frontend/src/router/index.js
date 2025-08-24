@@ -120,11 +120,11 @@ const routes = [
   },
 
   // frontend/src/router/index.js에 테스트 라우트 추가
-  {
-    path: '/test',
-    name: 'ComponentTest',
-    component: () => import('@/views/test/ComponentTest.vue')
-  },
+  // {
+  //   path: '/test',
+  //   name: 'ComponentTest',
+  //   component: () => import('@/views/test/ComponentTest.vue')
+  // },
   
 ]
 

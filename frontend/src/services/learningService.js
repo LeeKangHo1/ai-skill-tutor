@@ -4,12 +4,13 @@
 import apiClient from './api.js'
 
 /**
- * 학습 관련 API 서비스
+ * 학습 관련 API 서비스 (캐시 없이 실시간 데이터만 사용)
  * 학습 세션, 대화, 퀴즈 등의 기능을 제공
+ * 모든 API 호출은 캐시를 사용하지 않고 매번 새로운 요청을 수행
  */
 export const learningService = {
   /**
-   * 새로운 학습 세션 시작
+   * 새로운 학습 세션 시작 (캐시 없이 매번 새로운 세션 생성)
    * @param {Object} sessionData - 세션 시작 정보
    * @param {number} sessionData.chapterId - 챕터 ID
    * @param {string} sessionData.sessionType - 세션 타입 (theory, quiz, practice)
@@ -17,7 +18,14 @@ export const learningService = {
    */
   async startSession(sessionData) {
     try {
-      const response = await apiClient.post('/learning/sessions', sessionData)
+      // 캐시 방지를 위한 타임스탬프 추가
+      const requestData = {
+        ...sessionData,
+        timestamp: Date.now(),
+        force_new_session: true
+      }
+      
+      const response = await apiClient.post('/learning/sessions', requestData)
       return {
         success: true,
         data: response.data,
@@ -79,7 +87,7 @@ export const learningService = {
   },
 
   /**
-   * 학습 세션에 메시지 전송 (AI와 대화)
+   * 학습 세션에 메시지 전송 (AI와 대화, 캐시 없이 매번 새로운 응답 생성)
    * @param {string} sessionId - 세션 ID
    * @param {Object} messageData - 메시지 데이터
    * @param {string} messageData.message - 사용자 메시지
@@ -88,7 +96,14 @@ export const learningService = {
    */
   async sendMessage(sessionId, messageData) {
     try {
-      const response = await apiClient.post(`/learning/sessions/${sessionId}/messages`, messageData)
+      // 캐시 방지를 위한 데이터 추가
+      const requestData = {
+        ...messageData,
+        timestamp: Date.now(),
+        force_new_response: true
+      }
+      
+      const response = await apiClient.post(`/learning/sessions/${sessionId}/messages`, requestData)
       return {
         success: true,
         data: response.data,
@@ -104,13 +119,19 @@ export const learningService = {
   },
 
   /**
-   * 세션의 대화 기록 조회
+   * 세션의 대화 기록 조회 (캐시 없이 실시간 데이터만 조회)
    * @param {string} sessionId - 세션 ID
    * @returns {Promise<Object>} 대화 기록
    */
   async getSessionConversations(sessionId) {
     try {
-      const response = await apiClient.get(`/learning/sessions/${sessionId}/conversations`)
+      // 캐시 방지를 위한 쿼리 파라미터 추가
+      const response = await apiClient.get(`/learning/sessions/${sessionId}/conversations`, {
+        params: {
+          timestamp: Date.now(),
+          no_cache: true
+        }
+      })
       return {
         success: true,
         data: response.data,
@@ -126,7 +147,7 @@ export const learningService = {
   },
 
   /**
-   * 퀴즈 답안 제출
+   * 퀴즈 답안 제출 (캐시 없이 매번 새로운 평가 수행)
    * @param {string} sessionId - 세션 ID
    * @param {Object} answerData - 답안 데이터
    * @param {string} answerData.answer - 사용자 답안
@@ -135,7 +156,14 @@ export const learningService = {
    */
   async submitQuizAnswer(sessionId, answerData) {
     try {
-      const response = await apiClient.post(`/learning/sessions/${sessionId}/quiz/submit`, answerData)
+      // 캐시 방지를 위한 데이터 추가
+      const requestData = {
+        ...answerData,
+        timestamp: Date.now(),
+        force_new_evaluation: true
+      }
+      
+      const response = await apiClient.post(`/learning/sessions/${sessionId}/quiz/submit`, requestData)
       return {
         success: true,
         data: response.data,
@@ -229,7 +257,7 @@ export const learningService = {
   },
 
   /**
-   * 세션 메시지 전송 (v2.0 API - 통합 워크플로우)
+   * 세션 메시지 전송 (v2.0 API - 통합 워크플로우, 캐시 없이 매번 새로운 응답)
    * @param {string} userMessage - 사용자 메시지
    * @param {string} messageType - 메시지 타입 (기본값: 'user')
    * @returns {Promise<Object>} AI 워크플로우 응답
@@ -238,7 +266,9 @@ export const learningService = {
     try {
       const response = await apiClient.post('/learning/session/message', {
         user_message: userMessage,
-        message_type: messageType
+        message_type: messageType,
+        timestamp: Date.now(),
+        force_new_response: true
       })
       return {
         success: true,
@@ -255,14 +285,16 @@ export const learningService = {
   },
 
   /**
-   * 퀴즈 답안 제출 (v2.0 API - 통합 워크플로우)
+   * 퀴즈 답안 제출 (v2.0 API - 통합 워크플로우, 캐시 없이 매번 새로운 평가)
    * @param {string} userAnswer - 사용자 답안
    * @returns {Promise<Object>} 퀴즈 평가 결과
    */
   async submitQuizAnswerV2(userAnswer) {
     try {
       const response = await apiClient.post('/learning/quiz/submit', {
-        user_answer: userAnswer
+        user_answer: userAnswer,
+        timestamp: Date.now(),
+        force_new_evaluation: true
       })
       return {
         success: true,

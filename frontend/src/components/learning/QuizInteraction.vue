@@ -112,7 +112,7 @@ import { ref, computed, watch, nextTick, defineProps, defineEmits } from 'vue'
 import { learningService } from '@/services/learningService.js'
 import { useLearningStore } from '@/stores/learningStore'
 
-// Store 사용
+// Store 사용 (캐시 없이 실시간 데이터만 사용)
 const learningStore = useLearningStore()
 
 // Props 정의
@@ -156,11 +156,11 @@ const props = defineProps({
 // Emits 정의
 const emit = defineEmits(['submit-answer', 'request-hint', 'quiz-reset', 'api-error'])
 
-// store에서 퀴즈 데이터 가져오기 (props보다 우선)
+// store에서 퀴즈 데이터 가져오기 (캐시 없이 현재 데이터만 사용)
 const storeQuizData = computed(() => learningStore.quizData)
 const actualQuizData = computed(() => {
-  // store에 퀴즈 데이터가 있으면 store 데이터 사용, 없으면 props 사용
-  if (storeQuizData.value && storeQuizData.value.question) {
+  // 캐시된 데이터 사용하지 않고 현재 store 데이터만 사용
+  if (storeQuizData.value && storeQuizData.value.question && !storeQuizData.value.question.includes('로드 중입니다')) {
     return storeQuizData.value
   }
   return props.quizData
@@ -377,6 +377,7 @@ const createFallbackQuizResult = (userAnswer) => {
 }
 
 const resetQuiz = () => {
+  // 모든 상태 완전 초기화 (캐시 데이터 사용하지 않음)
   selectedAnswer.value = ''
   subjectiveAnswer.value = ''
   showHint.value = false
@@ -384,13 +385,15 @@ const resetQuiz = () => {
   hintUsed.value = false
   isSubmitted.value = false
 
+  console.log('퀴즈 상태 완전 초기화됨')
   emit('quiz-reset')
 }
 
-// 감시자들
-watch(() => actualQuizData.value, (newQuizData) => {
-  // 새로운 퀴즈 데이터가 들어오면 상태 리셋
-  if (newQuizData && newQuizData.question) {
+// 감시자들 - 캐시 없이 새로운 데이터마다 완전 리셋
+watch(() => actualQuizData.value, (newQuizData, oldQuizData) => {
+  // 새로운 퀴즈 데이터가 들어오면 이전 상태 완전 초기화
+  if (newQuizData && newQuizData.question && newQuizData !== oldQuizData) {
+    console.log('새로운 퀴즈 데이터 감지 - 상태 완전 리셋')
     resetQuiz()
   }
 }, { deep: true })
@@ -924,61 +927,7 @@ watch(subjectiveAnswer, () => {
   line-height: 1.4;
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .quiz-interaction {
-    padding: 0.75rem;
-  }
-
-  .interaction-content {
-    padding-right: 0.25rem;
-    /* 모바일에서 스크롤바 공간 줄임 */
-  }
-
-  .options-header,
-  .input-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-
-  .quiz-option {
-    padding: 0.75rem;
-  }
-
-  .option-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-
-  .quiz-actions {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .btn {
-    width: 100%;
-  }
-
-  .subjective-input {
-    font-size: 16px;
-    /* iOS에서 줌 방지 */
-  }
-
-  .no-quiz-data {
-    padding: 2rem 1rem;
-  }
-
-  .no-data-icon {
-    font-size: 2rem;
-  }
-
-  /* 모바일에서 스크롤바 숨김 */
-  .interaction-content::-webkit-scrollbar {
-    width: 3px;
-  }
-}
+/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 
 /* 접근성 개선 */
 @media (prefers-reduced-motion: reduce) {

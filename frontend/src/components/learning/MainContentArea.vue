@@ -197,55 +197,39 @@ const dummyQnaContent = {
   relatedInfo: '3챕터에서 AI의 역사와 발전 과정을 더 자세히 다룹니다.'
 }
 
-// API 데이터와 더미 데이터를 결합한 컨텐츠 데이터
+// API 데이터와 더미 데이터 (캐시 없이 현재 데이터만 사용)
 const theoryContent = computed(() => {
-  // 1. 현재 컴포넌트의 API 데이터 확인
+  // 캐시 사용하지 않고 현재 API 데이터만 확인
   if (apiContentData.value?.theory) {
-    console.log('🔍 theoryContent - API 데이터:', apiContentData.value.theory)
+    console.log('🔍 theoryContent - 현재 API 데이터:', apiContentData.value.theory)
     return apiContentData.value.theory
   }
 
-  // 2. 스토어의 캐시된 데이터 확인
-  const cachedTheory = learningStore.getApiContentCache('theory')
-  if (cachedTheory) {
-    console.log('🔍 theoryContent - 캐시 데이터:', cachedTheory)
-    return cachedTheory
-  }
-
-  // 3. 더미데이터 사용
-  console.log('🔍 theoryContent - 더미 데이터 사용:', dummyTheoryContent)
+  // 캐시 확인 제거 - 더미데이터 직접 사용
+  console.log('🔍 theoryContent - 더미 데이터 사용 (캐시 없음):', dummyTheoryContent)
   return dummyTheoryContent
 })
 
 const quizContent = computed(() => {
+  // 캐시 없이 현재 데이터만 사용
   if (apiContentData.value?.quiz) {
     return apiContentData.value.quiz
-  }
-  const cachedQuiz = learningStore.getApiContentCache('quiz')
-  if (cachedQuiz) {
-    return cachedQuiz
   }
   return dummyQuizContent
 })
 
 const feedbackContent = computed(() => {
+  // 캐시 없이 현재 데이터만 사용
   if (apiContentData.value?.feedback) {
     return apiContentData.value.feedback
-  }
-  const cachedFeedback = learningStore.getApiContentCache('feedback')
-  if (cachedFeedback) {
-    return cachedFeedback
   }
   return dummyFeedbackContent
 })
 
 const qnaContent = computed(() => {
+  // 캐시 없이 현재 데이터만 사용
   if (apiContentData.value?.qna) {
     return apiContentData.value.qna
-  }
-  const cachedQna = learningStore.getApiContentCache('qna')
-  if (cachedQna) {
-    return cachedQna
   }
   return dummyQnaContent
 })
@@ -316,34 +300,30 @@ const loadInitialContent = async () => {
     )
 
     if (success && data) {
-      // API 응답을 컴포넌트 데이터로 변환
+      // API 응답을 컴포넌트 데이터로 변환 (캐시 없이 현재 데이터만 저장)
       const mappedContent = mapApiResponseToComponent(data, 'theory')
       if (mappedContent) {
         apiContentData.value = { theory: mappedContent }
-        // 스토어에도 캐시 저장
-        learningStore.updateApiContentCache('theory', mappedContent)
+        // 캐시 저장 제거 - 현재 응답만 저장
+        learningStore.updateCurrentApiResponse(data)
         emit('content-loaded', { type: 'theory', data: mappedContent, source: 'api' })
-        console.log('MainContentArea: API 데이터 로드 성공', mappedContent)
+        console.log('MainContentArea: API 데이터 로드 성공 (캐시 없음)', mappedContent)
       } else {
         throw new Error('API 응답 매핑 실패')
       }
     } else {
-      // 더미데이터 fallback
+      // 더미데이터 fallback (캐시 저장하지 않음)
       apiContentData.value = { theory: dummyTheoryContent }
-      // 스토어에도 더미데이터 저장 (일관성 유지)
-      learningStore.updateApiContentCache('theory', dummyTheoryContent)
       emit('content-loaded', { type: 'theory', data: dummyTheoryContent, source: 'fallback' })
       emit('api-error', { message: error || 'API 호출 실패', fallback: true })
-      console.warn('MainContentArea: 더미데이터로 fallback', error)
+      console.warn('MainContentArea: 더미데이터로 fallback (캐시 없음)', error)
     }
   } catch (error) {
-    // 에러 발생 시 더미데이터 사용
+    // 에러 발생 시 더미데이터 사용 (캐시 저장하지 않음)
     apiContentData.value = { theory: dummyTheoryContent }
-    // 스토어에도 더미데이터 저장
-    learningStore.updateApiContentCache('theory', dummyTheoryContent)
     emit('content-loaded', { type: 'theory', data: dummyTheoryContent, source: 'fallback' })
     emit('api-error', { message: error.message, fallback: true })
-    console.error('MainContentArea: 컨텐츠 로드 에러', error)
+    console.error('MainContentArea: 컨텐츠 로드 에러 (캐시 없음)', error)
   } finally {
     isLoading.value = false
   }
@@ -405,31 +385,29 @@ const loadAgentContent = async (agent) => {
     }
 
     if (apiResult.success && apiResult.data) {
-      // API 응답을 컴포넌트 데이터로 변환
+      // API 응답을 컴포넌트 데이터로 변환 (캐시 없이 현재 데이터만 저장)
       const mappedContent = mapApiResponseToComponent(apiResult.data, contentType)
       if (mappedContent) {
         if (!apiContentData.value) apiContentData.value = {}
         apiContentData.value[contentType] = mappedContent
-        // 스토어에도 캐시 저장
-        learningStore.updateApiContentCache(contentType, mappedContent)
+        // 캐시 저장 제거 - 현재 응답만 저장
+        learningStore.updateCurrentApiResponse(apiResult.data)
         emit('content-loaded', { type: contentType, data: mappedContent, source: 'api' })
         lastApiCall.value = agent
-        console.log(`MainContentArea: ${agent} API 데이터 로드 성공`, mappedContent)
+        console.log(`MainContentArea: ${agent} API 데이터 로드 성공 (캐시 없음)`, mappedContent)
       } else {
         throw new Error('API 응답 매핑 실패')
       }
     } else {
-      // 더미데이터 fallback
+      // 더미데이터 fallback (캐시 저장하지 않음)
       if (!apiContentData.value) apiContentData.value = {}
       apiContentData.value[contentType] = fallbackData
-      // 스토어에도 더미데이터 저장
-      learningStore.updateApiContentCache(contentType, fallbackData)
       emit('content-loaded', { type: contentType, data: fallbackData, source: 'fallback' })
       emit('api-error', { message: apiResult.error || 'API 호출 실패', fallback: true })
-      console.warn(`MainContentArea: ${agent} 더미데이터로 fallback`, apiResult.error)
+      console.warn(`MainContentArea: ${agent} 더미데이터로 fallback (캐시 없음)`, apiResult.error)
     }
   } catch (error) {
-    // 에러 발생 시 더미데이터 사용
+    // 에러 발생 시 더미데이터 사용 (캐시 저장하지 않음)
     const contentType = agentContentMap[agent]
     const fallbackData = {
       theory: dummyTheoryContent,
@@ -440,11 +418,9 @@ const loadAgentContent = async (agent) => {
 
     if (!apiContentData.value) apiContentData.value = {}
     apiContentData.value[contentType] = fallbackData
-    // 스토어에도 더미데이터 저장
-    learningStore.updateApiContentCache(contentType, fallbackData)
     emit('content-loaded', { type: contentType, data: fallbackData, source: 'fallback' })
     emit('api-error', { message: error.message, fallback: true })
-    console.error(`MainContentArea: ${agent} 컨텐츠 로드 에러`, error)
+    console.error(`MainContentArea: ${agent} 컨텐츠 로드 에러 (캐시 없음)`, error)
   } finally {
     isLoading.value = false
   }
@@ -452,18 +428,10 @@ const loadAgentContent = async (agent) => {
 
 // 라이프사이클 훅
 onMounted(() => {
-  console.log('MainContentArea: 컴포넌트 마운트됨')
+  console.log('MainContentArea: 컴포넌트 마운트됨 (캐시 없이 새로운 데이터 로드)')
 
-  // 스토어에 캐시된 데이터가 있는지 먼저 확인
-  const cachedTheory = learningStore.getApiContentCache('theory')
-  if (cachedTheory) {
-    console.log('MainContentArea: 캐시된 이론 데이터 발견', cachedTheory)
-    apiContentData.value = { theory: cachedTheory }
-    emit('content-loaded', { type: 'theory', data: cachedTheory, source: 'cache' })
-  } else {
-    // 캐시된 데이터가 없으면 API 호출
-    loadInitialContent()
-  }
+  // 캐시 확인 제거 - 항상 새로운 API 호출
+  loadInitialContent()
 })
 
 // 에이전트 변경 감지
@@ -571,22 +539,5 @@ const handleNavigationClick = (navigationType) => {
 
 
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .main-content-area {
-    padding: 1rem;
-  }
-
-  .content-title {
-    font-size: 1.25rem;
-  }
-
-  .content-navigation {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-  }
-}
+/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

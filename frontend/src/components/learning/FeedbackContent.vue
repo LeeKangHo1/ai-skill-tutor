@@ -153,10 +153,5 @@ const props = defineProps({
   }
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .feedback-content {
-    padding: 1rem;
-  }
-}
+/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

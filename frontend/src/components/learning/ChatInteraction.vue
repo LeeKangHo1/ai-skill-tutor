@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch, onMounted, defineProps, defineEmits } from 'vue'
+import { ref, nextTick, watch, onMounted, defineProps, defineEmits } from 'vue'
 
 // Props 정의
 const props = defineProps({
@@ -509,33 +509,5 @@ onMounted(() => {
   background: #a8a8a8;
 }
 
-/* 반응형 */
-@media (max-width: 768px) {
-  .chat-message {
-    padding: 0.5rem;
-    margin-left: 0;
-    margin-right: 0;
-  }
-  
-  .user-message {
-    margin-left: 1rem;
-  }
-  
-  .system-message,
-  .qna-message {
-    margin-right: 1rem;
-  }
-  
-  .quick-actions {
-    flex-direction: column;
-  }
-  
-  .quick-action-btn {
-    width: 100%;
-  }
-  
-  .message-input {
-    font-size: 16px; /* iOS에서 줌 방지 */
-  }
-}
+/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>
