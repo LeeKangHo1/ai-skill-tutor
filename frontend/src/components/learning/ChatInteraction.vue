@@ -30,11 +30,11 @@
     <!-- 메시지 입력 영역 -->
     <div class="chat-input-container">
       <div class="quick-actions" v-if="showQuickActions">
-        <button class="quick-action-btn" @click="sendQuickMessage('다음으로 넘어가주세요')" :disabled="isLoading">
-          ➡️ 다음 단계
+        <button class="quick-action-btn" @click="handleRetryLearning" :disabled="isLoading">
+          🔄 재학습
         </button>
-        <button class="quick-action-btn" @click="sendQuickMessage('AI와 머신러닝의 차이가 뭐예요?')" :disabled="isLoading">
-          ❓ 질문하기
+        <button class="quick-action-btn" @click="handleProceedLearning" :disabled="isLoading">
+          ➡️ 다음 학습
         </button>
       </div>
 
@@ -59,11 +59,38 @@
         </div>
       </div>
     </div>
+
+    <!-- 학습 완료 모달 -->
+    <div v-if="showCompletionModal" class="modal-overlay" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>학습 세션 완료</h3>
+          <button class="modal-close-btn" @click="closeModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>학습 세션이 완료되었습니다. 다음 단계를 선택해주세요.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn dashboard-btn" @click="goToDashboard">
+            📊 대시보드
+          </button>
+          <button class="modal-btn start-learning-btn" @click="startNewLearning" :disabled="isProcessing">
+            <span v-if="isProcessing" class="button-spinner"></span>
+            <span v-else>🚀</span>
+            {{ isProcessing ? '학습 준비 중...' : '학습 시작' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, nextTick, watch, onMounted, defineProps, defineEmits } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import tokenManager from '@/utils/tokenManager'
+import { useAuthStore } from '@/stores/authStore'
 
 // Props 정의
 const props = defineProps({
@@ -87,12 +114,18 @@ const props = defineProps({
 })
 
 // Emits 정의
-const emit = defineEmits(['send-message'])
+const emit = defineEmits(['send-message', 'session-complete'])
+
+// 라우터 및 스토어 사용
+const router = useRouter()
+const authStore = useAuthStore()
 
 // 반응형 상태
 const currentMessage = ref('')
 const chatHistoryRef = ref(null)
 const messageInputRef = ref(null)
+const showCompletionModal = ref(false)
+const isProcessing = ref(false)
 
 // 메시지 클래스 결정
 const getMessageClass = (messageType) => {
@@ -162,11 +195,111 @@ const sendMessage = () => {
   })
 }
 
-const sendQuickMessage = (message) => {
-  if (props.isLoading) return
 
-  currentMessage.value = message
-  sendMessage()
+
+// 재학습 처리
+const handleRetryLearning = async () => {
+  if (isProcessing.value) return
+
+  try {
+    isProcessing.value = true
+
+    const response = await axios.post('/api/v1/learning/session/complete', {
+      proceed_decision: 'retry'
+    }, {
+      headers: {
+        'Authorization': `Bearer ${tokenManager.getAccessToken()}`
+      }
+    })
+
+    if (response.data.success) {
+      // 응답에서 새로운 토큰이나 사용자 정보가 있다면 업데이트
+      if (response.data.data?.access_token) {
+        authStore.updateUserFromToken(response.data.data.access_token)
+      }
+
+      // 사용자 정보 업데이트 (진행 상태 등)
+      if (response.data.data?.user_info) {
+        authStore.user = { ...authStore.user, ...response.data.data.user_info }
+        tokenManager.setUserInfo(authStore.user)
+      }
+
+      showCompletionModal.value = true
+    }
+  } catch (error) {
+    console.error('재학습 요청 실패:', error)
+    alert('재학습 요청에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+// 다음 학습 처리
+const handleProceedLearning = async () => {
+  if (isProcessing.value) return
+
+  try {
+    isProcessing.value = true
+
+    const response = await axios.post('/api/v1/learning/session/complete', {
+      proceed_decision: 'proceed'
+    }, {
+      headers: {
+        'Authorization': `Bearer ${tokenManager.getAccessToken()}`
+      }
+    })
+
+    if (response.data.success) {
+      console.log('다음 학습 응답 데이터:', response.data)
+
+      // 서버에서 최신 사용자 정보 강제 조회하여 authStore 갱신
+      try {
+        await authStore.updateUserInfo()
+        console.log('사용자 정보 갱신 완료:', authStore.user)
+      } catch (updateError) {
+        console.warn('사용자 정보 갱신 실패:', updateError)
+      }
+
+      showCompletionModal.value = true
+    }
+  } catch (error) {
+    console.error('다음 학습 요청 실패:', error)
+    alert('다음 학습 요청에 실패했습니다. 다시 시도해주세요.')
+  } finally {
+    isProcessing.value = false
+  }
+}
+
+// 모달 닫기
+const closeModal = () => {
+  showCompletionModal.value = false
+}
+
+// 대시보드로 이동
+const goToDashboard = () => {
+  closeModal()
+  router.push('/dashboard')
+}
+
+// 새로운 학습 시작
+const startNewLearning = async () => {
+  try {
+    // 로딩 상태 시작
+    isProcessing.value = true
+
+    console.log('새 학습 세션으로 이동 중...')
+
+    // start 요청은 LearningPage에서 처리하도록 하고, 여기서는 바로 페이지 이동
+    // 약간의 딜레이를 주어 사용자가 로딩을 인지할 수 있도록 함
+    setTimeout(() => {
+      window.location.href = '/learning'
+    }, 500)
+
+  } catch (error) {
+    console.error('새 학습 세션 이동 실패:', error)
+    alert('새 학습 세션 이동에 실패했습니다. 다시 시도해주세요.')
+    isProcessing.value = false
+  }
 }
 
 // 채팅 히스토리 스크롤 자동 이동
@@ -502,6 +635,137 @@ onMounted(() => {
 
 .chat-history::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  color: #495057;
+  line-height: 1.6;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-top: 1px solid #dee2e6;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.dashboard-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.dashboard-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.start-learning-btn {
+  background: #74a8f7;
+  color: white;
+}
+
+.start-learning-btn:hover {
+  background: #5a94f5;
+  transform: translateY(-1px);
 }
 
 /* 데스크톱 전용 - 모바일/태블릿 대응 제거 */

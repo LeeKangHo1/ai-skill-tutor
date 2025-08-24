@@ -245,6 +245,9 @@ const cleanOptionText = (option, index) => {
   const numberPattern = new RegExp(`^${index + 1}\\.\\s*`)
   text = text.replace(numberPattern, '')
   
+  // 알파벳 패턴 제거 (예: "A.", "B.", "C.", "D." 등)
+  text = text.replace(/^[A-Z]\.\s*/i, '')
+  
   // 다른 번호 패턴도 제거 (예: "1)", "(1)", "[1]" 등)
   text = text.replace(/^\d+[\.\)\]]\s*/, '')
   text = text.replace(/^\[\d+\]\s*/, '')

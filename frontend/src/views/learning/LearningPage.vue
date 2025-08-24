@@ -5,9 +5,6 @@
     <div class="learning-header">
       <div class="header-left">
         <div class="logo">🤖 AI 활용법 학습 튜터</div>
-        <div class="current-session">
-          {{ currentChapter }}챕터 {{ currentSection }}섹션: {{ sectionTitle }}
-        </div>
       </div>
       <div class="header-right">
         <button class="btn btn-secondary" @click="goToDashboard">
@@ -34,7 +31,7 @@
         <div class="interaction-body">
           <!-- 채팅 모드 -->
           <ChatInteraction v-if="uiMode === 'chat'" :chat-history="chatHistory" :is-loading="isLoading"
-            @send-message="handleSendMessage" />
+            @send-message="handleSendMessage" @session-complete="handleSessionComplete" />
 
           <!-- 퀴즈 모드 -->
           <QuizInteraction v-else-if="uiMode === 'quiz'" :quiz-data="quizData" :is-loading="isLoading"
@@ -89,10 +86,7 @@ const currentAgent = computed(() => learningStore.currentAgent)
 const uiMode = computed(() => learningStore.currentUIMode)
 const currentContentMode = computed(() => learningStore.currentContentMode || 'current')
 
-// 세션 정보
-const currentChapter = computed(() => learningStore.sessionInfo?.chapter_number || 2)
-const currentSection = computed(() => learningStore.sessionInfo?.section_number || 1)
-const sectionTitle = computed(() => learningStore.sessionInfo?.section_title || 'LLM이란 무엇인가')
+
 
 
 
@@ -177,13 +171,10 @@ const handleSubmitAnswer = async (submitData) => {
   }
 }
 
-const handleRequestHint = () => {
-  chatHistory.value.push({
-    sender: '튜터',
-    message: '힌트: LLM의 "L"이 무엇을 의미하는지 생각해보세요.',
-    type: 'system',
-    timestamp: new Date()
-  })
+const handleRequestHint = (hintData) => {
+  // 힌트 요청 처리 - 하드코딩된 메시지 제거
+  console.log('힌트 요청:', hintData)
+  // 필요시 여기에 힌트 관련 로직 추가
 }
 
 const handleNavigationClick = (navigationType) => {
@@ -229,6 +220,31 @@ const handleApiError = (errorData) => {
 
 const goToDashboard = () => {
   router.push('/dashboard')
+}
+
+// 세션 완료 처리 (새로운 학습 세션 시작)
+const handleSessionComplete = (sessionData) => {
+  console.log('새로운 학습 세션 시작:', sessionData)
+  
+  // 모든 상태 초기화
+  learningStore.initializeNewSession()
+  contentData.value = { title: '', subtitle: '', content: '', type: 'theory' }
+  chatHistory.value = []
+  
+  // 초기 컨텐츠 설정
+  updateContentData('theory')
+  
+  // 초기 상태 설정
+  learningStore.updateAgent('theory_educator')
+  learningStore.updateUIMode('chat')
+  
+  // 새 세션 시작 메시지 추가
+  chatHistory.value.push({
+    sender: '튜터',
+    message: '새로운 학습 세션을 시작합니다. 왼쪽 내용을 확인해주세요!',
+    type: 'system',
+    timestamp: new Date()
+  })
 }
 
 // 실제 API 호출 함수 - Store 중심 구조
@@ -592,12 +608,7 @@ watch(() => learningStore.quizData, (newQuizData, oldQuizData) => {
   font-weight: bold;
 }
 
-.current-session {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
-  font-size: 0.9rem;
-}
+
 
 
 

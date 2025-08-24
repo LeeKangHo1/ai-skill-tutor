@@ -25,7 +25,7 @@
 # Before: LCEL (Function Calling 미완성)
 qna_chain = prompt_template | model_with_tools | StrOutputParser
 
-# After: LangChain Agent (완전한 Function Calling)  
+# After: LangChain Agent (Function Calling)  
 agent = create_tool_calling_agent(model, tools, prompt_template)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 ```
