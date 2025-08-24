@@ -1,0 +1,73 @@
+{
+  "learning_context": {
+    "user_type": "beginner",
+    "total_chapters": 8,
+    "curriculum_overview": "AI 활용법 학습 - 기초부터 실무 적용까지"
+  },
+  "chapters": [
+    {
+      "chapter_number": 1,
+      "chapter_title": "AI는 무엇인가?",
+      "core_keywords": ["AI 정의", "머신러닝", "딥러닝", "생성형 AI", "LLM", "챗봇", "GPT", "파라미터"],
+      "learning_goals": ["AI 기본 개념 이해", "AI 용어 정리", "챗봇 활용 방법"]
+    },
+    {
+      "chapter_number": 2,
+      "chapter_title": "LLM이란 무엇인가",
+      "core_keywords": ["딥러닝 역사", "알렉스넷", "GPU", "알파고", "트랜스포머", "어텐션", "ChatGPT", "멀티모달"],
+      "learning_goals": ["LLM 발전 과정", "핵심 기술 이해", "현재 AI 동향"]
+    },
+    {
+      "chapter_number": 3,
+      "chapter_title": "다양한 AI 챗봇들 소개",
+      "core_keywords": ["ChatGPT", "OpenAI", "제미나이", "Google", "클로드", "Anthropic", "한국형 챗봇", "무료", "유료"],
+      "learning_goals": ["챗봇 비교", "선택 기준", "각 서비스 특징"]
+    },
+    {
+      "chapter_number": 4,
+      "chapter_title": "프롬프트란 무엇인가",
+      "core_keywords": ["프롬프트", "명령어", "입력", "프롬프트 요소", "나쁜 프롬프트", "프롬프트 작성법"],
+      "learning_goals": ["프롬프트 개념", "기본 원리", "작성 방법"]
+    },
+    {
+      "chapter_number": 5,
+      "chapter_title": "좋은 프롬프트 작성법",
+      "core_keywords": ["역할 부여", "구체적 조건", "형식 지정", "이미지 생성", "프롬프트 엔지니어링"],
+      "learning_goals": ["고급 프롬프트 기법", "실무 적용", "결과물 최적화"]
+    },
+    {
+      "chapter_number": 6,
+      "chapter_title": "ChatGPT로 할 수 있는 것들",
+      "core_keywords": ["문서 요약", "번역", "아이디어 발전", "여행 계획", "ChatGPT 활용법"],
+      "learning_goals": ["실용적 활용", "일상 업무 적용", "창의적 활용"]
+    },
+    {
+      "chapter_number": 7,
+      "chapter_title": "AI와 함께하는 일상업무",
+      "core_keywords": ["이메일 작성", "엑셀 함수", "회의록 정리", "업무 자동화", "개인 비서"],
+      "learning_goals": ["업무 효율성", "자동화", "실무 스킬"]
+    },
+    {
+      "chapter_number": 8,
+      "chapter_title": "AI 활용 고급 팁과 주의사항",
+      "core_keywords": ["환각 현상", "할루시네이션", "CoT", "Chain-of-Thought", "AI 윤리", "개인 교사"],
+      "learning_goals": ["AI 한계 이해", "고급 기법", "윤리적 사용"]
+    }
+  ],
+  "common_topics": {
+    "ai_basics": ["인공지능", "AI", "머신러닝", "딥러닝", "신경망"],
+    "llm_concepts": ["대화형 AI", "언어모델", "생성형 AI", "자연어처리"],
+    "prompt_engineering": ["프롬프트", "명령어", "지시사항", "입력"],
+    "practical_usage": ["업무 활용", "실무 적용", "자동화", "효율성"],
+    "tools_comparison": ["ChatGPT", "제미나이", "클로드", "비교", "선택"],
+    "advanced_techniques": ["CoT", "체인 오브 쏘트", "고급 기법", "최적화"],
+    "ethics_safety": ["AI 윤리", "환각", "할루시네이션", "주의사항", "한계"]
+  },
+  "metadata": {
+    "created_for": "QnA Context Optimization",
+    "target_user": "AI 입문자",
+    "last_updated": "2025-08-24",
+    "version": "1.0",
+    "usage": "Function calling 시 ChatGPT에게 학습 컨텍스트 제공용"
+  }
+}

@@ -43,26 +43,46 @@
   - 이론 생성 에이전트와 동일한 State 업데이트 패턴 적용
   - _Requirements: 2.1, 2.2, 2.6, 2.7_
 
-- [ ] 2.1 QnA 에이전트 기본 구조 구현
+- [x] 2.1 QnA 에이전트 기본 구조 구현
+
+
+
+
+
   - 이론 생성 에이전트의 process() 메서드 구조를 참고하여 기본 틀 작성
   - 에이전트 이름, 경로 설정 등 기본 초기화 로직 구현
   - 오류 처리를 위한 _create_error_response() 메서드 작성
   - _Requirements: 2.1_
 
-- [ ] 2.2 사용자 질문 추출 로직 구현
+- [x] 2.2 사용자 질문 추출 로직 구현
+
+
+
+
+
   - State의 current_session_conversations에서 최근 사용자 메시지를 찾는 _extract_user_question() 메서드 작성
   - 사용자 메시지 타입 필터링 및 유효성 검증 로직 포함
   - 질문이 없을 경우 기본 안내 메시지 처리
   - _Requirements: 2.2_
 
-- [ ] 2.3 QnA 답변 생성 도구 구현
+- [x] 2.3 QnA 답변 생성 도구 구현
+
+
+
+
+
   - qna_tools_chatgpt.py 파일을 새로 생성하여 QnA 전용 답변 생성 도구 작성
   - 기존 search_qna_materials() 함수를 활용한 벡터 검색 로직 통합
   - LangChain Function Calling 또는 직접 호출 방식 중 하나 선택하여 구현
   - 벡터 검색 결과가 있을 때와 없을 때의 분기 처리 로직 작성
   - _Requirements: 2.3, 2.4, 2.5_
 
-- [ ] 2.4 QnA 에이전트 State 업데이트 로직 구현
+- [x] 2.4 QnA 에이전트 State 업데이트 로직 구현
+
+
+
+
+
   - 답변 생성 완료 후 state_manager.update_agent_draft()로 qna_draft에 저장
   - state_manager.update_agent_transition()으로 현재 에이전트 설정
   - state_manager.add_conversation()으로 대화 기록 추가
@@ -76,7 +96,15 @@
   - 벡터 검색 결과를 터미널에 상세히 로깅하는 디버깅 지원 추가
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-- [ ] 3.1 벡터 검색 도구 통합 방식 결정
+- [x] 3.1 벡터 검색 도구 통합 방식 결정
+
+
+
+
+
+
+
+
   - LangChain Function Calling 방식과 직접 호출 방식 중 하나 선택
   - 선택한 방식에 따라 qna_tools_chatgpt.py에서 search_qna_materials() 함수 활용
   - 벡터 검색 결과를 ChatGPT 프롬프트에 적절히 전달하는 로직 구현
