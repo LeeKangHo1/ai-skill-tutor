@@ -1,5 +1,6 @@
 # backend/app/tools/external/web_search_tools.py
 """
+⚠️ 현재 미구현
 웹 검색 도구
 웹 검색을 통한 정보 수집 기능을 제공합니다.
 """
