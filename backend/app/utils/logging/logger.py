@@ -52,7 +52,7 @@ class AppLogger:
         app_log_path = os.path.join(log_dir, 'app.log')
         app_handler = RotatingFileHandler(
             app_log_path,
-            maxBytes=10 * 1024 * 1024,
+            maxBytes=1 * 1024 * 1024,
             backupCount=5,
             encoding='utf-8'
         )
