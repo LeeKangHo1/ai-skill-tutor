@@ -340,7 +340,7 @@ class ResponseGenerator:
             
             if quiz_correct_answer and user_answer:
                 answer_info_text = f"""
-📋 **답변 정보**:
+📋 **답변 정보**
 • 정답: {quiz_correct_answer}
 • 선택한 답: {user_answer}
 """
@@ -349,14 +349,14 @@ class ResponseGenerator:
         # 세션 결정 결과에 따른 상세 안내 추가
         if session_decision == "proceed":
             outro = f"""
-🎯 **다음 단계 안내**:
+🎯 **다음 단계 안내**
 • 이 섹션을 성공적으로 완료하셨습니다!
 • 추가로 궁금한 점이 있으시면 언제든 질문해주세요
 • 다음 학습으로 넘어가려면 다음 학습 버튼을 눌러주세요.
 • 이 부분을 다시 학습하고 싶으시면 재학습 버튼을 눌러주세요."""
         elif session_decision == "retry":
             outro = f"""
-🎯 **다음 단계 안내**:
+🎯 **다음 단계 안내**
 • 이번 학습은 아쉬운 부분이 있었습니다. 재학습을 추천드립니다.
 • 추가로 궁금한 점이 있으시면 언제든 질문해주세요
 • 다음 학습으로 넘어가려면 다음 학습 버튼을 눌러주세요.

@@ -323,7 +323,13 @@ const sendMessageToAPI = async (message) => {
             const formattedResponse = {
               workflow_response: workflowResponse
             }
-            learningStore.setQuizDataFromAPI(formattedResponse)
+            learningStore.setQuizDataFromAPI(formattedResponse);
+            chatHistory.value.push({
+              sender: '튜터',
+              message: '퀴즈 생성이 완료되었습니다.',
+              type: 'system',
+              timestamp: new Date()
+            })
           } else if (isQnAContent) {
             console.log('💬 QnA 응답 감지 - 채팅 모드 유지')
             console.log('🔍 QnA content.answer 확인:', content.answer)
@@ -383,7 +389,13 @@ const sendMessageToAPI = async (message) => {
           
           if (isQuizContent && !isQnAContent) {
             console.log('🎯 직접 구조에서 퀴즈 데이터 발견')
-            learningStore.setQuizDataFromAPI(apiResponse)
+            learningStore.setQuizDataFromAPI(apiResponse);
+            chatHistory.value.push({
+              sender: '튜터',
+              message: '퀴즈 생성이 완료되었습니다.',
+              type: 'system',
+              timestamp: new Date()
+            })
           } else if (isQnAContent) {
             console.log('💬 직접 구조에서 QnA 응답 감지 - 채팅 모드 유지')
             console.log('🔍 직접 구조 QnA content.answer 확인:', content.answer)

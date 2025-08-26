@@ -30,10 +30,10 @@
     <!-- 메시지 입력 영역 -->
     <div class="chat-input-container">
       <div class="quick-actions" v-if="showQuickActions">
-        <button class="quick-action-btn" @click="handleRetryLearning" :disabled="isLoading">
+        <button class="quick-action-btn" @click="handleRetryLearning" :disabled="isLoading || !isFeedbackComplete">
           🔄 재학습
         </button>
-        <button class="quick-action-btn" @click="handleProceedLearning" :disabled="isLoading">
+        <button class="quick-action-btn" @click="handleProceedLearning" :disabled="isLoading || !isFeedbackComplete">
           ➡️ 다음 학습
         </button>
       </div>
@@ -88,11 +88,12 @@
 </template>
 
 <script setup>
-import { ref, nextTick, watch, onMounted, defineProps, defineEmits } from 'vue'
+import { ref, nextTick, watch, onMounted, defineProps, defineEmits, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import tokenManager from '@/utils/tokenManager'
 import { useAuthStore } from '@/stores/authStore'
+import { useLearningStore } from '@/stores/learningStore'
 
 // Props 정의
 const props = defineProps({
@@ -121,6 +122,9 @@ const emit = defineEmits(['send-message', 'session-complete'])
 // 라우터 및 스토어 사용
 const router = useRouter()
 const authStore = useAuthStore()
+const learningStore = useLearningStore()
+
+const isFeedbackComplete = computed(() => learningStore.completedSteps.feedback)
 
 // 반응형 상태
 const currentMessage = ref('')
@@ -437,7 +441,7 @@ onMounted(() => {
 }
 
 .system-message {
-  background: lighten($success, 52%);
+  background: lighten($warning, 38%);
   margin-right: $spacing-lg * 1.33; // 2rem
   margin-left: 0;
   border-bottom-left-radius: $border-radius-sm;
