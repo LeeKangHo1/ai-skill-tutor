@@ -50,7 +50,7 @@
 
     <footer class="app-footer">
       <div class="container">
-        <p>&copy; 2025 AI 활용법 학습 튜터 - 포트폴리오 프로젝트</p>
+        <p>&copy; 2025 AI 활용법 학습 튜터</p>
       </div>
     </footer>
   </div>
