@@ -523,26 +523,24 @@ watch(() => learningStore.feedbackData, (newFeedbackData) => {
 }, { deep: true })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .main-content-area {
-  background: white;
-  padding: 2rem;
+  background: $white;
+  padding: $spacing-lg * 1.33; // 2rem
   overflow-y: auto;
-  border-right: 1px solid #dee2e6;
+  border-right: 1px solid $gray-300;
   height: 100%;
 }
 
 .content-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: $spacing-lg;
 }
 
 .content-title {
-  font-size: 1.5rem;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
+  font-size: $font-size-lg * 1.2; // 1.5rem
+  color: $text-dark;
+  margin-bottom: $spacing-sm;
 }
-
-
 
 .content-body {
   min-height: 400px;
@@ -555,17 +553,17 @@ watch(() => learningStore.feedbackData, (newFeedbackData) => {
   align-items: center;
   justify-content: center;
   min-height: 300px;
-  color: #6c757d;
+  color: $secondary;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #74a8f7;
+  border: 4px solid $gray-200;
+  border-top: 4px solid $primary;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+  margin-bottom: $spacing-md;
 }
 
 @keyframes spin {
@@ -578,41 +576,35 @@ watch(() => learningStore.feedbackData, (newFeedbackData) => {
   }
 }
 
-/* 컨테이너 스타일만 유지 */
-
 /* 이전 컨텐츠 접근 버튼 */
 .content-navigation {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #dee2e6;
+  margin-top: $spacing-lg * 1.33; // 2rem
+  padding-top: $spacing-md;
+  border-top: 1px solid $gray-300;
   display: flex;
-  gap: 1rem;
+  gap: $spacing-md;
   flex-wrap: wrap;
 }
 
 .btn {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem $spacing-md;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
 }
 
 .btn-outline {
-  background: white;
-  color: #6c757d;
-  border: 1px solid #6c757d;
+  background: $white;
+  color: $secondary;
+  border: 1px solid $secondary;
 }
 
 .btn-outline:hover {
-  background: #f8f9fa;
-  border-color: #495057;
-  color: #495057;
+  background: $gray-100;
+  border-color: $gray-700;
+  color: $gray-700;
   transform: translateY(-1px);
 }
-
-
-
-/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

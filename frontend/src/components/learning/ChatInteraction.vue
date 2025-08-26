@@ -353,16 +353,15 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .chat-mode {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: $spacing-md;
   height: 100%;
   opacity: 0.7;
   transition: opacity 0.3s ease;
-  min-height: 0;
-  /* flexbox 부모에서 overflow가 작동하도록 */
+  min-height: 0; // flexbox 부모에서 overflow가 작동하도록
 }
 
 .chat-mode.active {
@@ -373,21 +372,38 @@ onMounted(() => {
 .chat-history {
   flex: 1;
   overflow-y: auto;
-  background: white;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  border: 1px solid #dee2e6;
+  background: $white;
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  border: 1px solid $gray-300;
   scroll-behavior: smooth;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  /* flexbox 자식에서 overflow가 작동하도록 */
+  min-height: 0; // flexbox 자식에서 overflow가 작동하도록
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $gray-100;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $gray-400;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: $gray-500;
+  }
 }
 
 .chat-message {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md * 0.75;
+  border-radius: $border-radius-lg;
   animation: messageSlideIn 0.3s ease-out;
   max-width: 85%;
   width: fit-content;
@@ -398,7 +414,6 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -406,41 +421,41 @@ onMounted(() => {
 }
 
 .user-message {
-  background: #e3f2fd;
-  margin-left: 2rem;
+  background: lighten($primary, 40%);
+  margin-left: $spacing-lg * 1.33; // 2rem
   margin-right: 0;
-  border-bottom-right-radius: 0.25rem;
+  border-bottom-right-radius: $border-radius-sm;
   align-self: flex-end;
-}
 
-.user-message .message-content {
-  text-align: right;
-}
+  .message-content {
+    text-align: right;
+  }
 
-.user-message .message-timestamp {
-  text-align: left;
+  .message-timestamp {
+    text-align: left;
+  }
 }
 
 .system-message {
-  background: #f1f8e9;
-  margin-right: 2rem;
+  background: lighten($success, 50%);
+  margin-right: $spacing-lg * 1.33; // 2rem
   margin-left: 0;
-  border-bottom-left-radius: 0.25rem;
+  border-bottom-left-radius: $border-radius-sm;
   align-self: flex-start;
 }
 
 .qna-message {
-  background: #f3e5f5;
-  border-left: 3px solid #9c27b0;
-  margin-right: 2rem;
+  background: lighten($brand-purple, 40%);
+  border-left: 3px solid $brand-purple;
+  margin-right: $spacing-lg * 1.33; // 2rem
   margin-left: 0;
   align-self: flex-start;
 }
 
 .loading-message {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  margin-right: 2rem;
+  background: lighten($warning, 35%);
+  border: 1px solid lighten($warning, 30%);
+  margin-right: $spacing-lg * 1.33; // 2rem
   margin-left: 0;
   align-self: flex-start;
 }
@@ -448,12 +463,12 @@ onMounted(() => {
 .message-content {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: $spacing-xs;
 }
 
 .message-sender {
-  font-size: 0.875rem;
-  color: #495057;
+  font-size: $font-size-sm;
+  color: $gray-700;
 }
 
 .message-text {
@@ -462,24 +477,24 @@ onMounted(() => {
 }
 
 .message-timestamp {
-  font-size: 0.75rem;
-  color: #6c757d;
+  font-size: $font-size-sm * 0.85; // 0.75rem
+  color: $secondary;
   text-align: right;
-  margin-top: 0.25rem;
+  margin-top: $spacing-xs;
 }
 
 /* 타이핑 인디케이터 */
 .typing-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: $spacing-xs;
 }
 
 .typing-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #6c757d;
+  background: $secondary;
   animation: typingBounce 1.4s infinite ease-in-out;
 }
 
@@ -492,14 +507,12 @@ onMounted(() => {
 }
 
 @keyframes typingBounce {
-
   0%,
   80%,
   100% {
     transform: scale(0.8);
     opacity: 0.5;
   }
-
   40% {
     transform: scale(1);
     opacity: 1;
@@ -510,75 +523,74 @@ onMounted(() => {
 .chat-input-container {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: $spacing-md * 0.75;
   flex-shrink: 0;
-  /* 입력 영역은 크기가 고정되도록 */
 }
 
 .quick-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: $spacing-sm;
   flex-wrap: wrap;
 }
 
 .quick-action-btn {
-  padding: 0.5rem 0.75rem;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 1rem;
-  font-size: 0.875rem;
+  padding: $spacing-sm $spacing-md * 0.75;
+  background: $gray-100;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-pill;
+  font-size: $font-size-sm;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-}
 
-.quick-action-btn:hover:not(:disabled) {
-  background: #e9ecef;
-  border-color: #adb5bd;
-  transform: translateY(-1px);
-}
+  &:hover:not(:disabled) {
+    background: $gray-200;
+    border-color: $gray-500;
+    transform: translateY(-1px);
+  }
 
-.quick-action-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .chat-input {
   display: flex;
-  gap: 0.5rem;
+  gap: $spacing-sm;
   align-items: flex-end;
 }
 
 .message-input {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  padding: $spacing-md * 0.75;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius;
+  font-size: $font-size-sm;
   line-height: 1.5;
   resize: none;
   min-height: 44px;
   max-height: 120px;
   transition: border-color 0.2s ease;
-}
 
-.message-input:focus {
-  outline: none;
-  border-color: #74a8f7;
-  box-shadow: 0 0 0 2px rgba(116, 168, 247, 0.25);
-}
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 2px rgba($primary, 0.25);
+  }
 
-.message-input:disabled {
-  background: #f8f9fa;
-  opacity: 0.7;
+  &:disabled {
+    background: $gray-100;
+    opacity: 0.7;
+  }
 }
 
 .send-button {
-  padding: 0.75rem 1rem;
-  background: #74a8f7;
-  color: white;
+  padding: $spacing-md * 0.75 $spacing-md;
+  background: $primary;
+  color: $white;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -586,25 +598,25 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-}
 
-.send-button:hover:not(:disabled) {
-  background: #5a94f5;
-  transform: translateY(-1px);
-}
+  &:hover:not(:disabled) {
+    background: darken($primary, 10%);
+    transform: translateY(-1px);
+  }
 
-.send-button:disabled,
-.btn-disabled {
-  background: #adb5bd;
-  cursor: not-allowed;
-  transform: none;
+  &:disabled,
+  &.btn-disabled {
+    background: $gray-500;
+    cursor: not-allowed;
+    transform: none;
+  }
 }
 
 .button-spinner {
   width: 16px;
   height: 16px;
   border: 2px solid transparent;
-  border-top: 2px solid white;
+  border-top: 2px solid $white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -613,7 +625,6 @@ onMounted(() => {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -621,40 +632,21 @@ onMounted(() => {
 
 /* 입력 힌트 */
 .input-hints {
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  border-radius: 0.375rem;
-  padding: 0.75rem;
-  font-size: 0.875rem;
+  background: $gray-100;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius;
+  padding: $spacing-md * 0.75;
+  font-size: $font-size-sm;
 }
 
 .hint-item {
-  margin-bottom: 0.5rem;
+  margin-bottom: $spacing-sm;
   line-height: 1.4;
-  color: #495057;
-}
+  color: $gray-700;
 
-.hint-item:last-child {
-  margin-bottom: 0;
-}
-
-/* 스크롤바 스타일링 */
-.chat-history::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-history::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.chat-history::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.chat-history::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 /* 모달 스타일 */
@@ -664,7 +656,7 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba($black, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -676,16 +668,15 @@ onMounted(() => {
   from {
     opacity: 0;
   }
-
   to {
     opacity: 1;
   }
 }
 
 .modal-content {
-  background: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  background: $white;
+  border-radius: $border-radius-lg * 1.5; // 0.75rem
+  box-shadow: 0 10px 25px rgba($black, 0.15);
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
@@ -698,7 +689,6 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -709,22 +699,22 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid #dee2e6;
-}
+  padding: $spacing-lg;
+  border-bottom: 1px solid $gray-300;
 
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #212529;
+  h3 {
+    margin: 0;
+    font-size: $font-size-lg;
+    font-weight: 600;
+    color: $gray-900;
+  }
 }
 
 .modal-close-btn {
   background: none;
   border: none;
-  font-size: 1.5rem;
-  color: #6c757d;
+  font-size: $font-size-lg * 1.2; // 1.5rem
+  color: $secondary;
   cursor: pointer;
   padding: 0;
   width: 30px;
@@ -734,59 +724,57 @@ onMounted(() => {
   justify-content: center;
   border-radius: 50%;
   transition: all 0.2s ease;
-}
 
-.modal-close-btn:hover {
-  background: #f8f9fa;
-  color: #495057;
+  &:hover {
+    background: $gray-100;
+    color: $gray-700;
+  }
 }
 
 .modal-body {
-  padding: 1.5rem;
-  color: #495057;
+  padding: $spacing-lg;
+  color: $gray-700;
   line-height: 1.6;
 }
 
 .modal-footer {
   display: flex;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  border-top: 1px solid #dee2e6;
+  gap: $spacing-md * 0.75;
+  padding: $spacing-lg;
+  border-top: 1px solid $gray-300;
   justify-content: flex-end;
 }
 
 .modal-btn {
-  padding: 0.75rem 1.5rem;
+  padding: $spacing-md * 0.75 $spacing-lg;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: $border-radius-lg;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
 }
 
 .dashboard-btn {
-  background: #6c757d;
-  color: white;
-}
+  background: $secondary;
+  color: $white;
 
-.dashboard-btn:hover {
-  background: #5a6268;
-  transform: translateY(-1px);
+  &:hover {
+    background: darken($secondary, 10%);
+    transform: translateY(-1px);
+  }
 }
 
 .start-learning-btn {
-  background: #74a8f7;
-  color: white;
-}
+  background: $primary;
+  color: $white;
 
-.start-learning-btn:hover {
-  background: #5a94f5;
-  transform: translateY(-1px);
+  &:hover {
+    background: darken($primary, 10%);
+    transform: translateY(-1px);
+  }
 }
-
-/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

@@ -85,159 +85,159 @@ const props = defineProps({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 /* 이론 컨텐츠 스타일 */
 .theory-content {
-  background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
-  border-left: 4px solid #2196f3;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
+  background: linear-gradient(135deg, lighten($primary, 40%), lighten($brand-purple, 40%));
+  border-left: 4px solid $primary;
+  padding: $spacing-lg;
+  border-radius: $border-radius-lg;
+  margin-bottom: $spacing-md;
 }
 
 /* 새로운 JSON 구조 스타일 */
 
 .theory-title {
-  font-size: 1.4rem;
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
+  font-size: $font-size-lg * 1.1; // 1.4rem
+  color: $text-dark;
+  margin-bottom: $spacing-lg;
   font-weight: 600;
 }
 
 .theory-sections {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: $spacing-lg;
 }
 
 .theory-section {
-  border-radius: 0.375rem;
-  padding: 1rem;
+  border-radius: $border-radius;
+  padding: $spacing-md;
 }
 
 /* 소개 섹션 */
 .section-introduction {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(33, 150, 243, 0.2);
+  background: rgba($white, 0.8);
+  border: 1px solid rgba($primary, 0.2);
 }
 
 .introduction-text {
-  font-size: 1.1rem;
+  font-size: $font-size-base * 1.1;
   line-height: 1.6;
-  color: #495057;
+  color: $gray-700;
   margin: 0;
 }
 
 /* 정의 섹션 */
 .section-definition {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(33, 150, 243, 0.3);
+  background: rgba($white, 0.9);
+  border: 1px solid rgba($primary, 0.3);
 }
 
 .section-title {
-  font-size: 1.2rem;
-  color: #2c3e50;
-  margin-bottom: 0.75rem;
+  font-size: $font-size-lg;
+  color: $text-dark;
+  margin-bottom: $spacing-md * 0.75;
   font-weight: 600;
 }
 
 .definition-content {
-  font-size: 1rem;
+  font-size: $font-size-base;
   line-height: 1.6;
-  color: #495057;
-  margin-bottom: 1rem;
+  color: $gray-700;
+  margin-bottom: $spacing-md;
 }
 
 .analogy-box {
-  background: linear-gradient(135deg, #fff9c4, #f0f4c3);
-  border: 1px solid #dce775;
-  border-radius: 0.375rem;
-  padding: 1rem;
-  margin-top: 1rem;
+  background: linear-gradient(135deg, lighten($warning, 45%), lighten($success, 50%));
+  border: 1px solid lighten($success, 30%);
+  border-radius: $border-radius;
+  padding: $spacing-md;
+  margin-top: $spacing-md;
 }
 
 .analogy-title {
-  font-size: 1rem;
-  color: #558b2f;
-  margin-bottom: 0.5rem;
+  font-size: $font-size-base;
+  color: darken($success, 5%);
+  margin-bottom: $spacing-sm;
   font-weight: 600;
 }
 
 .analogy-content p {
-  margin-bottom: 0.5rem;
-  color: #33691e;
+  margin-bottom: $spacing-sm;
+  color: darken($success, 20%);
 }
 
 .analogy-details {
   list-style: none;
   padding-left: 0;
-  margin: 0.5rem 0 0 0;
+  margin: $spacing-sm 0 0 0;
 }
 
 .analogy-details li {
-  background: rgba(255, 255, 255, 0.7);
-  padding: 0.25rem 0.5rem;
-  margin-bottom: 0.25rem;
-  border-radius: 0.25rem;
-  font-size: 0.9rem;
-  color: #33691e;
+  background: rgba($white, 0.7);
+  padding: $spacing-xs $spacing-sm;
+  margin-bottom: $spacing-xs;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-sm;
+  color: darken($success, 20%);
 }
 
 /* 예시 섹션 */
 .section-examples {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(33, 150, 243, 0.3);
+  background: rgba($white, 0.9);
+  border: 1px solid rgba($primary, 0.3);
 }
 
 .examples-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
 }
 
 .example-item {
-  background: linear-gradient(135deg, #e8f5e8, #f1f8e9);
-  border: 1px solid #c8e6c9;
-  border-radius: 0.375rem;
-  padding: 1rem;
+  background: linear-gradient(135deg, lighten($success, 55%), lighten($success, 50%));
+  border: 1px solid lighten($success, 40%);
+  border-radius: $border-radius;
+  padding: $spacing-md;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .example-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba($black, 0.1);
 }
 
 .example-category {
-  font-size: 1.1rem;
-  color: #2e7d32;
-  margin-bottom: 0.5rem;
+  font-size: $font-size-base * 1.1;
+  color: darken($success, 15%);
+  margin-bottom: $spacing-sm;
   font-weight: 600;
 }
 
 .example-description {
-  color: #424242;
+  color: $gray-800;
   line-height: 1.5;
-  margin-bottom: 0.75rem;
+  margin-bottom: $spacing-md * 0.75;
 }
 
 .example-benefit {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: $spacing-sm;
 }
 
 .benefit-label {
-  color: #558b2f;
+  color: darken($success, 5%);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: $font-size-sm;
   flex-shrink: 0;
 }
 
 .benefit-text {
-  color: #33691e;
-  font-size: 0.9rem;
+  color: darken($success, 20%);
+  font-size: $font-size-sm;
   line-height: 1.4;
 }
 
@@ -246,9 +246,9 @@ const props = defineProps({
 }
 
 .theory-description {
-  font-size: 1rem;
+  font-size: $font-size-base;
   line-height: 1.6;
-  color: #495057;
+  color: $gray-700;
 }
 
 /* 컨텐츠 표시/숨김 */
@@ -272,6 +272,4 @@ const props = defineProps({
     transform: translateY(0);
   }
 }
-
-/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

@@ -460,20 +460,19 @@ watch(subjectiveAnswer, () => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .quiz-interaction {
-  background: white;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  border: 1px solid #dee2e6;
+  background: $white;
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  border: 1px solid $gray-300;
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: $spacing-md;
   opacity: 0.7;
   transition: opacity 0.3s ease;
   overflow: hidden;
-  /* 전체 컨테이너 오버플로우 제어 */
 }
 
 .quiz-interaction.active {
@@ -485,114 +484,59 @@ watch(subjectiveAnswer, () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: $spacing-md;
   overflow-y: auto;
-  /* 세로 스크롤 추가 */
   min-height: 0;
-  /* flex 아이템이 축소될 수 있도록 */
-  padding-right: 0.5rem;
-  /* 스크롤바 공간 확보 */
-}
+  padding-right: $spacing-sm;
 
-/* 스크롤바 스타일링 */
-.interaction-content::-webkit-scrollbar {
-  width: 6px;
-}
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
 
-.interaction-content::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
+  &::-webkit-scrollbar-track {
+    background: $gray-100;
+    border-radius: 3px;
+  }
 
-.interaction-content::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
+  &::-webkit-scrollbar-thumb {
+    background: $gray-400;
+    border-radius: 3px;
+  }
 
-.interaction-content::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  &::-webkit-scrollbar-thumb:hover {
+    background: $gray-500;
+  }
 }
 
 /* 퀴즈 헤더 */
 .quiz-header {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.75rem;
+  border-bottom: 1px solid $gray-200;
+  padding-bottom: $spacing-md * 0.75;
 }
 
 .quiz-progress {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: $spacing-sm;
 }
 
 .progress-text {
-  font-size: 0.875rem;
-  color: #6c757d;
+  font-size: $font-size-sm;
+  color: $secondary;
   text-align: center;
 }
 
 .progress-bar {
   height: 4px;
-  background: #e9ecef;
+  background: $gray-200;
   border-radius: 2px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #74a8f7, #5a94f5);
+  background: linear-gradient(90deg, $primary, darken($primary, 10%));
   transition: width 0.3s ease;
-}
-
-/* 퀴즈 질문 */
-.quiz-question-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.quiz-question {
-  font-weight: 500;
-  font-size: 1.1rem;
-  line-height: 1.5;
-  color: #2c3e50;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 0.5rem;
-  border-left: 4px solid #74a8f7;
-}
-
-.quiz-type-info {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.875rem;
-}
-
-.quiz-type-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-weight: 500;
-  font-size: 0.75rem;
-}
-
-.badge-multiple {
-  background: #e3f2fd;
-  color: #1976d2;
-}
-
-.badge-subjective {
-  background: #f3e5f5;
-  color: #7b1fa2;
-}
-
-.badge-default {
-  background: #f5f5f5;
-  color: #666;
-}
-
-.quiz-instruction {
-  color: #6c757d;
 }
 
 /* 옵션 헤더 */
@@ -601,68 +545,67 @@ watch(subjectiveAnswer, () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #eee;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid $gray-200;
 }
 
 .options-header h4,
 .input-header h4 {
   margin: 0;
-  font-size: 1rem;
-  color: #2c3e50;
+  font-size: $font-size-base;
+  color: $text-dark;
   font-weight: 600;
 }
 
 .options-count,
 .input-guide {
-  font-size: 0.875rem;
-  color: #6c757d;
+  font-size: $font-size-sm;
+  color: $secondary;
 }
 
 /* 객관식 옵션들 */
 .quiz-options {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: $spacing-md * 0.75;
   flex: 1;
   min-height: 0;
-  /* flex 아이템이 축소될 수 있도록 */
 }
 
 .quiz-option {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.5rem;
+  gap: $spacing-md * 0.75;
+  padding: $spacing-md;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: white;
-}
+  background: $white;
 
-.quiz-option:hover:not(.disabled) {
-  background: #f8f9fa;
-  border-color: #74a8f7;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(116, 168, 247, 0.15);
-}
+  &:hover:not(.disabled) {
+    background: $gray-100;
+    border-color: $primary;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba($primary, 0.15);
+  }
 
-.quiz-option.selected {
-  background: #e3f2fd;
-  border-color: #74a8f7;
-  box-shadow: 0 0 0 2px rgba(116, 168, 247, 0.25);
-}
+  &.selected {
+    background: lighten($primary, 40%);
+    border-color: $primary;
+    box-shadow: 0 0 0 2px rgba($primary, 0.25);
+  }
 
-.quiz-option.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .option-indicator {
-  font-size: 1.25rem;
-  color: #74a8f7;
+  font-size: $font-size-lg;
+  color: $primary;
   font-weight: bold;
   min-width: 20px;
 }
@@ -670,13 +613,13 @@ watch(subjectiveAnswer, () => {
 .option-content {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: $spacing-sm;
   flex: 1;
 }
 
 .option-number {
   font-weight: 500;
-  color: #495057;
+  color: $gray-700;
 }
 
 .option-text {
@@ -687,10 +630,9 @@ watch(subjectiveAnswer, () => {
 .subjective-input-container {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: $spacing-md * 0.75;
   flex: 1;
   min-height: 0;
-  /* flex 아이템이 축소될 수 있도록 */
 }
 
 /* 퀴즈 로딩 상태 */
@@ -699,18 +641,18 @@ watch(subjectiveAnswer, () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
-  padding: 3rem 1rem;
+  gap: $spacing-lg;
+  padding: $spacing-lg * 2 1rem;
   text-align: center;
-  color: #6c757d;
+  color: $secondary;
   flex: 1;
 }
 
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #74a8f7;
+  border: 4px solid $gray-200;
+  border-top: 4px solid $primary;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -719,7 +661,6 @@ watch(subjectiveAnswer, () => {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -727,21 +668,20 @@ watch(subjectiveAnswer, () => {
 
 .quiz-loading p {
   margin: 0;
-  font-size: 1rem;
+  font-size: $font-size-base;
   font-weight: 500;
-  color: #495057;
+  color: $gray-700;
 }
 
-/* 로딩 점들 애니메이션 */
 .loading-dots {
   display: flex;
-  gap: 0.5rem;
+  gap: $spacing-sm;
 }
 
 .loading-dots span {
   width: 8px;
   height: 8px;
-  background: #74a8f7;
+  background: $primary;
   border-radius: 50%;
   animation: bounce 1.4s ease-in-out infinite both;
 }
@@ -755,13 +695,11 @@ watch(subjectiveAnswer, () => {
 }
 
 @keyframes bounce {
-
   0%,
   80%,
   100% {
     transform: scale(0);
   }
-
   40% {
     transform: scale(1);
   }
@@ -769,43 +707,42 @@ watch(subjectiveAnswer, () => {
 
 .subjective-input {
   width: 100%;
-  padding: 1rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
+  padding: $spacing-md;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-sm;
   line-height: 1.5;
   resize: vertical;
   min-height: 120px;
   max-height: 200px;
   transition: border-color 0.2s ease;
-}
 
-.subjective-input:focus {
-  outline: none;
-  border-color: #74a8f7;
-  box-shadow: 0 0 0 2px rgba(116, 168, 247, 0.25);
-}
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 2px rgba($primary, 0.25);
+  }
 
-.subjective-input:disabled {
-  background: #f8f9fa;
-  opacity: 0.7;
+  &:disabled {
+    background: $gray-100;
+    opacity: 0.7;
+  }
 }
 
 .character-count {
   text-align: right;
-  font-size: 0.75rem;
-  color: #6c757d;
+  font-size: $font-size-sm * 0.85; // 0.75rem
+  color: $secondary;
 }
 
 /* 힌트 컨테이너 */
 .hint-container {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 0.5rem;
-  padding: 1rem;
+  background: lighten($warning, 35%);
+  border: 1px solid lighten($warning, 30%);
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
   animation: hintSlideIn 0.3s ease-out;
   flex-shrink: 0;
-  /* 힌트 영역이 축소되지 않도록 */
 }
 
 @keyframes hintSlideIn {
@@ -813,7 +750,6 @@ watch(subjectiveAnswer, () => {
     opacity: 0;
     transform: translateY(-10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -823,16 +759,16 @@ watch(subjectiveAnswer, () => {
 .hint-content {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: $spacing-md * 0.75;
 }
 
 .hint-icon {
-  font-size: 1.25rem;
+  font-size: $font-size-lg;
 }
 
 .hint-text {
   line-height: 1.5;
-  color: #856404;
+  color: darken($warning, 40%);
   font-weight: 500;
 }
 
@@ -840,21 +776,19 @@ watch(subjectiveAnswer, () => {
 .quiz-actions {
   display: flex;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: $spacing-md * 0.75;
   align-items: center;
   flex-wrap: wrap;
   flex-shrink: 0;
-  /* 버튼 영역이 축소되지 않도록 */
-  border-top: 1px solid #eee;
-  padding-top: 1rem;
+  border-top: 1px solid $gray-200;
+  padding-top: $spacing-md;
   margin-top: auto;
-  /* 하단에 고정 */
 }
 
 .btn {
-  padding: 0.75rem 1rem;
+  padding: $spacing-md * 0.75 $spacing-md;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: $border-radius;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -865,35 +799,35 @@ watch(subjectiveAnswer, () => {
 }
 
 .btn-primary {
-  background: #74a8f7;
-  color: white;
-}
+  background: $primary;
+  color: $white;
 
-.btn-primary:hover:not(:disabled) {
-  background: #5a94f5;
-  transform: translateY(-1px);
+  &:hover:not(:disabled) {
+    background: darken($primary, 10%);
+    transform: translateY(-1px);
+  }
 }
 
 .btn-secondary {
-  background: #6c757d;
-  color: white;
-}
+  background: $secondary;
+  color: $white;
 
-.btn-secondary:hover:not(:disabled) {
-  background: #545b62;
-  transform: translateY(-1px);
+  &:hover:not(:disabled) {
+    background: darken($secondary, 10%);
+    transform: translateY(-1px);
+  }
 }
 
 .btn-outline {
-  background: white;
-  color: #6c757d;
-  border: 1px solid #6c757d;
-}
+  background: $white;
+  color: $secondary;
+  border: 1px solid $secondary;
 
-.btn-outline:hover:not(:disabled) {
-  background: #f8f9fa;
-  border-color: #495057;
-  color: #495057;
+  &:hover:not(:disabled) {
+    background: $gray-100;
+    border-color: $gray-700;
+    color: $gray-700;
+  }
 }
 
 .btn:disabled {
@@ -915,74 +849,61 @@ watch(subjectiveAnswer, () => {
   width: 16px;
   height: 16px;
   border: 2px solid transparent;
-  border-top: 2px solid white;
+  border-top: 2px solid $white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 /* 제출 후 액션 */
 .post-submit-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: $spacing-md * 0.75;
   align-items: center;
   width: 100%;
 }
 
 .submit-success {
-  color: #28a745;
+  color: $success;
   font-weight: 500;
-  padding: 0.5rem 1rem;
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 0.375rem;
+  padding: $spacing-sm $spacing-md;
+  background: lighten($success, 45%);
+  border: 1px solid lighten($success, 40%);
+  border-radius: $border-radius;
   text-align: center;
   width: 100%;
 }
 
 /* 퀴즈 푸터 */
 .quiz-footer {
-  border-top: 1px solid #eee;
-  padding-top: 0.75rem;
+  border-top: 1px solid $gray-200;
+  padding-top: $spacing-md * 0.75;
 }
 
 .quiz-tips {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: $spacing-sm;
 }
 
 .tip-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #6c757d;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $secondary;
 }
 
 .tip-icon {
-  font-size: 1rem;
+  font-size: $font-size-base;
 }
 
 .tip-text {
   line-height: 1.4;
 }
 
-/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
-
 /* 접근성 개선 */
 @media (prefers-reduced-motion: reduce) {
-
   .quiz-option,
   .btn,
   .hint-container {

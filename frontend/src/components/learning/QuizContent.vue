@@ -131,13 +131,13 @@ const instructionText = computed(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .quiz-content {
-  background: linear-gradient(135deg, #fff3e0, #fce4ec);
-  border-left: 4px solid #ff9800;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
+  background: linear-gradient(135deg, lighten($warning, 40%), lighten($danger, 45%));
+  border-left: 4px solid $warning;
+  padding: $spacing-lg;
+  border-radius: $border-radius-lg;
+  margin-bottom: $spacing-md;
 }
 
 /* 퀴즈 헤더 */
@@ -145,76 +145,76 @@ const instructionText = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255, 152, 0, 0.2);
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md * 0.75;
+  border-bottom: 1px solid rgba($warning, 0.2);
 }
 
 .quiz-header h3 {
   margin: 0;
-  color: #e65100;
-  font-size: 1.25rem;
+  color: darken($warning, 30%);
+  font-size: $font-size-lg;
 }
 
 .quiz-type-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
+  padding: $spacing-xs $spacing-md * 0.75;
+  border-radius: $border-radius-pill;
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: $font-size-sm * 0.85; // 0.75rem
 }
 
 .badge-multiple {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: lighten($primary, 40%);
+  color: darken($primary, 10%);
 }
 
 .badge-subjective {
-  background: #f3e5f5;
-  color: #7b1fa2;
+  background: lighten($brand-purple, 40%);
+  color: darken($brand-purple, 5%);
 }
 
 .badge-default {
-  background: #f5f5f5;
-  color: #666;
+  background: $gray-100;
+  color: $gray-700;
 }
 
 /* 퀴즈 문제 표시 */
 .quiz-question-display {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: $spacing-md;
 }
 
 .question-content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: $spacing-md * 0.75;
 }
 
 .question-text {
-  font-size: 1.1rem;
+  font-size: $font-size-base * 1.1;
   line-height: 1.6;
-  color: #2c3e50;
+  color: $text-dark;
   margin: 0;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 152, 0, 0.2);
+  padding: $spacing-md;
+  background: rgba($white, 0.8);
+  border-radius: $border-radius-lg;
+  border: 1px solid rgba($warning, 0.2);
 }
 
 .quiz-instruction {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #6c757d;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 0.375rem;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $secondary;
+  padding: $spacing-sm $spacing-md;
+  background: rgba($white, 0.6);
+  border-radius: $border-radius;
 }
 
 .instruction-icon {
-  font-size: 1rem;
+  font-size: $font-size-base;
 }
 
 .instruction-text {
@@ -223,15 +223,15 @@ const instructionText = computed(() => {
 
 /* 안내 메시지 */
 .quiz-description {
-  background: rgba(255, 255, 255, 0.7);
-  padding: 1rem;
-  border-radius: 0.375rem;
-  border: 1px solid rgba(255, 152, 0, 0.3);
+  background: rgba($white, 0.7);
+  padding: $spacing-md;
+  border-radius: $border-radius;
+  border: 1px solid rgba($warning, 0.3);
 }
 
 .quiz-description p {
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+  margin-bottom: $spacing-sm;
+  font-size: $font-size-sm;
   line-height: 1.4;
 }
 
@@ -244,18 +244,18 @@ const instructionText = computed(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255, 152, 0, 0.2);
+  gap: $spacing-md * 0.75;
+  padding: $spacing-lg * 1.33; // 2rem
+  background: rgba($white, 0.8);
+  border-radius: $border-radius-lg;
+  border: 1px solid rgba($warning, 0.2);
 }
 
 .loading-spinner {
   width: 32px;
   height: 32px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #ff9800;
+  border: 3px solid $gray-100;
+  border-top: 3px solid $warning;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -267,8 +267,8 @@ const instructionText = computed(() => {
 
 .loading-state p {
   margin: 0;
-  color: #6c757d;
-  font-size: 0.875rem;
+  color: $secondary;
+  font-size: $font-size-sm;
 }
 
 /* 컨텐츠 표시/숨김 */
@@ -292,6 +292,4 @@ const instructionText = computed(() => {
     transform: translateY(0);
   }
 }
-
-/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>

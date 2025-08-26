@@ -94,55 +94,49 @@ const formatText = (text) => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .feedback-content {
-  background: linear-gradient(135deg, #e8f5e8, #f1f8e9);
-  border-left: 4px solid #4caf50;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
+  background: linear-gradient(135deg, lighten($success, 55%), lighten($success, 50%));
+  border-left: 4px solid $success;
+  padding: $spacing-lg;
+  border-radius: $border-radius-lg;
+  margin-bottom: $spacing-md;
 }
 
 /* 답변 정보 섹션 */
 .answer-info-section {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  background: rgba($white, 0.8);
+  border: 1px solid rgba($success, 0.3);
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
 }
-
-/* 답변 정보 섹션은 제목 없이 내용만 표시 */
 
 .answer-details {
   line-height: 1.6;
-  color: #2e7d32;
+  color: darken($success, 20%);
 }
 
 /* 피드백 내용 섹션 */
 .feedback-content-section {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(76, 175, 80, 0.3);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  background: rgba($white, 0.8);
+  border: 1px solid rgba($success, 0.3);
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
 }
 
 .feedback-content-section h4 {
-  margin: 0 0 0.75rem 0;
-  color: #2e7d32;
-  font-size: 1rem;
+  margin: 0 0 $spacing-md * 0.75 0;
+  color: darken($success, 20%);
+  font-size: $font-size-base;
   font-weight: 600;
 }
 
 .feedback-details {
   line-height: 1.6;
-  color: #2e7d32;
+  color: darken($success, 20%);
 }
-
-/* 다음 단계 안내 섹션은 제거됨 - 2개 섹션으로 단순화 */
-
-
 
 /* 컨텐츠 표시/숨김 */
 .content-active {
@@ -165,6 +159,4 @@ const formatText = (text) => {
     transform: translateY(0);
   }
 }
-
-/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>
