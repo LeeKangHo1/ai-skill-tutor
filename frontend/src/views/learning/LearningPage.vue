@@ -659,45 +659,42 @@ watch(() => learningStore.quizData, (newQuizData, oldQuizData) => {
 }, { deep: true })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .learning-page {
   max-width: 1400px;
   margin: 0 auto;
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  background: $white;
+  border-radius: $border-radius-lg;
+  box-shadow: 0 20px 40px rgba($black, 0.1);
   overflow: hidden;
   height: 90vh;
   display: flex;
   flex-direction: column;
 }
 
-/* 헤더 영역 */
+/* Header Area */
 .learning-header {
-  background: #2c3e50;
-  color: white;
-  padding: 1rem 2rem;
+  background: $header-gradient;
+  color: $white;
+  padding: $spacing-md $spacing-lg;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+  }
+
+  .logo {
+    font-size: $font-size-lg;
+    font-weight: 600;
+  }
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logo {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-
-
-
-
-/* 메인 컨텐츠 영역 - 6:4 비율 */
+/* Main Content Area */
 .learning-content {
   flex: 1;
   display: grid;
@@ -705,78 +702,73 @@ watch(() => learningStore.quizData, (newQuizData, oldQuizData) => {
   gap: 0;
   overflow: hidden;
   min-height: 0;
-  /* flexbox 오버플로우 활성화 */
 }
 
-/* 오른쪽: 상호작용 영역 (50%) */
+/* Interaction Area */
 .interaction-area {
-  background: #f8f9fa;
+  background: $gray-100;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* flexbox 오버플로우 활성화 */
+
+  .interaction-header {
+    background: $gray-700;
+    color: $white;
+    padding: $spacing-md;
+    text-align: center;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .interaction-body {
+    flex: 1;
+    padding: $spacing-md;
+    overflow: hidden;
+    min-height: 0;
+  }
 }
 
-.interaction-header {
-  background: #495057;
-  color: white;
-  padding: 1rem;
-  text-align: center;
-  font-weight: 500;
-  flex-shrink: 0;
-  /* 헤더 크기 고정 */
-}
-
-.interaction-body {
-  flex: 1;
-  padding: 1rem;
-  overflow: hidden;
-  /* 자식 컴포넌트에서 스크롤 처리하도록 */
-  min-height: 0;
-  /* flexbox 오버플로우 활성화 */
-}
-
-/* 로딩 오버레이 */
+/* Loading Overlay */
 .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba($black, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-}
 
-.loading-spinner {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
+  .loading-spinner {
+    background: $white;
+    padding: $spacing-lg;
+    border-radius: $border-radius-lg;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba($black, 0.2);
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #74a8f7;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
+    p {
+      margin-top: $spacing-md;
+      font-weight: 500;
+      color: $gray-700;
+    }
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid $gray-200;
+    border-top-color: $primary;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
+  to {
     transform: rotate(360deg);
   }
 }
-
-/* 데스크톱 전용 - 모바일/태블릿 대응 제거 */
 </style>
