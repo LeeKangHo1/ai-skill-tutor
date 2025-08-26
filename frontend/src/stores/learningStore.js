@@ -1,486 +1,251 @@
 // frontend/src/stores/learningStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { learningService } from '@/services/learningService'
+import { useAuthStore } from '@/stores/authStore'
+import { useRouter } from 'vue-router'
 
+/**
+ * 학습 상태 관리 스토어 (PINIA V2.0 - 리팩토링)
+ *
+ * @description
+ * 이 스토어는 학습 세션의 모든 상태와 비즈니스 로직을 중앙에서 관리합니다.
+ * 컴포넌트가 액션을 호출하고, 액션이 API를 호출하며, API 응답을 기반으로 상태를 업데이트하는
+ * 엄격한 단방향 데이터 흐름을 따릅니다.
+ * 컴포넌트는 비즈니스 로직이나 직접적인 API 호출을 포함해서는 안 됩니다.
+ *
+ * @원칙
+ * 1. 단일 정보 출처 (Single Source of Truth): 모든 학습 관련 데이터는 여기에 저장됩니다.
+ * 2. 상태는 읽기 전용: 컴포넌트는 getters나 computed 속성을 통해 상태를 읽을 뿐, 직접 수정하지 않습니다.
+ * 3. 상태 변경은 액션을 통해서만: 모든 상태 변경은 API 상호작용을 처리하는 액션을 통해 시작됩니다.
+ */
 export const useLearningStore = defineStore('learning', () => {
-  // ===== 기본 상태 =====
-  
-  // 현재 활성 에이전트
-  const currentAgent = ref('theory_educator')
-  
-  // UI 모드 ('chat' | 'quiz')
-  const currentUIMode = ref('chat')
-  
-  // 컨텐츠 모드 ('current' | 'review_theory' | 'review_quiz')
-  const currentContentMode = ref('current')
-  
-  // 사용자 의도
-  const userIntent = ref('')
-  
-  // 세션 진행 단계
-  const sessionProgressStage = ref('session_start')
-  
-  // 완료된 단계
-  const completedSteps = ref({
-    theory: true,
-    quiz: false,
-    feedback: false
-  })
-  
-  // ===== 세션 정보 =====
-  
-  // 현재 세션 정보
+  // 의존성 스토어 및 라우터
+  const authStore = useAuthStore()
+  const router = useRouter()
+
+  // ===== 상태 (State) ===== //
+
+  // --- UI 및 로딩 상태 ---
+  const isLoading = ref(false)
+  const loadingMessage = ref('학습 내용을 준비하고 있습니다...')
+  const currentUIMode = ref('chat') // 'chat' | 'quiz'
+
+  // --- 세션 상태 ---
   const sessionInfo = ref({
-    session_id: null,
-    chapter_number: 2,
+    chapter_number: 1,
     section_number: 1,
-    chapter_title: 'LLM이란 무엇인가',
-    section_title: 'LLM의 기본 개념',
-    user_type: 'beginner'
   })
-  
-  // ===== 컨텐츠 데이터 =====
-  
-  // 메인 컨텐츠 데이터
+  const currentAgent = ref('session_manager')
+  const sessionProgressStage = ref('session_start')
+
+  // --- 컨텐츠 상태 ---
+  // API 응답을 기반으로 한 통합 컨텐츠 객체
   const mainContent = ref({
-    agent_name: 'theory_educator',
-    content_type: 'theory',
-    title: 'LLM(Large Language Model)이란?',
-    content: '',
-    metadata: {}
+    type: 'theory', // 'theory', 'qna', 'feedback'
+    data: null,
   })
-  
-  // API 응답 데이터 (캐시 없이 실시간 데이터만 사용)
-  const currentApiResponse = ref(null)
-  
-  // 채팅 히스토리 (세션별로 새로 시작, 이전 대화 저장하지 않음)
+  const quizData = ref(null) // 퀴즈 데이터는 별도로 관리
   const chatHistory = ref([])
-  
-  // 퀴즈 데이터 (초기값은 완전히 비워둠)
-  const quizData = ref({
-    question: '',
-    type: '',
-    options: [],
-    hint: '',
-    correct_answer: '',
-    user_answer: ''
-  })
-  
-  // 현재 퀴즈 상태
-  const currentQuizInfo = ref({
-    quiz_type: 'multiple_choice',
-    is_quiz_active: false,
-    is_answer_submitted: false,
-    hint_usage_count: 0,
-    score: null
-  })
-  
-  // 워크플로우 응답
-  const lastWorkflowResponse = ref({
-    current_agent: 'theory_educator',
-    session_progress_stage: 'session_start',
-    ui_mode: 'chat',
-    content: {},
-    metadata: {}
-  })
-  
-  // 피드백 데이터
-  const feedbackData = ref({
-    scoreText: '',
-    explanation: '',
-    nextStep: ''
-  })
-  
-  // ===== 컴퓨티드 속성 =====
-  
-  // UI 모드 판단
+
+  // ===== 게터 (Getters & Computed) ===== //
+
   const isQuizMode = computed(() => currentUIMode.value === 'quiz')
   const isChatMode = computed(() => currentUIMode.value === 'chat')
-  
-  // 세션 단계 판단
-  const isSessionStart = computed(() => sessionProgressStage.value === 'session_start')
-  const isTheoryCompleted = computed(() => sessionProgressStage.value === 'theory_completed')
-  const isQuizAndFeedbackCompleted = computed(() => sessionProgressStage.value === 'quiz_and_feedback_completed')
-  
-  // 사용자 액션 가능 여부
-  const canAskQuestion = computed(() => {
-    return ['theory_completed', 'quiz_and_feedback_completed'].includes(sessionProgressStage.value)
-  })
-  
-  const canProceedNext = computed(() => {
-    return ['theory_completed', 'quiz_and_feedback_completed'].includes(sessionProgressStage.value)
-  })
-  
-  // 진행 단계 표시용 데이터
-  const sessionSteps = computed(() => [
-    {
-      name: '이론',
-      key: 'theory',
-      active: currentAgent.value === 'theory_educator' || currentAgent.value === 'qna_resolver',
-      completed: completedSteps.value.theory
-    },
-    {
-      name: '퀴즈',
-      key: 'quiz', 
-      active: currentAgent.value === 'quiz_generator',
-      completed: completedSteps.value.quiz
-    },
-    {
-      name: '풀이',
-      key: 'feedback',
-      active: currentAgent.value === 'evaluation_feedback',
-      completed: completedSteps.value.feedback
+  const hasQuiz = computed(() => quizData.value && quizData.value.question)
+  const hasFeedback = computed(() => mainContent.value.type === 'feedback' && mainContent.value.data)
+
+  // ===== 액션 (Actions) - 컴포넌트가 호출하는 공개 API ===== //
+
+  /**
+   * [ACTION] 새로운 학습 세션을 시작합니다. (HeaderComponent에서 호출)
+   * authStore에서 현재 챕터/섹션 정보를 가져와 API를 호출합니다.
+   */
+  const startNewSession = async () => {
+    isLoading.value = true
+    loadingMessage.value = '새로운 학습 세션을 시작합니다...'
+    console.log('ACTION: startNewSession 호출됨')
+
+    // 이전 세션 데이터 초기화
+    _resetSessionState()
+
+    const chapterNumber = authStore.currentChapter
+    const sectionNumber = authStore.currentSection
+    const userMessage = `${chapterNumber}챕터 ${sectionNumber}섹션 학습을 시작합니다.`
+
+    const result = await learningService.startLearningSession(
+      chapterNumber,
+      sectionNumber,
+      userMessage
+    )
+
+    if (result.success && result.data?.data?.workflow_response) {
+      console.log('✅ 세션 시작 API 성공', result.data)
+      _processWorkflowResponse(result.data.data.workflow_response)
+      // 학습 페이지로 이동
+      router.push('/learning')
+    } else {
+      console.error('API Error in startNewSession:', result.error)
+      // TODO: 사용자에게 보여줄 에러 처리 추가
+      chatHistory.value.push({
+        sender: '시스템',
+        message: `세션 시작에 실패했습니다: ${result.error}`,
+        type: 'system',
+      })
     }
-  ])
-  
-  // ===== 액션 메서드 =====
-  
-  // 에이전트 업데이트 - 자동 UI 모드 설정 제거 (워크플로우에서 처리)
-  const updateAgent = (agentName) => {
-    console.log(`에이전트 업데이트: ${currentAgent.value} → ${agentName}`)
-    currentAgent.value = agentName
-    
-    // 에이전트별 완료 단계만 업데이트 (UI 모드는 워크플로우에서 결정)
-    switch (agentName) {
-      case 'theory_educator':
-        sessionProgressStage.value = 'theory_completed'
+    isLoading.value = false
+  }
+
+  /**
+   * [ACTION] 사용자 메시지 또는 퀴즈 답변을 서버로 전송합니다.
+   * @param {string} message - 사용자 입력 메시지 또는 퀴즈 답변
+   */
+  const sendMessage = async (message) => {
+    if (isLoading.value) return
+    isLoading.value = true
+    loadingMessage.value = '응답을 기다리고 있습니다...'
+    console.log(`ACTION: sendMessage 호출됨 (Mode: ${currentUIMode.value})`, { message })
+
+    // 사용자 메시지를 채팅 기록에 먼저 추가
+    if (isChatMode.value) {
+      chatHistory.value.push({ sender: '나', message, type: 'user' })
+    }
+
+    // 현재 UI 모드에 따라 다른 서비스 호출
+    const result = isQuizMode.value
+      ? await learningService.submitQuizAnswerV2(message)
+      : await learningService.sendSessionMessage(message)
+
+    if (result.success && result.data?.data?.workflow_response) {
+      console.log('✅ 메시지/답변 API 성공', result.data)
+      _processWorkflowResponse(result.data.data.workflow_response)
+    } else {
+      console.error('API Error in sendMessage:', result.error)
+      chatHistory.value.push({
+        sender: '시스템',
+        message: `오류가 발생했습니다: ${result.error}`,
+        type: 'system',
+      })
+    }
+    isLoading.value = false
+  }
+
+  // ===== 내부 헬퍼 함수 (Private Helpers) ===== //
+
+  /**
+   * [HELPER] 백엔드의 워크플로우 응답을 처리하여 모든 상태를 업데이트합니다.
+   * 이 함수는 모든 상태 변경의 유일한 진입점입니다.
+   * @param {object} response - API 응답의 workflow_response 객체
+   */
+  const _processWorkflowResponse = (response) => {
+    console.log('HELPER: _processWorkflowResponse 처리 시작', response)
+
+    // 1. 핵심 상태 업데이트 (Agent, UI Mode, Progress)
+    currentAgent.value = response.current_agent || 'session_manager'
+    currentUIMode.value = response.ui_mode || 'chat'
+    sessionProgressStage.value = response.session_progress_stage || 'unknown'
+
+    // 2. 컨텐츠 처리
+    const content = response.content
+    if (!content) {
+      console.warn('Workflow response에 content가 없습니다.')
+      return
+    }
+
+    // 3. 컨텐츠 유형에 따라 상태 분기 처리
+    switch (content.type) {
+      case 'theory':
+        mainContent.value = { type: 'theory', data: content }
+        quizData.value = null // 이론 설명 시 퀴즈 데이터 초기화
+        _addTutorMessage(
+          content.refined_content || '왼쪽의 학습 내용을 확인해주세요.'
+        )
         break
-      case 'quiz_generator':
-        sessionProgressStage.value = 'theory_completed'
-        completedSteps.value.quiz = true
+
+      case 'quiz':
+        quizData.value = content
+        mainContent.value = { type: 'theory', data: mainContent.value.data } // 이론 내용을 배경으로 유지
+        _addTutorMessage(
+          content.refined_content || '퀴즈가 준비되었습니다. 오른쪽에서 답변해주세요.'
+        )
         break
-      case 'evaluation_feedback':
-        sessionProgressStage.value = 'quiz_and_feedback_completed'
-        completedSteps.value.feedback = true
+
+      case 'qna':
+        mainContent.value = { type: 'theory', data: mainContent.value.data } // 이론 내용을 배경으로 유지
+        _addTutorMessage(content.answer, 'qna')
         break
-      case 'qna_resolver':
-        // 진행 단계는 변경하지 않음
+        
+      default:
+        // 'feedback' 또는 기타 content.type이 없는 경우 (e.g., session_completion)
+        if (response.evaluation_result) {
+            mainContent.value = { type: 'feedback', data: response.evaluation_result.feedback }
+            quizData.value = null // 평가 완료 후 퀴즈 데이터 초기화
+            _addTutorMessage(
+                response.evaluation_result.feedback.content || '평가가 완료되었습니다. 왼쪽 결과를 확인하고 다음 단계를 진행해주세요.'
+            )
+        } else if(response.session_completion) {
+             _addTutorMessage(
+                response.session_completion.session_summary || '세션이 완료되었습니다. 다음 학습을 시작해주세요.'
+            )
+            // TODO: 세션 완료 후 다음 챕터/섹션 정보 업데이트 로직 추가
+        } else {
+            console.warn('알 수 없는 컨텐츠 유형 또는 구조:', response)
+            _addTutorMessage(content.refined_content || '알 수 없는 응답입니다. 다음 단계로 진행해주세요.')
+        }
         break
     }
-  }
-  
-  // UI 모드 업데이트
-  const updateUIMode = (mode) => {
-    console.log(`UI 모드 업데이트: ${currentUIMode.value} → ${mode}`)
-    currentUIMode.value = mode
-  }
-  
-  // 컨텐츠 모드 업데이트
-  const updateContentMode = (mode) => {
-    console.log(`컨텐츠 모드 업데이트: ${currentContentMode.value} → ${mode}`)
-    currentContentMode.value = mode
-  }
-  
-  // 세션 진행 단계 업데이트
-  const updateSessionProgress = (stage) => {
-    console.log(`세션 진행 단계 업데이트: ${sessionProgressStage.value} → ${stage}`)
-    sessionProgressStage.value = stage
-  }
-  
-  // 완료된 단계 업데이트
-  const updateCompletedSteps = (steps) => {
-    completedSteps.value = { ...completedSteps.value, ...steps }
-  }
-  
-  // 세션 정보 업데이트
-  const updateSessionInfo = (info) => {
-    sessionInfo.value = { ...sessionInfo.value, ...info }
-  }
-  
-  // 메인 컨텐츠 업데이트
-  const updateMainContent = (content) => {
-    mainContent.value = { ...mainContent.value, ...content }
-  }
-  
-  // API 응답 데이터 업데이트 (캐시 없이 현재 데이터만 저장)
-  const updateCurrentApiResponse = (data) => {
-    currentApiResponse.value = data
-    console.log('현재 API 응답 데이터 업데이트:', data)
-  }
-  
-  // 현재 API 응답 데이터 조회
-  const getCurrentApiResponse = () => {
-    return currentApiResponse.value
-  }
-  
-  // 채팅 히스토리 업데이트 (기존 히스토리 완전 대체)
-  const updateChatHistory = (history) => {
-    if (Array.isArray(history)) {
-      chatHistory.value = [...history] // 새로운 배열로 완전 대체
-    }
-  }
-  
-  // 채팅 메시지 추가
-  const addChatMessage = (message) => {
-    chatHistory.value.push({
-      ...message,
-      timestamp: message.timestamp || new Date()
+    console.log('HELPER: _processWorkflowResponse 처리 완료. 최종 상태:', {
+        uiMode: currentUIMode.value,
+        mainContent: mainContent.value,
+        quizData: quizData.value,
+        chatHistory: chatHistory.value
     })
   }
-  
-  // 퀴즈 데이터 업데이트
-  const updateQuizData = (quiz) => {
-    quizData.value = {
-      question: quiz.question || '',
-      type: quiz.type || '',
-      options: quiz.options || [],
-      hint: quiz.hint || '',
-      correct_answer: quiz.correct_answer || '',
-      user_answer: quiz.user_answer || ''
+
+  /**
+   * [HELPER] 튜터 메시지를 채팅 기록에 추가합니다.
+   * @param {string} message - 튜터가 보낸 메시지
+   * @param {string} type - 메시지 유형 ('system' | 'qna')
+   */
+  const _addTutorMessage = (message, type = 'system') => {
+    if (message) {
+      chatHistory.value.push({ sender: '튜터', message, type })
     }
   }
 
-  // API 응답에서 퀴즈 데이터 저장 - 자동 UI 모드 전환 포함
-  const setQuizDataFromAPI = (apiResponse) => {
-    console.log('🔍 setQuizDataFromAPI 호출됨:', apiResponse)
-    
-    if (apiResponse?.workflow_response?.content) {
-      const content = apiResponse.workflow_response.content
-      console.log('📋 컨텐츠 상세 분석:', content)
-      
-      // 퀴즈 데이터 매핑 (실제 API 응답 구조에 맞게)
-      const mappedQuizData = {
-        question: content.question || '',
-        type: content.quiz_type || 'multiple_choice',
-        options: Array.isArray(content.options) ? content.options : [],
-        hint: content.hint || '',
-        correct_answer: content.correct_answer || '',
-        user_answer: '',
-        refined_content: content.refined_content || '' // 추가 컨텐츠 정보
-      }
-      
-      console.log('🎯 매핑된 퀴즈 데이터:', mappedQuizData)
-      
-      // 퀴즈 데이터 업데이트
-      quizData.value = mappedQuizData
-      console.log('💾 Store quizData 업데이트 후:', quizData.value)
-      
-      // 퀴즈 상태 설정
-      currentQuizInfo.value = {
-        quiz_type: mappedQuizData.type,
-        is_quiz_active: true,
-        is_answer_submitted: false,
-        hint_usage_count: 0,
-        score: null
-      }
-      
-      console.log('✅ 퀴즈 데이터 Store에 저장 완료:', mappedQuizData)
-      console.log('📝 퀴즈 옵션:', mappedQuizData.options)
-      
-      // 퀴즈 데이터가 설정되면 자동으로 UI 모드를 퀴즈로 전환
-      if (currentUIMode.value !== 'quiz') {
-        console.log('🔄 퀴즈 데이터 설정으로 인한 UI 모드 자동 전환: chat → quiz')
-        currentUIMode.value = 'quiz'
-      }
-      
-      return mappedQuizData
-    }
-    
-    console.warn('⚠️ 퀴즈 데이터를 찾을 수 없습니다. API 응답 구조:', {
-      hasWorkflowResponse: !!apiResponse?.workflow_response,
-      hasContent: !!apiResponse?.workflow_response?.content,
-      apiResponse: apiResponse
-    })
-    return null
-  }
-  
-  // 퀴즈 상태 업데이트
-  const updateQuizInfo = (info) => {
-    currentQuizInfo.value = { ...currentQuizInfo.value, ...info }
-  }
-  
-  // 사용자 답변 업데이트
-  const updateUserAnswer = (answer) => {
-    quizData.value.user_answer = answer
-  }
-  
-  // 피드백 데이터 업데이트
-  const updateFeedbackData = (feedback) => {
-    feedbackData.value = {
-      scoreText: feedback.scoreText || '',
-      explanation: feedback.explanation || '',
-      nextStep: feedback.nextStep || ''
-    }
-    console.log('피드백 데이터 업데이트:', feedbackData.value)
-  }
-  
-  // 워크플로우 응답 업데이트 - 자동 상태 동기화
-  const updateWorkflowResponse = (response) => {
-    console.log('워크플로우 응답 업데이트:', response)
-    
-    lastWorkflowResponse.value = { ...lastWorkflowResponse.value, ...response }
-    
-    // 워크플로우 응답에 따른 상태 자동 동기화
-    if (response.current_agent) {
-      console.log(`에이전트 자동 업데이트: ${currentAgent.value} → ${response.current_agent}`)
-      currentAgent.value = response.current_agent
-    }
-    
-    if (response.ui_mode) {
-      console.log(`UI 모드 자동 업데이트: ${currentUIMode.value} → ${response.ui_mode}`)
-      currentUIMode.value = response.ui_mode
-    }
-    
-    if (response.session_progress_stage) {
-      console.log(`세션 진행 단계 자동 업데이트: ${sessionProgressStage.value} → ${response.session_progress_stage}`)
-      sessionProgressStage.value = response.session_progress_stage
-    }
-    
-    // 에이전트별 추가 상태 설정
-    if (response.current_agent === 'quiz_generator') {
-      completedSteps.value.quiz = true
-    } else if (response.current_agent === 'evaluation_feedback') {
-      completedSteps.value.feedback = true
-    }
-    // qna_resolver로 변경될 때는 기존 완료 상태를 유지 (피드백 데이터 보존)
-  }
-  
-  // ===== 초기화 메서드 =====
-  
-  // 세션 초기화
-  const initializeSession = (sessionData = {}) => {
-    console.log('세션 초기화 시작')
-    
-    // 기본값 설정
-    currentAgent.value = 'theory_educator'
-    currentUIMode.value = 'chat'
-    currentContentMode.value = 'current'
-    sessionProgressStage.value = 'session_start'
-    
-    // 세션 정보 설정
-    if (sessionData.chapter_number) {
-      sessionInfo.value.chapter_number = sessionData.chapter_number
-    }
-    if (sessionData.section_number) {
-      sessionInfo.value.section_number = sessionData.section_number
-    }
-    
-    // 완료 단계 초기화
-    completedSteps.value = {
-      theory: true, // 이론은 기본적으로 시작 시 완료로 설정
-      quiz: false,
-      feedback: false
-    }
-    
-    console.log('세션 초기화 완료', {
-      agent: currentAgent.value,
-      uiMode: currentUIMode.value,
-      sessionInfo: sessionInfo.value
-    })
-  }
-  
-  // 세션 시작 시에만 사용하는 초기화 (POST /learning/session/start 호출 시에만)
-  const initializeNewSession = () => {
-    console.log('새로운 학습 세션 초기화')
-    
-    currentAgent.value = 'theory_educator'
-    currentUIMode.value = 'chat'
-    currentContentMode.value = 'current'
-    sessionProgressStage.value = 'session_start'
-    userIntent.value = ''
-    
-    completedSteps.value = {
-      theory: true,
-      quiz: false,
-      feedback: false
-    }
-    
-    // 세션 시작 시에만 데이터 초기화
+  /**
+   * [HELPER] 새로운 세션 시작 시 모든 관련 상태를 초기화합니다.
+   */
+  const _resetSessionState = () => {
+    console.log('HELPER: _resetSessionState 호출됨')
     chatHistory.value = []
-    quizData.value = {
-      question: '',
-      type: '',
-      options: [],
-      hint: '',
-      correct_answer: '',
-      user_answer: ''
-    }
-    feedbackData.value = {
-      scoreText: '',
-      explanation: '',
-      nextStep: ''
-    }
-    currentApiResponse.value = null
-    
-    mainContent.value = {
-      agent_name: 'theory_educator',
-      content_type: 'theory',
-      title: 'LLM(Large Language Model)이란?',
-      content: '',
-      metadata: {}
-    }
-    
-    lastWorkflowResponse.value = {
-      current_agent: 'theory_educator',
-      session_progress_stage: 'session_start',
-      ui_mode: 'chat',
-      content: {},
-      metadata: {}
-    }
+    mainContent.value = { type: 'theory', data: null }
+    quizData.value = null
+    currentUIMode.value = 'chat'
+    currentAgent.value = 'session_manager'
+    sessionProgressStage.value = 'session_start'
   }
-  
-  // ===== 디버그 메서드 =====
-  
-  // 현재 상태 정보
-  const getStateInfo = () => {
-    return {
-      currentAgent: currentAgent.value,
-      currentUIMode: currentUIMode.value,
-      currentContentMode: currentContentMode.value,
-      sessionProgressStage: sessionProgressStage.value,
-      completedSteps: completedSteps.value,
-      sessionInfo: sessionInfo.value
-    }
-  }
-  
-  // Store 반환
+
   return {
-    // 상태
-    currentAgent,
+    // State
+    isLoading,
+    loadingMessage,
     currentUIMode,
-    currentContentMode,
-    userIntent,
-    sessionProgressStage,
-    completedSteps,
     sessionInfo,
+    currentAgent,
+    sessionProgressStage,
     mainContent,
-    chatHistory,
     quizData,
-    currentQuizInfo,
-    lastWorkflowResponse,
-    currentApiResponse,
-    feedbackData,
-    
-    // 컴퓨티드
+    chatHistory,
+
+    // Getters & Computed
     isQuizMode,
     isChatMode,
-    isSessionStart,
-    isTheoryCompleted,
-    isQuizAndFeedbackCompleted,
-    canAskQuestion,
-    canProceedNext,
-    sessionSteps,
-    
-    // 액션
-    updateAgent,
-    updateUIMode,
-    updateContentMode,
-    updateSessionProgress,
-    updateCompletedSteps,
-    updateSessionInfo,
-    updateMainContent,
-    updateChatHistory,
-    addChatMessage,
-    updateQuizData,
-    setQuizDataFromAPI,
-    updateQuizInfo,
-    updateUserAnswer,
-    updateFeedbackData,
-    updateWorkflowResponse,
-    initializeSession,
-    initializeNewSession,
-    getStateInfo,
-    updateCurrentApiResponse,
-    getCurrentApiResponse
+    hasQuiz,
+    hasFeedback,
+
+    // Actions
+    startNewSession,
+    sendMessage,
   }
 })
