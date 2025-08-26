@@ -437,7 +437,7 @@ onMounted(() => {
 }
 
 .system-message {
-  background: lighten($success, 50%);
+  background: lighten($success, 52%);
   margin-right: $spacing-lg * 1.33; // 2rem
   margin-left: 0;
   border-bottom-left-radius: $border-radius-sm;
