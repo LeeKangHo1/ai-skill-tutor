@@ -16,6 +16,11 @@
       <MainContentArea />
 
       <div class="interaction-area">
+
+
+        <!-- <p style="text-align: center; background: red; color: white;">[디버그] 현재 uiMode: {{ uiMode }}</p> -->
+
+        
         <div class="interaction-header">
           {{ uiMode === 'chat' ? '💬 채팅' : '📝 퀴즈' }}
         </div>
@@ -33,20 +38,14 @@
         </div>
       </div>
     </div>
-
-    <div v-if="isLoading" class="loading-overlay">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-        <p>{{ loadingMessage }}</p>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { onMounted, watch, ref } from 'vue' // ref를 import에 추가합니다.
 import { useRouter } from 'vue-router'
 import { useLearningStore } from '@/stores/learningStore'
+// storeToRefs는 더 이상 uiMode를 위해 필요하지 않지만, 다른 상태를 위해 남겨둘 수 있습니다.
 import { storeToRefs } from 'pinia'
 
 // 자식 컴포넌트 임포트
@@ -58,54 +57,38 @@ import QuizInteraction from '@/components/learning/QuizInteraction.vue'
 const router = useRouter()
 const learningStore = useLearningStore()
 
-// --- 2. Store 상태와 게터를 반응형으로 가져오기 ---
-// storeToRefs를 사용하면 구조 분해 할당 시 반응성을 유지할 수 있습니다.
-const { isLoading, loadingMessage, uiMode } = storeToRefs(learningStore)
+// --- 2. Store 상태 가져오기 ---
+// [수정] uiMode를 임시로 'chat'으로 고정합니다.
+const uiMode = ref('chat') 
+// const { uiMode } = storeToRefs(learningStore) // 기존 코드는 주석 처리합니다.
 
 console.log('[LearningPage] 🟢 컴포넌트 초기화 완료. Store와 연결되었습니다.')
+console.log('[LearningPage] ⚠️ [임시 조치] uiMode를 "chat"으로 고정합니다.')
+
 
 // --- 3. 이벤트 핸들러 (Store Action 호출) ---
-
-/**
- * ChatInteraction 컴포넌트에서 받은 메시지를 Store로 전달합니다.
- * @param {string} message - 사용자가 입력한 메시지
- */
 const handleSendMessage = (message) => {
   console.log('[LearningPage] 📤 "send-message" 이벤트 수신. Store 액션을 호출합니다.', { message })
   learningStore.sendMessage(message)
 }
 
-/**
- * QuizInteraction 컴포넌트에서 받은 퀴즈 답변을 Store로 전달합니다.
- * @param {object} submitData - 퀴즈 제출 데이터 객체
- */
 const handleSubmitAnswer = (submitData) => {
   console.log('[LearningPage] 📥 "submit-answer" 이벤트 수신. Store 액션을 호출합니다.', { answer: submitData.answer })
-  // v2.0 API에서는 주관식/객관식 모두 동일한 message API를 사용하므로, 답변 텍스트만 넘겨줍니다.
   learningStore.sendMessage(submitData.answer)
 }
 
-/**
- * 대시보드 페이지로 이동합니다.
- */
 const goToDashboard = () => {
   console.log('[LearningPage] 🚀 대시보드로 이동합니다.')
   router.push('/dashboard')
 }
 
-// --- 4. 라이프사이클 및 감시자 (디버깅용) ---
-
+// --- 4. 라이프사이클 및 감시자 ---
 onMounted(() => {
-  console.log('[LearningPage] 🟢 컴포넌트가 마운트되었습니다.')
-  // 페이지 첫 로딩(세션 시작)은 이제 HeaderComponent에서 트리거하므로
-  // 이 페이지는 로딩이 완료된 후 보여지게 됩니다.
-  // 만약 URL로 직접 접근하는 경우를 대비한 로직이 필요하다면 여기에 추가할 수 있습니다.
+  console.log('[LearningPage] 🟢 컴포넌트가 마운트되었습니다. 새로운 세션 시작을 요청합니다.')
+  learningStore.startNewSession()
 })
 
-// UI 모드 변경을 감지하여 로그를 남깁니다 (디버깅에 유용).
-watch(uiMode, (newMode, oldMode) => {
-  console.log(`[LearningPage] 🔄 UI 모드 변경 감지: ${oldMode} -> ${newMode}`)
-})
+// watch(uiMode, ... ) 부분은 uiMode가 고정되었으므로 잠시 무시됩니다.
 </script>
 
 <style lang="scss" scoped>
@@ -122,7 +105,6 @@ watch(uiMode, (newMode, oldMode) => {
   flex-direction: column;
 }
 
-/* Header Area */
 .learning-header {
   background: $header-gradient;
   color: $white;
@@ -131,20 +113,13 @@ watch(uiMode, (newMode, oldMode) => {
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: $spacing-md;
-  }
-
-  .logo {
-    font-size: $font-size-lg;
-    font-weight: 600;
-  }
 }
 
-/* Main Content Area */
+.logo {
+  font-size: $font-size-lg;
+  font-weight: 600;
+}
+
 .learning-content {
   flex: 1;
   display: grid;
@@ -154,71 +129,26 @@ watch(uiMode, (newMode, oldMode) => {
   min-height: 0;
 }
 
-/* Interaction Area */
 .interaction-area {
   background: $gray-100;
   display: flex;
   flex-direction: column;
   min-height: 0;
-
-  .interaction-header {
-    background: $gray-700;
-    color: $white;
-    padding: $spacing-md;
-    text-align: center;
-    font-weight: 500;
-    flex-shrink: 0;
-  }
-
-  .interaction-body {
-    flex: 1;
-    padding: $spacing-md;
-    overflow: hidden;
-    min-height: 0;
-  }
 }
 
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba($black, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-
-  .loading-spinner {
-    background: $white;
-    padding: $spacing-lg;
-    border-radius: $border-radius-lg;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba($black, 0.2);
-
-    p {
-      margin-top: $spacing-md;
-      font-weight: 500;
-      color: $gray-700;
-    }
-  }
-
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid $gray-200;
-    border-top-color: $primary;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
-  }
+.interaction-header {
+  background: $gray-700;
+  color: $white;
+  padding: $spacing-md;
+  text-align: center;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.interaction-body {
+  flex: 1;
+  padding: $spacing-md;
+  overflow: hidden;
+  min-height: 0;
 }
 </style>

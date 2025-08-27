@@ -50,11 +50,9 @@ const authStore = useAuthStore()
 // 계산된 속성
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const userName = computed(() => {
-  // 초기화가 완료되지 않았거나 로딩 중이면 기본값 표시
   if (!authStore.isInitialized || authStore.isLoading) {
     return '로딩 중...'
   }
-  // 인증되었지만 사용자 정보가 없으면 기본값
   return authStore.user?.username || authStore.user?.login_id || '사용자'
 })
 
@@ -65,7 +63,6 @@ const handleLogout = async () => {
     router.push('/')
   } catch (error) {
     console.error('로그아웃 실패:', error)
-    // 에러가 발생해도 홈으로 이동
     router.push('/')
   }
 }
@@ -123,6 +120,7 @@ const handleLogout = async () => {
       border-radius: 6px;
       transition: all 0.3s;
       font-weight: 500;
+      cursor: pointer;
 
       &:hover {
         background-color: rgba($white, 0.1);

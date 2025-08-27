@@ -1,3 +1,4 @@
+<!-- frontend/src/components/learning/MainContentArea.vue -->
 <template>
   <div class="main-content-area">
     <div class="content-header">
@@ -5,7 +6,7 @@
     </div>
 
     <div class="content-body">
-      <div v-if="isLoading" class="loading-container">
+      <div v-if="isContentLoading" class="loading-container">
         <div class="loading-spinner"></div>
         <p>콘텐츠를 불러오는 중...</p>
       </div>
@@ -17,115 +18,109 @@
       </div>
 
       <template v-else>
-        <TheoryContent
-          v-if="effectiveContentType === 'theory' && theoryContent"
-          :theory-data="theoryContent"
-        />
-        <QuizContent
-          v-else-if="effectiveContentType === 'quiz'"
-          :is-visible="true"
-        />
-        <FeedbackContent
-          v-else-if="effectiveContentType === 'feedback'"
-          :is-visible="true"
-        />
+        <TheoryContent v-if="shouldShowContent('theory')" />
+        <QuizContent v-else-if="shouldShowContent('quiz')" />
+        <FeedbackContent v-else-if="shouldShowContent('feedback')" />
+
+        <template v-else-if="shouldShowContent('qna')">
+          <TheoryContent v-if="hasFeedbackCompleted" />
+          <FeedbackContent v-if="hasFeedbackCompleted" />
+          <TheoryContent v-else />
+        </template>
       </template>
+    </div>
+
+    <div class="content-navigation">
+      <button v-if="canShowNavigationButton('theory')" class="btn btn-outline" @click="handleNavigationClick('review_theory')">
+        📖 이론 다시 보기
+      </button>
+      <button v-if="canShowNavigationButton('quiz')" class="btn btn-outline" @click="handleNavigationClick('review_quiz')">
+        📝 퀴즈 다시 보기
+      </button>
+      <button v-if="canShowNavigationButton('current')" class="btn btn-outline" @click="handleNavigationClick('current')">
+        ← 현재 학습으로 돌아가기
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, defineProps, watch } from 'vue'
+import { computed } from 'vue'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
-
-// 자식 컨텐츠 컴포넌트들
 import TheoryContent from './TheoryContent.vue'
 import QuizContent from './QuizContent.vue'
 import FeedbackContent from './FeedbackContent.vue'
 
-// --- 1. [임시 브릿지] 기존 props 정의를 유지합니다. ---
-// 이 코드는 하위 호환성을 위해 남겨두며, 최종 단계에서 삭제됩니다.
-const props = defineProps({
-  currentAgent: {
-    type: String,
-    default: ''
-  },
-  contentData: {
-    type: Object,
-    default: () => ({})
-  },
-})
-
-// --- 2. Store 연결 ---
+// --- Store 직접 연결 ---
 const learningStore = useLearningStore()
-const { 
-  isLoading, 
+const {
+  isContentLoading,
   apiError,
-  mainContent, 
   sessionInfo,
-  currentAgent: agentFromStore,
+  currentAgent,
+  // [기능 복원] store에서 새로운 상태들을 가져옵니다.
+  contentMode,
+  completedSteps,
 } = storeToRefs(learningStore)
 
-console.log('[MainContentArea] 🟢 컴포넌트 초기화. Store와 연결되었습니다.')
+console.log('[MainContentArea] 🟢 컴포넌트 초기화. Store와 직접 연결되었습니다.')
 
-// --- 3. '임시 브릿지' Computed 속성 생성 ---
+// --- Store 상태 기반 Computed 속성 ---
 
-// props로 받은 currentAgent가 있으면 그것을 사용하고, 없으면 store의 currentAgent를 사용합니다.
-const effectiveAgent = computed(() => {
-  const agent = props.currentAgent || agentFromStore.value
-  console.log(`[MainContentArea] 🕵️‍♂️ 유효 에이전트 결정: ${agent}`)
-  return agent
-})
-
-// 에이전트에 따라 현재 보여줘야 할 컨텐츠 타입을 결정합니다.
-const effectiveContentType = computed(() => {
-  const typeMap = {
-    theory_educator: 'theory',
-    quiz_generator: 'quiz',
-    evaluation_feedback: 'feedback',
-    qna_resolver: 'theory', // QnA 상황에서는 이론 컨텐츠를 배경으로 표시
-    session_manager: 'theory',
-  }
-  const type = typeMap[effectiveAgent.value] || 'theory'
-  console.log(`[MainContentArea] 📄 유효 컨텐츠 타입 결정: ${type}`)
-  return type
-})
-
-// Store에서 가져온 sessionInfo를 기반으로 제목을 생성합니다.
-const chapterTitle = computed(() => 
+const chapterTitle = computed(() =>
   `${sessionInfo.value.chapter_number}챕터 ${sessionInfo.value.section_number}섹션`
 )
 
-// 이론 컨텐츠는 store의 mainContent.data를 사용합니다.
-const theoryContent = computed(() => {
-  // mainContent의 타입이 'theory' 또는 'feedback'일 때 그 데이터를 사용합니다.
-  if (mainContent.value.type === 'theory' || mainContent.value.type === 'feedback') {
-    return mainContent.value.data
+const agentContentType = computed(() => {
+  const agentMap = {
+    theory_educator: 'theory',
+    quiz_generator: 'quiz',
+    evaluation_feedback: 'feedback',
+    qna_resolver: 'qna',
   }
-  // 퀴즈나 다른 상황에서는 null을 반환하여 TheoryContent가 렌더링되지 않도록 합니다.
-  return null
+  return agentMap[currentAgent.value] || 'theory'
 })
 
-// --- 4. 디버깅용 감시자 ---
-watch(effectiveAgent, (newAgent) => {
-  console.log(`[MainContentArea] 🔄 에이전트 변경 감지: ${newAgent}`)
-})
+// [기능 복원] 피드백을 완료했는지 여부
+const hasFeedbackCompleted = computed(() => completedSteps.value.feedback)
 
-watch(apiError, (newError) => {
-  if (newError) {
-    console.error('[MainContentArea] 🔴 API 오류 상태 감지:', newError)
+// [기능 복원] 어떤 컨텐츠를 보여줄지 결정하는 로직
+const shouldShowContent = (contentType) => {
+  if (contentMode.value === 'current') {
+    return contentType === agentContentType.value
+  } else if (contentMode.value === 'review_theory') {
+    return contentType === 'theory'
+  } else if (contentMode.value === 'review_quiz') {
+    return contentType === 'quiz'
   }
-})
+  return false
+}
 
-watch(isLoading, (newLoading) => {
-  console.log(`[MainContentArea] ⏳ 로딩 상태 변경: ${newLoading}`)
-})
+// [기능 복원] 네비게이션 버튼 표시 여부 결정 로직
+const canShowNavigationButton = (buttonType) => {
+  const isAfterQuiz = completedSteps.value.quiz
+  const isCurrentMode = contentMode.value === 'current'
 
+  if (buttonType === 'theory' || buttonType === 'quiz') {
+    return isAfterQuiz && isCurrentMode && (currentAgent.value === 'evaluation_feedback' || currentAgent.value === 'qna_resolver')
+  }
+  if (buttonType === 'current') {
+    return !isCurrentMode
+  }
+  return false
+}
+
+// [기능 복원] 네비게이션 버튼 클릭 핸들러
+const handleNavigationClick = (mode) => {
+  console.log(`[MainContentArea] 🖱️ 네비게이션 클릭: ${mode} 모드로 변경`)
+  // store의 액션을 호출하여 contentMode를 변경합니다.
+  learningStore.setContentMode(mode)
+}
 </script>
 
 <style lang="scss" scoped>
-/* 스타일은 변경되지 않았으므로 그대로 유지합니다. */
+/* 스타일은 기존과 동일하게 유지합니다. */
 .main-content-area {
   background: $white;
   padding: $spacing-lg * 1.33; /* 2rem */
@@ -133,22 +128,13 @@ watch(isLoading, (newLoading) => {
   border-right: 1px solid $gray-300;
   height: 100%;
 }
-
-.content-header {
-  margin-bottom: $spacing-lg;
-}
-
+.content-header { margin-bottom: $spacing-lg; }
 .content-title {
   font-size: $font-size-lg * 1.2; /* 1.5rem */
   color: $text-dark;
   margin-bottom: $spacing-sm;
 }
-
-.content-body {
-  min-height: 400px;
-}
-
-/* 로딩 및 오류 컨테이너 스타일 */
+.content-body { min-height: 400px; }
 .loading-container, .error-container {
   display: flex;
   flex-direction: column;
@@ -161,7 +147,6 @@ watch(isLoading, (newLoading) => {
   padding: $spacing-lg;
   text-align: center;
 }
-
 .loading-spinner {
   width: 40px;
   height: 40px;
@@ -171,33 +156,42 @@ watch(isLoading, (newLoading) => {
   animation: spin 1s linear infinite;
   margin-bottom: $spacing-md;
 }
-
 .error-container {
   border-left: 4px solid $danger;
   background-color: lighten($danger, 45%);
   color: darken($danger, 20%);
-  
-  h3 {
-    margin-top: 0;
-    margin-bottom: $spacing-sm;
-  }
-
-  p {
-    margin-bottom: $spacing-md;
-  }
-
-  span {
-    font-size: $font-size-sm;
-    color: $gray-600;
-  }
 }
+.error-container h3 { margin-top: 0; margin-bottom: $spacing-sm; }
+.error-container p { margin-bottom: $spacing-md; }
+.error-container span { font-size: $font-size-sm; color: $gray-600; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+/* [기능 복원] 이전 컨텐츠 접근 버튼 스타일 */
+.content-navigation {
+  margin-top: $spacing-lg * 1.33; // 2rem
+  padding-top: $spacing-md;
+  border-top: 1px solid $gray-300;
+  display: flex;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+.btn {
+  padding: 0.75rem $spacing-md;
+  border: none;
+  border-radius: $border-radius;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.btn-outline {
+  background: $white;
+  color: $secondary;
+  border: 1px solid $secondary;
+}
+.btn-outline:hover {
+  background: $gray-100;
+  border-color: $gray-700;
+  color: $gray-700;
+  transform: translateY(-1px);
 }
 </style>
