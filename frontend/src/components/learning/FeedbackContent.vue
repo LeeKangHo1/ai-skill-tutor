@@ -1,98 +1,46 @@
 <!-- frontend/src/components/learning/FeedbackContent.vue -->
 <template>
-  <div class="feedback-content" :class="{ 'content-active': isVisible, 'content-hidden': !isVisible }">
+  <div v-if="feedbackData" class="feedback-content content-active">
     <h3>✅ 평가 결과</h3>
-
-
-
-    <!-- 답변 정보 섹션 -->
-    <div v-if="parsedFeedback.answerInfo" class="answer-info-section">
-      <div class="answer-details" v-html="parsedFeedback.answerInfo"></div>
-    </div>
-
-    <!-- 피드백 내용 섹션 -->
-    <div v-if="parsedFeedback.feedbackContent" class="feedback-content-section">
-      <h4>💬 피드백</h4>
-      <div class="feedback-details" v-html="parsedFeedback.feedbackContent"></div>
-    </div>
-
-
+    <div class="feedback-details" v-html="formattedFeedback"></div>
   </div>
 </template>
 
 <script setup>
-import { defineProps, watch, computed } from 'vue'
+import { computed } from 'vue'
+import { useLearningStore } from '@/stores/learningStore'
+import { storeToRefs } from 'pinia'
 
-// Props 정의
-const props = defineProps({
-  feedbackData: {
-    type: Object,
-    required: true,
-    default: () => ({
-      scoreText: '',
-      explanation: '',
-      nextStep: ''
-    })
-  },
+const learningStore = useLearningStore()
+// [수정] mainContent와 preservedFeedback 상태를 가져옵니다.
+const { mainContent, preservedFeedback } = storeToRefs(learningStore)
 
-  isVisible: {
-    type: Boolean,
-    default: true
+const feedbackData = computed(() => {
+  // 현재 컨텐츠 타입이 'feedback'이면 mainContent.data를 사용하고,
+  // 그 외의 경우(예: QnA)에는 보존된 피드백(preservedFeedback)을 사용합니다.
+  if (mainContent.value.type === 'feedback') {
+    return mainContent.value.data
   }
+  return preservedFeedback.value
 })
 
-// 피드백 데이터 변화 감지 (디버깅용)
-watch(() => props.feedbackData, (newData) => {
-  console.log('🔍 FeedbackContent: 피드백 데이터 변화 감지:', newData)
-}, { deep: true, immediate: true })
-
-// 피드백 텍스트 파싱 함수 - 2개 섹션으로 단순화
-const parsedFeedback = computed(() => {
-  const scoreText = props.feedbackData.scoreText || ''
-
-  if (!scoreText) {
-    return {
-      answerInfo: '',
-      feedbackContent: ''
-    }
-  }
-
-  // 📋 답변 정보 부분과 나머지 피드백 부분으로 분리
-  const answerInfoPattern = /📋[^🎯]*?(?=💪|🎉|😊|$)/s
-  const answerInfoMatch = scoreText.match(answerInfoPattern)
-  
-  let answerInfo = ''
-  let feedbackContent = ''
-  
-  if (answerInfoMatch) {
-    // 답변 정보 부분
-    answerInfo = answerInfoMatch[0].trim()
-    
-    // 나머지 피드백 부분 (답변 정보 이후의 모든 내용)
-    feedbackContent = scoreText.replace(answerInfoMatch[0], '').trim()
-  } else {
-    // 📋 패턴이 없으면 전체를 피드백으로 처리
-    feedbackContent = scoreText
-  }
-
-  return {
-    answerInfo: answerInfo ? formatText(answerInfo) : '',
-    feedbackContent: feedbackContent ? formatText(feedbackContent) : ''
-  }
+// feedbackData의 내용을 HTML로 변환합니다.
+const formattedFeedback = computed(() => {
+  if (!feedbackData.value) return ''
+  // API 응답의 content 필드를 사용하도록 수정
+  return (feedbackData.value.content || '').replace(/\n/g, '<br>')
 })
-
-// 텍스트 포맷팅 함수
-const formatText = (text) => {
-  if (!text) return ''
-
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **텍스트** -> <strong>텍스트</strong>
-    .replace(/\n/g, '<br>') // 줄바꿈 -> <br>
-    .replace(/•/g, '&bull;') // 불릿 포인트 정리
-    .replace(/^\s*<br>\s*/, '') // 시작 부분의 불필요한 <br> 제거
-    .replace(/\s*<br>\s*$/, '') // 끝 부분의 불필요한 <br> 제거
-}
 </script>
+
+<style lang="scss" scoped>
+/* 스타일은 원본과 동일하게 유지합니다. */
+.feedback-content { background: linear-gradient(135deg, lighten($success, 55%), lighten($success, 50%)); border-left: 4px solid $success; padding: $spacing-lg; border-radius: $border-radius-lg; }
+.feedback-details { line-height: 1.6; color: darken($success, 20%); background: rgba($white, 0.8); padding: $spacing-md; border-radius: $border-radius; }
+.content-active { display: block; animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+
+
 
 <style lang="scss" scoped>
 .feedback-content {

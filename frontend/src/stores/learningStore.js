@@ -30,6 +30,8 @@ export const useLearningStore = defineStore('learning', () => {
   const apiError = ref(null)
   const currentUIMode = ref('chat')
   const contentMode = ref('current')
+  // [추가] 세션 완료 모달 표시 여부 상태
+  const sessionCompleted = ref(false)
 
   // --- 세션 상태 ---
   // [수정] sessionInfo를 authStore와 연동되는 computed 속성으로 변경
@@ -51,6 +53,7 @@ export const useLearningStore = defineStore('learning', () => {
     type: 'theory',
     data: null,
   })
+  
   const quizData = ref(null)
   const chatHistory = ref([])
   const preservedFeedback = ref(null)
@@ -128,6 +131,31 @@ export const useLearningStore = defineStore('learning', () => {
   const setContentMode = (mode) => {
     console.log(`ACTION: setContentMode 호출됨. 모드 변경: ${contentMode.value} -> ${mode}`)
     contentMode.value = mode
+  }
+
+    /**
+   * [ACTION] 학습 세션을 완료(다음으로 진행 또는 재학습) 처리합니다.
+   * @param {'proceed' | 'retry'} decision - 사용자의 결정
+   */
+  const completeSession = async (decision) => {
+    isContentLoading.value = true
+    apiError.value = null
+    console.log(`ACTION: completeSession 호출됨 (decision: ${decision})`)
+
+    const result = await learningService.completeSession(decision)
+
+    if (result.success) {
+      console.log('✅ 세션 완료 API 성공', result.data)
+      // authStore의 사용자 정보를 갱신하여 챕터/섹션 진행상황을 업데이트합니다.
+      await authStore.updateUserInfo()
+      // 세션 완료 모달을 표시하도록 상태를 변경합니다.
+      sessionCompleted.value = true
+    } else {
+      const errorMessage = result.error?.message || '알 수 없는 오류가 발생했습니다.'
+      console.error('API Error in completeSession:', errorMessage)
+      apiError.value = { message: `세션 완료 처리에 실패했습니다: ${errorMessage}` };
+    }
+    isContentLoading.value = false
   }
 
 
@@ -219,6 +247,7 @@ export const useLearningStore = defineStore('learning', () => {
     apiError,
     currentUIMode,
     contentMode,
+    sessionCompleted, // [추가]
     sessionInfo,
     currentAgent,
     sessionProgressStage,
@@ -236,5 +265,6 @@ export const useLearningStore = defineStore('learning', () => {
     startNewSession,
     sendMessage,
     setContentMode,
+    completeSession, // [추가]
   }
 })
