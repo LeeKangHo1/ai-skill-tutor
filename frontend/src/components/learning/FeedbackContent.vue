@@ -1,107 +1,134 @@
 <!-- frontend/src/components/learning/FeedbackContent.vue -->
 <template>
-  <div v-if="feedbackData" class="feedback-content content-active">
-    <h3>✅ 평가 결과</h3>
-    <div class="feedback-details" v-html="formattedFeedback"></div>
+  <!-- v-if 조건을 feedbackData가 아닌, 파싱된 결과가 실제로 있는지 여부로 변경하여 안정성을 높입니다. -->
+  <div v-if="feedbackData && (parsedFeedback.answerInfo || parsedFeedback.feedbackContent)" class="feedback-content content-active">
+    <h3>{{ parsedFeedback.title }}</h3>
+
+    <div v-if="parsedFeedback.answerInfo" class="answer-info-section">
+      <h4>📋 답변 정보</h4>
+      <div class="details-text" v-html="parsedFeedback.answerInfo"></div>
+    </div>
+
+    <div v-if="parsedFeedback.feedbackContent" class="feedback-content-section">
+      <h4>💬 상세 피드백</h4>
+      <div class="details-text" v-html="parsedFeedback.feedbackContent"></div>
+    </div>
+    
+    <div v-if="parsedFeedback.explanation" class="explanation-section">
+        <h4>🧠 추가 설명</h4>
+        <div class="details-text" v-html="parsedFeedback.explanation"></div>
+    </div>
+
+    <div v-if="parsedFeedback.nextStepInfo" class="next-step-section">
+      <h4>🎯 다음 단계 안내</h4>
+      <div class="details-text" v-html="parsedFeedback.nextStepInfo"></div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
 
 const learningStore = useLearningStore()
-// [수정] mainContent와 preservedFeedback 상태를 가져옵니다.
-const { mainContent, preservedFeedback } = storeToRefs(learningStore)
+const { feedbackData } = storeToRefs(learningStore)
 
-const feedbackData = computed(() => {
-  // 현재 컨텐츠 타입이 'feedback'이면 mainContent.data를 사용하고,
-  // 그 외의 경우(예: QnA)에는 보존된 피드백(preservedFeedback)을 사용합니다.
-  if (mainContent.value.type === 'feedback') {
-    return mainContent.value.data
+const parsedFeedback = computed(() => {
+  // feedbackData가 없으면 즉시 종료
+  if (!feedbackData.value || !feedbackData.value.content) {
+    return {}
   }
-  return preservedFeedback.value
+
+  const result = {
+    title: feedbackData.value.title || '✅ 평가 결과',
+    answerInfo: '',
+    feedbackContent: '',
+    nextStepInfo: '',
+    explanation: (feedbackData.value.explanation || '').replace(/\n/g, '<br>')
+  }
+
+  let content = feedbackData.value.content
+  
+  const nextStepDelimiter = '🎯 **다음 단계 안내**'
+  const answerInfoDelimiter = '📋 **답변 정보**'
+
+  // 1. '다음 단계 안내' 섹션을 분리
+  const nextStepIndex = content.indexOf(nextStepDelimiter)
+  if (nextStepIndex !== -1) {
+    result.nextStepInfo = content.substring(nextStepIndex + nextStepDelimiter.length).trim().replace(/\n/g, '<br>')
+    content = content.substring(0, nextStepIndex).trim()
+  }
+
+  // 2. 남은 content에서 '답변 정보' 섹션을 분리
+  const answerInfoIndex = content.indexOf(answerInfoDelimiter)
+  if (answerInfoIndex !== -1) {
+    result.answerInfo = content.substring(answerInfoIndex + answerInfoDelimiter.length).trim().replace(/\n/g, '<br>')
+    content = content.substring(0, answerInfoIndex).trim()
+  }
+  
+  // 3. 최종적으로 남은 content가 '상세 피드백'
+  result.feedbackContent = content.replace(/^[🎉💪]\s*/, '').trim().replace(/\n/g, '<br>')
+
+  // [요청사항] 파싱 결과 로그 출력
+  console.log('[FeedbackContent 파싱 결과]', {
+    answerInfo: result.answerInfo,
+    feedbackContent: result.feedbackContent,
+    nextStepInfo: result.nextStepInfo
+  });
+
+  return result
 })
 
-// feedbackData의 내용을 HTML로 변환합니다.
-const formattedFeedback = computed(() => {
-  if (!feedbackData.value) return ''
-  // API 응답의 content 필드를 사용하도록 수정
-  return (feedbackData.value.content || '').replace(/\n/g, '<br>')
-})
+// [추가] feedbackData 변경을 감지하여 디버깅 로그를 남깁니다.
+watch(feedbackData, (newData) => {
+  if (newData) {
+    console.log('[FeedbackContent] Store로부터 새로운 feedbackData를 받았습니다:', newData);
+  }
+}, { deep: true, immediate: true });
 </script>
 
-<style lang="scss" scoped>
-/* 스타일은 원본과 동일하게 유지합니다. */
-.feedback-content { background: linear-gradient(135deg, lighten($success, 55%), lighten($success, 50%)); border-left: 4px solid $success; padding: $spacing-lg; border-radius: $border-radius-lg; }
-.feedback-details { line-height: 1.6; color: darken($success, 20%); background: rgba($white, 0.8); padding: $spacing-md; border-radius: $border-radius; }
-.content-active { display: block; animation: fadeIn 0.3s ease-in; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-</style>
-
-
 
 <style lang="scss" scoped>
+/* style 부분은 이전과 동일하게 유지합니다. */
 .feedback-content {
   background: linear-gradient(135deg, lighten($success, 55%), lighten($success, 50%));
   border-left: 4px solid $success;
   padding: $spacing-lg;
   border-radius: $border-radius-lg;
   margin-bottom: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
 }
-
-/* 답변 정보 섹션 */
-.answer-info-section {
+.answer-info-section,
+.feedback-content-section,
+.explanation-section,
+.next-step-section {
   background: rgba($white, 0.8);
   border: 1px solid rgba($success, 0.3);
   border-radius: $border-radius-lg;
   padding: $spacing-md;
-  margin-bottom: $spacing-md;
 }
-
-.answer-details {
-  line-height: 1.6;
-  color: darken($success, 20%);
-}
-
-/* 피드백 내용 섹션 */
-.feedback-content-section {
-  background: rgba($white, 0.8);
-  border: 1px solid rgba($success, 0.3);
-  border-radius: $border-radius-lg;
-  padding: $spacing-md;
-  margin-bottom: $spacing-md;
-}
-
-.feedback-content-section h4 {
+h4 {
   margin: 0 0 $spacing-md * 0.75 0;
   color: darken($success, 20%);
   font-size: $font-size-base;
   font-weight: 600;
 }
-
-.feedback-details {
+.details-text {
   line-height: 1.6;
   color: darken($success, 20%);
 }
-
-/* 컨텐츠 표시/숨김 */
 .content-active {
   display: block;
   animation: fadeIn 0.3s ease-in;
 }
-
-.content-hidden {
-  display: none;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateY(10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
