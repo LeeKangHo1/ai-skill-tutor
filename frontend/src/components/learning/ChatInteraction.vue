@@ -47,7 +47,7 @@
           class="message-input" />
         <button 
           @click="sendMessage" 
-          :disabled="!currentMessage.trim() || sessionProgressStage === 'session_start'" 
+          :disabled="!currentMessage.trim() || sessionProgressStage === 'session_start' || isTutorReplying" 
           class="send-button">
           전송
         </button>
@@ -110,6 +110,10 @@ const showInputHints = computed(() => {
   return sessionProgressStage.value === 'theory_completed'
 })
 const showCompletionModal = computed(() => sessionCompleted.value)
+
+const isTutorReplying = computed(() => 
+  chatHistory.value.some(message => message.type === 'loading')
+)
 
 const sendMessage = () => {
   const message = currentMessage.value.trim()
