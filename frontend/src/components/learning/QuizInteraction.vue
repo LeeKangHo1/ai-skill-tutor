@@ -69,7 +69,15 @@
       <!-- 답변을 제출한 후에 표시되는 메시지 -->
       <div v-if="isSubmitted" class="post-submit-actions">
         <div class="submit-success">
-          ✅ 답변이 제출되었습니다! 평가를 기다려주세요...
+          ✅ 답변이 제출되었습니다!
+        </div>
+        <div class="evaluation-loading-message">
+          <span class="loading-text">평가를 기다려주세요</span>
+          <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
       </div>
     </div>
@@ -491,5 +499,77 @@ watch(quizData, (newQuizData) => {
   border-radius: $border-radius;
   text-align: center;
   width: 100%;
+}
+
+/* ============================================= */
+/* 퀴즈 제출 후 평가 대기 로딩 스타일 (신규 추가) */
+/* ============================================= */
+
+.post-submit-actions {
+  // 기존 스타일 유지 (flex-direction: column; gap: $spacing-md * 0.75; align-items: center; width: 100%;)
+  // 하지만 submit-success와 evaluation-loading-message를 더 잘 정렬하기 위해 gap 조정
+  gap: $spacing-sm; /* 간격을 조금 줄임 */
+}
+
+.submit-success {
+  // ✅ 답변이 제출되었습니다! 텍스트에 대한 스타일
+  color: $success;
+  font-weight: 500;
+  padding: $spacing-sm $spacing-md;
+  background: lighten($success, 45%);
+  border: 1px solid lighten($success, 40%);
+  border-radius: $border-radius;
+  text-align: center;
+  width: 100%;
+}
+
+.evaluation-loading-message {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 가운데 정렬 */
+  gap: $spacing-xs; /* 점들과 텍스트 사이 간격 */
+  padding: $spacing-sm $spacing-md;
+  background: $gray-100; /* 연한 회색 배경 */
+  border: 1px solid $gray-200;
+  border-radius: $border-radius;
+  width: 100%;
+  color: $gray-700;
+  font-size: $font-size-sm;
+  font-weight: 500;
+}
+
+/* ChatInteraction에서 가져온 타이핑 애니메이션 스타일 재활용 */
+.typing-indicator {
+  display: flex; /* 가로 정렬 */
+  align-items: center;
+  height: 1.2rem; /* 높이를 명확히 지정하여 텍스트와 정렬 */
+
+  span {
+    height: 8px; /* 점 크기 조정 */
+    width: 8px; /* 점 크기 조정 */
+    background-color: $gray-600;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+    animation: bounce 1.4s infinite both;
+  }
+
+  span:nth-child(1) { animation-delay: -0.32s; }
+  span:nth-child(2) { animation-delay: -0.16s; }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1.0);
+  }
+}
+
+.loading-text {
+  // "평가를 기다려주세요..." 텍스트 스타일
+  color: $gray-700;
+  line-height: 1.5;
 }
 </style>
