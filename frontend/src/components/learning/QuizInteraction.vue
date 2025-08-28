@@ -181,20 +181,16 @@ watch(quizData, (newQuizData) => {
 </script>
 
 <style lang="scss" scoped>
-/* ============================================= */
-/* QuizInteraction Component           */
-/* ============================================= */
-
-/* --- 기본 레이아웃 --- */
+/* --- Layout --- */
 .quiz-interaction {
-  background: $white;
-  border-radius: $border-radius-lg;
-  padding: $spacing-md;
-  border: 1px solid $gray-300;
-  height: 100%;
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
+  height: 100%;
+  padding: $spacing-md;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
   transition: opacity 0.3s ease;
   overflow: hidden;
 }
@@ -212,23 +208,33 @@ watch(quizData, (newQuizData) => {
   min-height: 0;
   padding-right: $spacing-sm;
 
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: $gray-100; border-radius: 3px; }
-  &::-webkit-scrollbar-thumb { background: $gray-400; border-radius: 3px; }
-  &::-webkit-scrollbar-thumb:hover { background: $gray-500; }
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: $gray-100;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: $gray-400;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: $gray-500;
+  }
 }
 
-/* --- 로딩 상태 --- */
+/* --- Loading --- */
 .quiz-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: $spacing-lg;
+  flex: 1;
   padding: $spacing-lg * 2 1rem;
   text-align: center;
   color: $secondary;
-  flex: 1;
 }
 
 .loading-spinner {
@@ -240,11 +246,6 @@ watch(quizData, (newQuizData) => {
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 .quiz-loading p {
   margin: 0;
   font-size: $font-size-base;
@@ -252,44 +253,41 @@ watch(quizData, (newQuizData) => {
   color: $gray-700;
 }
 
-/* --- 공용 헤더 (객관식/주관식) --- */
-
-/* 객관식 헤더: 한 줄에 양쪽 정렬 */
-.options-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* --- Headers --- */
+.options-header,
+.input-header {
   padding-bottom: $spacing-sm;
   border-bottom: 1px solid $gray-200;
   margin-bottom: $spacing-sm;
 }
 
-/* 주관식 헤더: 여러 줄로 세로 정렬 */
+.options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .input-header {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: $spacing-xs;
-  padding-bottom: $spacing-sm;
-  border-bottom: 1px solid $gray-200;
-  margin-bottom: $spacing-sm;
 }
 
-/* 헤더 안의 h4 태그 (공통 스타일) */
-.options-header h4, .input-header h4 {
+.options-header h4,
+.input-header h4 {
   margin: 0;
   font-size: $font-size-base;
-  color: $text-dark;
   font-weight: 600;
+  color: $text-dark;
 }
 
-/* 헤더 안의 안내 문구 (공통 스타일) */
 .input-guide {
   font-size: $font-size-sm;
   color: $secondary;
 }
 
-/* --- 객관식 퀴즈 영역 --- */
+/* --- Multiple Choice --- */
 .quiz-options {
   display: flex;
   flex-direction: column;
@@ -305,9 +303,9 @@ watch(quizData, (newQuizData) => {
   padding: $spacing-md;
   border: 1px solid $gray-300;
   border-radius: $border-radius-lg;
+  background: $white;
   cursor: pointer;
   transition: all 0.2s ease;
-  background: $white;
 
   &:hover:not(.disabled) {
     background: $gray-100;
@@ -329,10 +327,10 @@ watch(quizData, (newQuizData) => {
 }
 
 .option-indicator {
-  font-size: $font-size-lg;
-  color: $primary;
-  font-weight: bold;
   min-width: 20px;
+  font-size: $font-size-lg;
+  font-weight: bold;
+  color: $primary;
 }
 
 .option-content {
@@ -351,7 +349,7 @@ watch(quizData, (newQuizData) => {
   line-height: 1.4;
 }
 
-/* --- 주관식 퀴즈 영역 (신규 스타일 적용) --- */
+/* --- Subjective (Short-answer) --- */
 .subjective-input-container {
   display: flex;
   flex-direction: column;
@@ -362,15 +360,15 @@ watch(quizData, (newQuizData) => {
 .subjective-input {
   flex-grow: 1;
   width: 100%;
+  min-height: 150px;
   padding: $spacing-md;
   border: 1px solid $gray-300;
   border-radius: $border-radius-lg;
   font-size: $font-size-sm;
   line-height: 1.6;
-  resize: vertical;
-  min-height: 150px;
-  transition: all 0.2s ease-in-out;
   color: $text-dark;
+  resize: vertical;
+  transition: all 0.2s ease-in-out;
 
   &:focus {
     outline: none;
@@ -384,26 +382,14 @@ watch(quizData, (newQuizData) => {
   }
 }
 
-.character-count {
-  text-align: right;
-  font-size: $font-size-sm * 0.9;
-  color: $gray-600;
-  padding-right: $spacing-xs;
-}
-
-/* --- 힌트 영역 --- */
+/* --- Hint --- */
 .hint-container {
+  padding: $spacing-md;
   background: lighten($warning, 35%);
   border: 1px solid lighten($warning, 30%);
   border-radius: $border-radius-lg;
-  padding: $spacing-md;
   animation: hintSlideIn 0.3s ease-out;
   flex-shrink: 0;
-}
-
-@keyframes hintSlideIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .hint-content {
@@ -417,35 +403,35 @@ watch(quizData, (newQuizData) => {
 }
 
 .hint-text {
+  font-weight: 500;
   line-height: 1.5;
   color: darken($warning, 40%);
-  font-weight: 500;
 }
 
-/* --- 하단 버튼 영역 --- */
+/* --- Actions & Buttons --- */
 .quiz-actions {
   display: flex;
   justify-content: space-between;
-  gap: $spacing-md * 0.75;
   align-items: center;
   flex-wrap: wrap;
-  flex-shrink: 0;
-  border-top: 1px solid $gray-200;
+  gap: $spacing-md * 0.75;
   padding-top: $spacing-md;
-  margin-top: auto;
+  border-top: 1px solid $gray-200;
+  margin-top: auto; /* Pushes actions to the bottom */
+  flex-shrink: 0;
 }
 
 .btn {
-  padding: $spacing-md * 0.75 $spacing-md;
-  border: none;
-  border-radius: $border-radius;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 80px;
+  padding: $spacing-md * 0.75 $spacing-md;
+  border: none;
+  border-radius: $border-radius;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .btn-primary {
@@ -481,81 +467,88 @@ watch(quizData, (newQuizData) => {
   max-width: 150px;
 }
 
-/* --- 제출 후 상태 --- */
+/* --- Post-Submission --- */
 .post-submit-actions {
   display: flex;
   flex-direction: column;
-  gap: $spacing-md * 0.75;
   align-items: center;
+  gap: $spacing-sm;
   width: 100%;
 }
 
 .submit-success {
-  color: $success;
-  font-weight: 500;
+  width: 100%;
   padding: $spacing-sm $spacing-md;
   background: lighten($success, 45%);
   border: 1px solid lighten($success, 40%);
   border-radius: $border-radius;
-  text-align: center;
-  width: 100%;
-}
-
-/* ============================================= */
-/* 퀴즈 제출 후 평가 대기 로딩 스타일 (신규 추가) */
-/* ============================================= */
-
-.post-submit-actions {
-  // 기존 스타일 유지 (flex-direction: column; gap: $spacing-md * 0.75; align-items: center; width: 100%;)
-  // 하지만 submit-success와 evaluation-loading-message를 더 잘 정렬하기 위해 gap 조정
-  gap: $spacing-sm; /* 간격을 조금 줄임 */
-}
-
-.submit-success {
-  // ✅ 답변이 제출되었습니다! 텍스트에 대한 스타일
   color: $success;
   font-weight: 500;
-  padding: $spacing-sm $spacing-md;
-  background: lighten($success, 45%);
-  border: 1px solid lighten($success, 40%);
-  border-radius: $border-radius;
   text-align: center;
-  width: 100%;
 }
 
 .evaluation-loading-message {
   display: flex;
   align-items: center;
-  justify-content: center; /* 가운데 정렬 */
-  gap: $spacing-xs; /* 점들과 텍스트 사이 간격 */
+  justify-content: center;
+  gap: $spacing-xs;
+  width: 100%;
   padding: $spacing-sm $spacing-md;
-  background: $gray-100; /* 연한 회색 배경 */
+  background: $gray-100;
   border: 1px solid $gray-200;
   border-radius: $border-radius;
-  width: 100%;
   color: $gray-700;
   font-size: $font-size-sm;
   font-weight: 500;
 }
 
-/* ChatInteraction에서 가져온 타이핑 애니메이션 스타일 재활용 */
+.loading-text {
+  line-height: 1.5;
+  color: $gray-700;
+}
+
+/* --- Animations --- */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes hintSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .typing-indicator {
-  display: flex; /* 가로 정렬 */
+  display: flex;
   align-items: center;
-  height: 1.2rem; /* 높이를 명확히 지정하여 텍스트와 정렬 */
+  height: 1.2rem;
 
   span {
-    height: 8px; /* 점 크기 조정 */
-    width: 8px; /* 점 크기 조정 */
+    height: 8px;
+    width: 8px;
+    margin: 0 2px;
     background-color: $gray-600;
     border-radius: 50%;
     display: inline-block;
-    margin: 0 2px;
     animation: bounce 1.4s infinite both;
   }
 
-  span:nth-child(1) { animation-delay: -0.32s; }
-  span:nth-child(2) { animation-delay: -0.16s; }
+  span:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  span:nth-child(2) {
+    animation-delay: -0.16s;
+  }
 }
 
 @keyframes bounce {
@@ -565,11 +558,5 @@ watch(quizData, (newQuizData) => {
   40% {
     transform: scale(1.0);
   }
-}
-
-.loading-text {
-  // "평가를 기다려주세요..." 텍스트 스타일
-  color: $gray-700;
-  line-height: 1.5;
 }
 </style>

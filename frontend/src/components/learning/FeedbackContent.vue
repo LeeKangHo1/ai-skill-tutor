@@ -56,7 +56,7 @@ const parsedFeedback = computed(() => {
       answerInfoText += `• 정답: ${feedbackSource.answer_info.correct_answer}<br>`
     }
     if (feedbackSource.answer_info.user_answer) {
-      answerInfoText += `• 선택한 답: ${feedbackSource.answer_info.user_answer}`
+      answerInfoText += `• 사용자 답변: ${feedbackSource.answer_info.user_answer}`
     }
   }
 
