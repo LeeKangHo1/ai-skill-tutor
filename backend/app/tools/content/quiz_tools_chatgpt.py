@@ -109,7 +109,12 @@ def _create_prompt_template(quiz_type: str, user_type: str, is_retry_session: bo
   "quiz": {{
     "type": "multiple_choice",
     "question": "문제 내용",
-    "options": ["선택지1", "선택지2", "선택지3", "선택지4"],
+    "options": [
+        "1번 선택지 내용만", 
+        "2번 선택지 내용만", 
+        "3번 선택지 내용만", 
+        "4번 선택지 내용만"
+    ], // 중요: '1.'이나 'a.' 같은 접두사 없이 순수 텍스트만 포함해주세요.
     "correct_answer": 정답번호(1-4),
     "explanation": "정답 해설",
     "hint": "도움이 되는 힌트"

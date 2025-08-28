@@ -15,16 +15,6 @@
     </div>
 
     <div class="chat-input-container">
-      <!-- 입력 힌트를 메시지 입력칸 위로 이동 -->
-      <div class="input-hints" v-if="showInputHints">
-        <div class="hint-item">
-          💡 <strong>팁:</strong> "다음"이라고 입력하면 퀴즈로 이동합니다.
-        </div>
-        <div class="hint-item">
-          🤔 <strong>질문:</strong> 학습 내용에 대해 궁금한 점을 자유롭게 물어보세요.
-        </div>
-      </div>
-
 
       <div class="quick-actions" v-if="showQuickActions">
         <button class="quick-action-btn" @click="handleRetryLearning" :disabled="!isFeedbackComplete">
@@ -43,6 +33,15 @@
           :class="{ 'btn-disabled': !currentMessage.trim() }">
           전송
         </button>
+      </div>
+
+      <div class="input-hints" v-if="showInputHints">
+        <div class="hint-item">
+          💡 <strong>팁:</strong> "다음"이라고 입력하면 퀴즈로 이동합니다.
+        </div>
+        <div class="hint-item">
+          🤔 <strong>질문:</strong> 학습 내용에 대해 궁금한 점을 자유롭게 물어보세요.
+        </div>
       </div>
     </div>
 

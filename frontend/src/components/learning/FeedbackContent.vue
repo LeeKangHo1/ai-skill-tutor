@@ -12,11 +12,6 @@
       <h4>💬 상세 피드백</h4>
       <div class="details-text" v-html="parsedFeedback.feedbackContent"></div>
     </div>
-    
-    <div v-if="parsedFeedback.explanation" class="explanation-section">
-        <h4>🧠 추가 설명</h4>
-        <div class="details-text" v-html="parsedFeedback.explanation"></div>
-    </div>
 
     <div v-if="parsedFeedback.nextStepInfo" class="next-step-section">
       <h4>🎯 다음 단계 안내</h4>
@@ -47,46 +42,33 @@ const { feedbackData } = storeToRefs(learningStore)
 console.log('[FeedbackContent] 🟢 컴포넌트 초기화. Store의 feedbackData와 연결되었습니다.')
 
 const parsedFeedback = computed(() => {
-  // feedbackData가 없으면 즉시 종료
-  if (!feedbackData.value || !feedbackData.value.content) {
+  // feedbackData 또는 필수 필드가 없으면 즉시 종료
+  if (!feedbackData.value || !feedbackData.value.feedback_content) {
     return {}
   }
 
+  const feedbackSource = feedbackData.value;
+
+  // 답변 정보 텍스트 생성
+  let answerInfoText = ''
+  if (feedbackSource.answer_info) {
+    if (feedbackSource.answer_info.correct_answer) {
+      answerInfoText += `• 정답: ${feedbackSource.answer_info.correct_answer}<br>`
+    }
+    if (feedbackSource.answer_info.user_answer) {
+      answerInfoText += `• 선택한 답: ${feedbackSource.answer_info.user_answer}`
+    }
+  }
+
   const result = {
-    title: feedbackData.value.title || '✅ 평가 결과',
-    answerInfo: '',
-    feedbackContent: '',
-    nextStepInfo: '',
-    explanation: (feedbackData.value.explanation || '').replace(/\n/g, '<br>')
+    title: feedbackSource.title || '✅ 평가 결과',
+    answerInfo: answerInfoText,
+    feedbackContent: (feedbackSource.feedback_content || '').replace(/\n/g, '<br>'),
+    explanation: (feedbackSource.explanation || '').replace(/\n/g, '<br>'),
+    nextStepInfo: (feedbackSource.next_step_guidance || '').replace(/\n/g, '<br>')
   }
 
-  let content = feedbackData.value.content
-  
-  const nextStepDelimiter = '🎯 **다음 단계 안내**'
-  const answerInfoDelimiter = '📋 **답변 정보**'
-
-  // 1. '다음 단계 안내' 섹션을 분리
-  const nextStepIndex = content.indexOf(nextStepDelimiter)
-  if (nextStepIndex !== -1) {
-    result.nextStepInfo = content.substring(nextStepIndex + nextStepDelimiter.length).trim().replace(/\n/g, '<br>')
-    content = content.substring(0, nextStepIndex).trim()
-  }
-
-  // 2. 남은 content에서 '답변 정보' 섹션을 분리
-  const answerInfoIndex = content.indexOf(answerInfoDelimiter)
-  if (answerInfoIndex !== -1) {
-    result.answerInfo = content.substring(answerInfoIndex + answerInfoDelimiter.length).trim().replace(/\n/g, '<br>')
-    content = content.substring(0, answerInfoIndex).trim()
-  }
-  
-  // 3. 최종적으로 남은 content가 '상세 피드백'
-  result.feedbackContent = content.replace(/^[🎉💪]\s*/, '').trim().replace(/\n/g, '<br>')
-
-  console.log('[FeedbackContent 파싱 결과]', {
-    answerInfo: result.answerInfo,
-    feedbackContent: result.feedbackContent,
-    nextStepInfo: result.nextStepInfo
-  });
+  console.log('[FeedbackContent v2.2] 🟢 파싱 완료. 수정된 경로로 데이터를 사용합니다.', result);
 
   return result
 })
@@ -108,18 +90,19 @@ watch(feedbackData, (newData) => {
   padding: $spacing-lg;
   border-radius: $border-radius-lg;
   margin-bottom: $spacing-md;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
 }
 .answer-info-section,
 .feedback-content-section,
-.explanation-section,
 .next-step-section {
   background: rgba($white, 0.8);
   border: 1px solid rgba($success, 0.3);
   border-radius: $border-radius-lg;
   padding: $spacing-md;
+}
+
+.answer-info-section,
+.feedback-content-section {
+    margin-bottom: $spacing-lg;
 }
 h4 {
   margin: 0 0 $spacing-md * 0.75 0;

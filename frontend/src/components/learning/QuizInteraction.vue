@@ -57,7 +57,7 @@
     <!-- 하단 버튼 (힌트 보기, 정답 제출) 영역 -->
     <div class="quiz-actions">
       <!-- 힌트 보기/숨기기 버튼 -->
-      <button class="btn btn-secondary hint-btn" @click="toggleHint" :disabled="isSubmitted" v-if="quizData.hint">
+      <button class="btn btn-secondary hint-btn" @click="toggleHint" :disabled="isSubmitted" v-if="quizData.hint && !isSubmitted">
         {{ showHint ? '🔍 힌트 숨기기' : '💡 힌트 보기' }}
       </button>
 

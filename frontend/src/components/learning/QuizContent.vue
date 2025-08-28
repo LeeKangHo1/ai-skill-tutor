@@ -75,7 +75,7 @@ watch(quizData, (newData) => {
   padding: $spacing-xs $spacing-md * 0.75; 
   border-radius: $border-radius-pill; 
   font-weight: 500; 
-  background: lighten($primary, 40%); 
+  background: lighten($primary, 45%); 
   color: darken($primary, 10%); 
 }
 

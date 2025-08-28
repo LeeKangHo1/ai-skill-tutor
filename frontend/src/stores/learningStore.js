@@ -189,30 +189,21 @@ export const useLearningStore = defineStore('learning', () => {
       return
     }
     
-    // 컨텐츠 타입별로 각각의 전용 상태에 저장
-    switch (content.type) {
-      case 'theory':
-        theoryData.value = content
-        console.log('HELPER: theoryData 업데이트됨', content)
-        break
-        
-      case 'quiz':
-        quizData.value = content
-        // 퀴즈 생성 시에만 채팅 메시지 추가
-        _addTutorMessage('퀴즈가 생성되었습니다.')
-        console.log('HELPER: quizData 업데이트됨', content)
-        break
-        
-      case 'qna':
-        // QnA는 채팅창에 표시
-        _addTutorMessage(content.answer, 'qna')
-        console.log('HELPER: QnA 응답 채팅에 추가됨', content.answer)
-        break
-        
-      default:
-        console.warn('알 수 없는 컨텐츠 유형:', content.type, response)
-        break
+    // 컨텐츠 타입별로 각각의 전용 상태에 저장 (if-else if로 변경)
+    if (content.type === 'theory') {
+      theoryData.value = content
+      console.log('HELPER: theoryData 업데이트됨', content)
+    } else if (content.type === 'quiz') {
+      quizData.value = content
+      _addTutorMessage('퀴즈가 생성되었습니다.')
+      console.log('HELPER: quizData 업데이트됨', content)
+    } else if (content.type === 'qna') {
+      _addTutorMessage(content.answer, 'qna')
+      console.log('HELPER: QnA 응답 채팅에 추가됨', content.answer)
+    } else {
+      console.warn('알 수 없는 컨텐츠 유형:', content.type, response)
     }
+    return // 모든 content 처리 후 함수 종료
   }
 
   /**

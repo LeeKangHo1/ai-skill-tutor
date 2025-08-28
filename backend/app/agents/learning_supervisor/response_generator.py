@@ -301,73 +301,33 @@ class ResponseGenerator:
     
     def _refine_feedback_content(self, feedback_draft: str, state: TutorState) -> str:
         """
-        피드백 내용 정제
+        피드백 내용 정제 (v2.1 - 순수 피드백 메시지만 생성)
         
         Args:
             feedback_draft: 원본 피드백 대본
             state: TutorState
             
         Returns:
-            정제된 피드백 내용
+            정제된 피드백 메시지 (이모지 포함)
         """
-        user_type = state.get("user_type", "beginner")
         quiz_type = state.get("quiz_type", "multiple_choice")
         
-        # v2.0 평가 결과 필드 사용
         if quiz_type == "multiple_choice":
             is_correct = state.get("multiple_answer_correct", False)
-            score = 100 if is_correct else 0
         else:  # subjective
             score = state.get("subjective_answer_score", 0)
             is_correct = score >= 60
         
-        session_decision = state.get("retry_decision_result", "proceed")  # v2.0 필드명
-        
         # 기본 정제
         refined_content = feedback_draft.strip()
         
-        # 결과에 따른 이모지 및 격려 메시지 추가 (v2.0 수정)
+        # 결과에 따른 이모지 추가
         if is_correct:
             intro = "🎉 "
         else:
             intro = "💪 "
-        
-        # 객관식 문제의 경우 정답과 사용자 답변 정보 추가
-        answer_info_text = ""
-        if quiz_type == "multiple_choice":
-            quiz_correct_answer = state.get("quiz_correct_answer", "")
-            user_answer = state.get("user_answer", "")
             
-            if quiz_correct_answer and user_answer:
-                answer_info_text = f"""
-📋 **답변 정보**
-• 정답: {quiz_correct_answer}
-• 선택한 답: {user_answer}
-"""
-
-        
-        # 세션 결정 결과에 따른 상세 안내 추가
-        if session_decision == "proceed":
-            outro = f"""
-🎯 **다음 단계 안내**
-• 이 섹션을 성공적으로 완료하셨습니다!
-• 추가로 궁금한 점이 있으시면 언제든 질문해주세요
-• 다음 학습으로 넘어가려면 다음 학습 버튼을 눌러주세요.
-• 이 부분을 다시 학습하고 싶으시면 재학습 버튼을 눌러주세요."""
-        elif session_decision == "retry":
-            outro = f"""
-🎯 **다음 단계 안내**
-• 이번 학습은 아쉬운 부분이 있었습니다. 재학습을 추천드립니다.
-• 추가로 궁금한 점이 있으시면 언제든 질문해주세요
-• 다음 학습으로 넘어가려면 다음 학습 버튼을 눌러주세요.
-• 이 부분을 다시 학습하고 싶으시면 재학습 버튼을 눌러주세요."""
-        else:
-            outro = f"""
-💬 **학습 완료**:
-• 궁금한 점이 있으시면 언제든 질문해주세요
-• 다음 단계로 진행하려면 '다음'이라고 말씀해주세요"""
-        
-        return answer_info_text + intro + refined_content + outro
+        return intro + refined_content
     
     def _refine_qna_content(self, qna_draft: str, state: TutorState) -> str:
         """
@@ -487,7 +447,7 @@ class ResponseGenerator:
     
     def _create_feedback_workflow_response(self, state: TutorState) -> TutorState:
         """
-        평가 피드백 workflow_response 생성 (v2.0 신규)
+        평가 피드백 workflow_response 생성 (v2.1 - 구조화된 피드백)
         
         Args:
             state: TutorState
@@ -497,22 +457,74 @@ class ResponseGenerator:
         """
         feedback_draft = state.get("feedback_draft", "")
         quiz_type = state.get("quiz_type", "multiple_choice")
-        
-        # 평가 결과 추출 (v2.0 필드)
+        session_decision = state.get("retry_decision_result", "proceed")
+
+        # 1. 평가 결과 추출 (v2.0 필드)
         if quiz_type == "multiple_choice":
             is_correct = state.get("multiple_answer_correct", False)
             score = 100 if is_correct else 0
         else:  # subjective
             score = state.get("subjective_answer_score", 0)
-            is_correct = score >= 60  # 60점 이상이면 통과
+            is_correct = score >= 60
+
+        # 2. 답변 정보 생성
+        answer_info = {}
+        user_answer_str = state.get("user_answer", "")
         
-        # 피드백 내용 정제
+        if quiz_type == "multiple_choice":
+            quiz_options = state.get("quiz_options", [])
+            correct_answer_num = state.get("quiz_correct_answer", 0)
+
+            # 정답 텍스트
+            if correct_answer_num > 0 and len(quiz_options) >= correct_answer_num:
+                correct_text = quiz_options[correct_answer_num - 1]
+                answer_info['correct_answer'] = f"{correct_answer_num}. {correct_text}"
+            else:
+                answer_info['correct_answer'] = "정보 없음"
+
+            # 사용자 답변 텍스트
+            try:
+                user_answer_num = int(user_answer_str)
+                if user_answer_num > 0 and len(quiz_options) >= user_answer_num:
+                    user_text = quiz_options[user_answer_num - 1]
+                    answer_info['user_answer'] = f"{user_answer_num}. {user_text}"
+                else:
+                    answer_info['user_answer'] = user_answer_str
+            except (ValueError, IndexError):
+                answer_info['user_answer'] = user_answer_str
+
+        else: # 주관식
+            answer_info['user_answer'] = user_answer_str
+
+        # 3. 피드백 내용 정제
         if not feedback_draft:
             refined_feedback = self._generate_feedback_fallback(state)
         else:
+            # v2.1: 순수 피드백 메시지만 생성하는 함수 호출
             refined_feedback = self._refine_feedback_content(feedback_draft, state)
-        
-        # workflow_response 구조 생성
+
+        # 4. 다음 단계 안내 생성
+        if session_decision == "proceed":
+            next_step_guidance = (
+                "• 이 섹션을 성공적으로 완료하셨습니다!\n"
+                "• 추가로 궁금한 점이 있으시면 언제든 질문해주세요\n"
+                "• 다음 학습으로 넘어가려면 다음 학습 버튼을 눌러주세요.\n"
+                "• 이 부분을 다시 학습하고 싶으시면 재학습 버튼을 눌러주세요."
+            )
+        elif session_decision == "retry":
+            next_step_guidance = (
+                "• 이번 학습은 아쉬운 부분이 있었습니다. 재학습을 추천드립니다.\n"
+                "• 추가로 궁금한 점이 있으시면 언제든 질문해주세요\n"
+                "• 다음 학습으로 넘어가려면 다음 학습 버튼을 눌러주세요.\n"
+                "• 이 부분을 다시 학습하고 싶으시면 재학습 버튼을 눌러주세요."
+            )
+        else:
+            next_step_guidance = (
+                "• 궁금한 점이 있으시면 언제든 질문해주세요\n"
+                "• 다음 단계로 진행하려면 '다음'이라고 말씀해주세요"
+            )
+
+        # 5. workflow_response 구조 생성
         workflow_response = {
             "current_agent": "evaluation_feedback_agent",
             "session_progress_stage": "quiz_and_feedback_completed",
@@ -523,14 +535,16 @@ class ResponseGenerator:
                 "score": score,
                 "feedback": {
                     "title": "🎉 정답입니다!" if is_correct else "💪 아쉽네요!",
-                    "content": refined_feedback,
+                    "answer_info": answer_info,
+                    "feedback_content": refined_feedback,
                     "explanation": state.get("quiz_explanation", ""),
-                    "next_step_decision": state.get("retry_decision_result", "proceed")  # v2.0 필드명
+                    "next_step_guidance": next_step_guidance,
+                    "next_step_decision": session_decision
                 }
             }
         }
         
-        # State 업데이트 - 정제된 내용을 feedback_draft에도 저장
+        # State 업데이트
         updated_state = state_manager.update_workflow_response(state, workflow_response)
         updated_state = state_manager.update_agent_draft(updated_state, "evaluation_feedback_agent", refined_feedback)
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
