@@ -92,16 +92,39 @@ export const useLearningStore = defineStore('learning', () => {
    */
   const sendMessage = async (message) => {
     apiError.value = null
-    console.log(`ACTION: sendMessage 호출됨 (Mode: ${currentUIMode.value})`, { message })
+    let loadingMessageId = null // 로딩 메시지를 식별할 ID
 
+    // 채팅 모드일 때만 사용자 메시지 추가 및 로딩 시작
     if (isChatMode.value) {
-      chatHistory.value.push({ sender: '나', message, type: 'user' })
+      // 1. 사용자 메시지를 채팅 기록에 추가
+      chatHistory.value.push({ sender: '나', message, type: 'user', timestamp: Date.now() })
+      
+      // 2. 키워드 검사 없이 무조건 로딩 메시지 추가
+      const loadingMessage = {
+        id: `loading-${Date.now()}`,
+        sender: '튜터',
+        message: '...',
+        type: 'loading',
+        timestamp: Date.now()
+      };
+      loadingMessageId = loadingMessage.id
+      chatHistory.value.push(loadingMessage)
     }
 
+    // API 호출 (퀴즈 모드 또는 채팅 모드)
     const result = isQuizMode.value
       ? await learningService.submitQuizAnswerV2(message)
       : await learningService.sendSessionMessage(message)
 
+    // 3. API 응답 후 로딩 메시지가 있었다면 제거
+    if (loadingMessageId) {
+      const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessageId)
+      if (loadingIndex !== -1) {
+        chatHistory.value.splice(loadingIndex, 1)
+      }
+    }
+
+    // 4. 실제 API 결과 처리
     if (result.success && result.data?.data?.workflow_response) {
       console.log('✅ 메시지/답변 API 성공', result.data)
       _processWorkflowResponse(result.data.data.workflow_response)
@@ -109,6 +132,8 @@ export const useLearningStore = defineStore('learning', () => {
       const errorMessage = result.error?.message || '알 수 없는 오류가 발생했습니다.'
       console.error('API Error in sendMessage:', errorMessage)
       apiError.value = { message: `요청 처리에 실패했습니다: ${errorMessage}` };
+      // 오류 발생 시 사용자에게도 알려주는 메시지 추가
+      _addTutorMessage(`오류가 발생했습니다. 잠시 후 다시 시도해주세요: ${errorMessage}`, 'system');
     }
   }
   
@@ -132,9 +157,7 @@ export const useLearningStore = defineStore('learning', () => {
 
     if (result.success) {
       console.log('✅ 세션 완료 API 성공', result.data)
-      // authStore의 사용자 정보를 갱신하여 챕터/섹션 진행상황을 업데이트합니다.
       await authStore.updateUserInfo()
-      // 세션 완료 모달을 표시하도록 상태를 변경합니다.
       sessionCompleted.value = true
     } else {
       const errorMessage = result.error?.message || '알 수 없는 오류가 발생했습니다.'
@@ -151,7 +174,6 @@ export const useLearningStore = defineStore('learning', () => {
   const _processWorkflowResponse = (response) => {
     console.log('HELPER: _processWorkflowResponse 처리 시작', response)
 
-    // 💡 [수정] QnA 응답일 경우, currentAgent 상태를 변경하지 않아 MainContentArea의 재렌더링을 방지합니다.
     if (response.current_agent !== 'qna_resolver') {
       currentAgent.value = response.current_agent || 'session_manager'
     }
@@ -159,7 +181,6 @@ export const useLearningStore = defineStore('learning', () => {
     currentUIMode.value = response.ui_mode || 'chat'
     sessionProgressStage.value = response.session_progress_stage || 'unknown'
     
-    // 완료된 단계 업데이트
     switch(currentAgent.value) {
       case 'theory_educator':
         completedSteps.value.theory = true
@@ -173,28 +194,24 @@ export const useLearningStore = defineStore('learning', () => {
         break
     }
 
-    // 평가 결과가 있는 경우 (evaluation_result가 있는 응답)
     if (response.evaluation_result) {
       feedbackData.value = response.evaluation_result.feedback
       console.log('HELPER: feedbackData 업데이트됨 (evaluation_result)', response.evaluation_result.feedback)
       return
     }
 
-    // 세션 완료가 있는 경우
     if (response.session_completion) {
       _addTutorMessage(response.session_completion.session_summary || '세션이 완료되었습니다. 다음 학습을 시작해주세요.')
       console.log('HELPER: 세션 완료 메시지 추가됨')
       return
     }
 
-    // content 필드가 있는 경우 (이론, 퀴즈, QnA)
     const content = response.content
     if (!content) {
       console.warn('Workflow response에 content가 없고 evaluation_result나 session_completion도 없습니다.')
       return
     }
     
-    // 컨텐츠 타입별로 각각의 전용 상태에 저장 (if-else if로 변경)
     if (content.type === 'theory') {
       theoryData.value = content
       console.log('HELPER: theoryData 업데이트됨', content)
@@ -208,7 +225,6 @@ export const useLearningStore = defineStore('learning', () => {
     } else {
       console.warn('알 수 없는 컨텐츠 유형:', content.type, response)
     }
-    return // 모든 content 처리 후 함수 종료
   }
 
   /**
@@ -216,7 +232,7 @@ export const useLearningStore = defineStore('learning', () => {
    */
   const _addTutorMessage = (message, type = 'system') => {
     if (message) {
-      chatHistory.value.push({ sender: '튜터', message, type })
+      chatHistory.value.push({ sender: '튜터', message, type, timestamp: Date.now() })
     }
   }
 
@@ -226,12 +242,9 @@ export const useLearningStore = defineStore('learning', () => {
   const _resetSessionState = () => {
     console.log('HELPER: _resetSessionState 호출됨')
     
-    // 각각의 컨텐츠 데이터 초기화
     theoryData.value = null
     quizData.value = null
     feedbackData.value = null
-
-    // 💡 [수정] 채팅 기록을 초기화합니다.
     chatHistory.value = []
     
     currentUIMode.value = 'chat'
@@ -241,12 +254,10 @@ export const useLearningStore = defineStore('learning', () => {
     completedSteps.value = { theory: false, quiz: false, feedback: false }
     sessionCompleted.value = false
 
-    // 학습 시작 안내 메시지 추가
     _addTutorMessage('🎓 학습을 시작합니다! 이론 내용을 불러오겠습니다.')
   }
 
   return {
-    // State
     apiError,
     currentUIMode,
     contentMode,
@@ -255,19 +266,12 @@ export const useLearningStore = defineStore('learning', () => {
     currentAgent,
     sessionProgressStage,
     completedSteps,
-    
-    // 분리된 컨텐츠 데이터
     theoryData,
     quizData,
     feedbackData,
-    
     chatHistory,
-
-    // Getters & Computed
     isQuizMode,
     isChatMode,
-
-    // Actions
     startNewSession,
     sendMessage,
     setContentMode,

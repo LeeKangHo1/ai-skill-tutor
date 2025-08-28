@@ -1,4 +1,3 @@
-<!-- frontend/src/components/learning/ChatInteraction.vue -->
 <template>
   <div class="chat-mode" :class="{ active: true }">
     <div class="chat-history" ref="chatHistoryRef">
@@ -6,7 +5,14 @@
         :class="getMessageClass(message.type)">
         <div class="message-content">
           <strong class="message-sender">{{ message.sender }}:</strong>
-          <span class="message-text">{{ message.message }}</span>
+          
+          <div v-if="message.type === 'loading'" class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <span v-else class="message-text">{{ message.message }}</span>
+
         </div>
         <div class="message-timestamp">
           {{ formatTimestamp(message.timestamp) }}
@@ -37,7 +43,7 @@
 
       <div class="chat-input">
         <input type="text" v-model="currentMessage" ref="messageInputRef"
-          placeholder="메시지를 입력하세요" @keypress="handleKeyPress" @input="handleInput"
+          placeholder="메시지를 입력하세요"           @keypress="handleKeyPress" @input="handleInput"
           class="message-input" />
         <button 
           @click="sendMessage" 
@@ -81,38 +87,24 @@ import { useRouter } from 'vue-router'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
 
-// --- 스토어 및 라우터 설정 ---
 const router = useRouter()
 const learningStore = useLearningStore()
-// 필요한 모든 상태를 반응형으로 가져옵니다.
 const { chatHistory, completedSteps, sessionCompleted, sessionProgressStage } = storeToRefs(learningStore)
 
 console.log('[ChatInteraction] 🟢 컴포넌트 초기화. Store와 연결되었습니다.')
 
-// --- 로컬 상태 (컴포넌트 내 UI 제어용) ---
 const currentMessage = ref('')
 const chatHistoryRef = ref(null)
 const messageInputRef = ref(null)
 const isProcessing = ref(false)
 const isDashboardLoading = ref(false)
 
-// --- 컴퓨티드 속성 (Store 상태를 기반으로 UI 표시 여부 결정) ---
-
-// 피드백 단계가 완료되었는지 여부
 const isFeedbackComplete = computed(() => completedSteps.value.feedback)
-
-// 빠른 액션 버튼 표시 여부
 const showQuickActions = computed(() => isFeedbackComplete.value)
-
-// 입력 힌트 표시 여부 (이론 학습이 완료되었을 때만)
 const showInputHints = computed(() => {
   return sessionProgressStage.value === 'theory_completed'
 })
-
-// 완료 모달 표시 여부
 const showCompletionModal = computed(() => sessionCompleted.value)
-
-// --- 메서드 (Store 액션 호출 또는 로컬 UI 제어) ---
 
 const sendMessage = () => {
   const message = currentMessage.value.trim()
@@ -133,7 +125,6 @@ const handleProceedLearning = () => {
   learningStore.completeSession('proceed')
 }
 
-// 모달 관련 로직
 const closeModal = () => {
   console.log('[ChatInteraction] 모달 닫기.')
   learningStore.sessionCompleted = false
@@ -149,7 +140,6 @@ const startNewLearning = () => {
   learningStore.startNewSession()
 }
 
-// --- 유틸리티 및 라이프사이클 훅 (원본과 동일) ---
 const handleKeyPress = (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
@@ -169,6 +159,7 @@ const getMessageClass = (messageType) => {
     case 'user': return `${baseClass} user-message`
     case 'system': return `${baseClass} system-message`
     case 'qna': return `${baseClass} qna-message`
+    case 'loading': return `${baseClass} system-message loading-message`
     default: return `${baseClass} system-message`
   }
 }
@@ -243,4 +234,30 @@ onMounted(() => {
 .dashboard-btn:hover { background: darken($secondary, 10%); transform: translateY(-1px); }
 .start-learning-btn { background: $primary; color: $white; }
 .start-learning-btn:hover { background: darken($primary, 10%); transform: translateY(-1px); }
+
+/* --- 타이핑 애니메이션 스타일 (신규 추가) --- */
+.loading-message {
+  padding-bottom: 1.1rem; /* 애니메이션 높이에 맞게 패딩 조정 */
+}
+.typing-indicator {
+  span {
+    height: 10px;
+    width: 10px;
+    background-color: $gray-600;
+    border-radius: 50%;
+    display: inline-block;
+    margin: 0 2px;
+    animation: bounce 1.4s infinite both;
+  }
+  span:nth-child(1) { animation-delay: -0.32s; }
+  span:nth-child(2) { animation-delay: -0.16s; }
+}
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1.0);
+  }
+}
 </style>
