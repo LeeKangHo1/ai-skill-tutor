@@ -97,7 +97,12 @@ const canShowNavigationButton = (buttonType) => {
   const isCurrentMode = contentMode.value === 'current'
 
   if (buttonType === 'theory' || buttonType === 'quiz') {
-    return isAfterQuiz && isCurrentMode && (currentAgent.value === 'evaluation_feedback' || currentAgent.value === 'qna_resolver')
+    // 퀴즈가 완료되고, 현재 모드이며, 피드백 또는 QnA 에이전트일 때 표시
+    return isAfterQuiz && isCurrentMode && (
+      currentAgent.value === 'evaluation_feedback' || 
+      currentAgent.value === 'evaluation_feedback_agent' ||
+      currentAgent.value === 'qna_resolver'
+    )
   }
   if (buttonType === 'current') {
     return !isCurrentMode
