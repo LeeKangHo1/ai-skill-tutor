@@ -11,7 +11,7 @@
             <span></span>
             <span></span>
           </div>
-          <span v-else class="message-text">{{ message.message }}</span>
+          <span v-else class="message-text">{{ formatMessage(message.message) }}</span>
 
         </div>
         <div class="message-timestamp">
@@ -86,6 +86,11 @@ import { ref, nextTick, watch, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
+const formatMessage = (text) => {
+  if (!text) return '';
+  // ##, ** 와 같은 마크다운 문자를 제거합니다.
+  return text.replace(/##\s?/g, '').replace(/\*\*/g, '');
+};
 
 const router = useRouter()
 const learningStore = useLearningStore()
@@ -200,7 +205,7 @@ onMounted(() => {
 .qna-message { background: lighten($brand-purple, 40%); border-left: 3px solid $brand-purple; margin-right: auto; margin-left: 0; align-self: flex-start; }
 .message-content { display: flex; flex-direction: column; gap: $spacing-xs; }
 .message-sender { font-size: $font-size-sm; color: $gray-700; }
-.message-text { line-height: 1.5; word-wrap: break-word; }
+.message-text { line-height: 1.5; word-wrap: break-word; white-space: pre-wrap; }
 .message-timestamp { font-size: $font-size-sm * 0.85; color: $secondary; text-align: right; margin-top: $spacing-xs; }
 .chat-input-container { display: flex; flex-direction: column; gap: $spacing-md * 0.75; flex-shrink: 0; }
 .input-hints { background: $gray-100; border: 1px solid $gray-300; border-radius: $border-radius; padding: $spacing-md * 0.75; font-size: $font-size-sm; }

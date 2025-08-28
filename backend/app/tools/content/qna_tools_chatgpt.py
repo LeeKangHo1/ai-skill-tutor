@@ -221,7 +221,7 @@ def _create_agent_prompt_template(context_metadata: Dict[str, Any], current_cont
 - 실무에 활용할 수 있는 실용적인 정보 제공
 - 복잡한 개념은 단계별로 설명
 - AI 입문자도 이해할 수 있는 수준으로 설명
-- 답변 길이: 200-800자 정도 (너무 길지 않게)
+- 답변 길이: 200-500자 정도 (너무 길지 않게)
 
 === 도구 사용법 ===
 벡터 검색이 필요하다고 판단되면 vector_search_qna_tool을 호출하세요.
