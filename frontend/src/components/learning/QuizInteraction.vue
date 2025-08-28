@@ -27,7 +27,7 @@
           <!-- 선택지 내용 -->
           <div class="option-content">
             <span class="option-number">{{ index + 1 }}.</span>
-            <span class="option-text">{{ cleanOptionText(option, index) }}</span>
+            <span class="option-text">{{ cleanOptionText(option) }}</span>
           </div>
         </div>
       </div>
@@ -149,11 +149,12 @@ const submitAnswer = () => {
 
 // --- 유틸리티 함수 ---
 
-// API에서 받은 선택지 텍스트에서 '1.'과 같은 번호를 제거하여 순수 텍스트만 표시합니다.
-const cleanOptionText = (option, index) => {
-  let text = typeof option === 'string' ? option : (option.text || String(option))
-  const numberPattern = new RegExp(`^${index + 1}\\.\\s*`)
-  return text.replace(numberPattern, '').trim()
+// API에서 받은 선택지 텍스트에서 '1.', 'A.', 'a.' 등 불필요한 번호를 모두 제거합니다.
+const cleanOptionText = (option) => {
+  const text = typeof option === 'string' ? option : (option.text || String(option));
+  // ex) '1. A. 단어' 또는 ' a. 단어' 같은 패턴을 제거하는 정규식
+  const pattern = /^(\s*(\d+\.|[A-Za-z]\.)\s*)+/;
+  return text.replace(pattern, '').trim();
 }
 
 // --- 감시자 ---

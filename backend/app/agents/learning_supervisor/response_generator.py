@@ -323,9 +323,9 @@ class ResponseGenerator:
         
         # 결과에 따른 이모지 추가
         if is_correct:
-            intro = "🎉 "
+            intro = ""
         else:
-            intro = "💪 "
+            intro = ""
             
         return intro + refined_content
     

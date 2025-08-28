@@ -150,7 +150,12 @@ export const useLearningStore = defineStore('learning', () => {
    */
   const _processWorkflowResponse = (response) => {
     console.log('HELPER: _processWorkflowResponse 처리 시작', response)
-    currentAgent.value = response.current_agent || 'session_manager'
+
+    // 💡 [수정] QnA 응답일 경우, currentAgent 상태를 변경하지 않아 MainContentArea의 재렌더링을 방지합니다.
+    if (response.current_agent !== 'qna_resolver') {
+      currentAgent.value = response.current_agent || 'session_manager'
+    }
+    
     currentUIMode.value = response.ui_mode || 'chat'
     sessionProgressStage.value = response.session_progress_stage || 'unknown'
     
@@ -225,6 +230,9 @@ export const useLearningStore = defineStore('learning', () => {
     theoryData.value = null
     quizData.value = null
     feedbackData.value = null
+
+    // 💡 [수정] 채팅 기록을 초기화합니다.
+    chatHistory.value = []
     
     currentUIMode.value = 'chat'
     currentAgent.value = 'session_manager'

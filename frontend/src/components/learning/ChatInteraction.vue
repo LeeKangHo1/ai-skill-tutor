@@ -25,9 +25,19 @@
         </button>
       </div>
 
+      <div class="input-hints">
+        <div class="hint-item" v-if="showInputHints">
+          💡 <strong>팁:</strong> "다음"이라고 입력하면 퀴즈로 이동합니다.
+        </div>
+        <div class="hint-item">
+          🤔 <strong>질문:</strong> 학습 내용에 대해 궁금한 점을 자유롭게 물어보세요.
+        </div>
+      </div>
+
+
       <div class="chat-input">
         <input type="text" v-model="currentMessage" ref="messageInputRef"
-          placeholder="메시지를 입력하세요 (예: 퀴즈, AI와 머신러닝 차이는?)" @keypress="handleKeyPress" @input="handleInput"
+          placeholder="메시지를 입력하세요" @keypress="handleKeyPress" @input="handleInput"
           class="message-input" />
         <button @click="sendMessage" :disabled="!currentMessage.trim()" class="send-button"
           :class="{ 'btn-disabled': !currentMessage.trim() }">
@@ -35,14 +45,6 @@
         </button>
       </div>
 
-      <div class="input-hints" v-if="showInputHints">
-        <div class="hint-item">
-          💡 <strong>팁:</strong> "다음"이라고 입력하면 퀴즈로 이동합니다.
-        </div>
-        <div class="hint-item">
-          🤔 <strong>질문:</strong> 학습 내용에 대해 궁금한 점을 자유롭게 물어보세요.
-        </div>
-      </div>
     </div>
 
     <div v-if="showCompletionModal" class="modal-overlay" @click="closeModal">

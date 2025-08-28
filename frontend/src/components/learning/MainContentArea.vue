@@ -18,7 +18,6 @@
         <FeedbackContent v-else-if="shouldShowContent('feedback')" />
 
         <template v-else-if="shouldShowContent('qna')">
-          <TheoryContent v-if="hasFeedbackCompleted" />
           <FeedbackContent v-if="hasFeedbackCompleted" />
           <TheoryContent v-else />
         </template>
