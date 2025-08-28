@@ -39,8 +39,10 @@
         <input type="text" v-model="currentMessage" ref="messageInputRef"
           placeholder="메시지를 입력하세요" @keypress="handleKeyPress" @input="handleInput"
           class="message-input" />
-        <button @click="sendMessage" :disabled="!currentMessage.trim()" class="send-button"
-          :class="{ 'btn-disabled': !currentMessage.trim() }">
+        <button 
+          @click="sendMessage" 
+          :disabled="!currentMessage.trim() || sessionProgressStage === 'session_start'" 
+          class="send-button">
           전송
         </button>
       </div>

@@ -33,10 +33,10 @@
       </div>
 
       <!-- 퀴즈 유형이 '주관식'일 때의 UI -->
-      <div v-else-if="quizData.type === 'subjective'" class="subjective-input-container">
+      <div v-else-if="quizData.quiz_type === 'subjective'" class="subjective-input-container">
         <div class="input-header">
-          <h4>답안을 작성해주세요</h4>
-          <span class="input-guide">자세하고 구체적으로 작성해주세요</span>
+          <h4>답안을 작성해주세요.</h4>
+          <span class="input-guide">자세하고 구체적일수록 좋습니다.</span>
         </div>
         <!-- 주관식 답변을 입력받는 textarea -->
         <textarea v-model="subjectiveAnswer" ref="subjectiveInputRef" class="subjective-input"
@@ -113,7 +113,7 @@ const canSubmit = computed(() => {
   // 퀴즈 유형에 따라 제출 가능 조건을 다르게 설정합니다.
   if (quizData.value.quiz_type === 'multiple_choice') {
     return selectedAnswer.value !== '' // 객관식은 답을 선택해야만 활성화
-  } else if (quizData.value.type === 'subjective') {
+  } else if (quizData.value.quiz_type === 'subjective') {
     return subjectiveAnswer.value.trim().length > 0 // 주관식은 내용을 입력해야만 활성화
   }
   return false
@@ -173,47 +173,323 @@ watch(quizData, (newQuizData) => {
 </script>
 
 <style lang="scss" scoped>
-/* 원본의 모든 스타일을 그대로 유지합니다. */
-.quiz-interaction { background: $white; border-radius: $border-radius-lg; padding: $spacing-md; border: 1px solid $gray-300; height: 100%; display: flex; flex-direction: column; gap: $spacing-md; transition: opacity 0.3s ease; overflow: hidden; }
-.quiz-interaction.active { opacity: 1; }
-.interaction-content { flex: 1; display: flex; flex-direction: column; gap: $spacing-md; overflow-y: auto; min-height: 0; padding-right: $spacing-sm; }
-.interaction-content::-webkit-scrollbar { width: 6px; }
-.interaction-content::-webkit-scrollbar-track { background: $gray-100; border-radius: 3px; }
-.interaction-content::-webkit-scrollbar-thumb { background: $gray-400; border-radius: 3px; }
-.interaction-content::-webkit-scrollbar-thumb:hover { background: $gray-500; }
-.options-header, .input-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: $spacing-md; padding-bottom: $spacing-sm; border-bottom: 1px solid $gray-200; }
-.options-header h4, .input-header h4 { margin: 0; font-size: $font-size-base; color: $text-dark; font-weight: 600; }
-.quiz-options { display: flex; flex-direction: column; gap: $spacing-md * 0.75; flex: 1; min-height: 0; }
-.quiz-option { display: flex; align-items: center; gap: $spacing-md * 0.75; padding: $spacing-md; border: 1px solid $gray-300; border-radius: $border-radius-lg; cursor: pointer; transition: all 0.2s ease; background: $white; }
-.quiz-option:hover:not(.disabled) { background: $gray-100; border-color: $primary; transform: translateY(-1px); box-shadow: 0 2px 8px rgba($primary, 0.15); }
-.quiz-option.selected { background: lighten($primary, 40%); border-color: $primary; box-shadow: 0 0 0 2px rgba($primary, 0.25); }
-.quiz-option.disabled { opacity: 0.6; cursor: not-allowed; }
-.option-indicator { font-size: $font-size-lg; color: $primary; font-weight: bold; min-width: 20px; }
-.option-content { display: flex; align-items: center; gap: $spacing-sm; flex: 1; }
-.option-number { font-weight: 500; color: $gray-700; }
-.option-text { line-height: 1.4; }
-.subjective-input-container { display: flex; flex-direction: column; gap: $spacing-md * 0.75; flex: 1; min-height: 0; }
-.quiz-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: $spacing-lg; padding: $spacing-lg * 2 1rem; text-align: center; color: $secondary; flex: 1; }
-.loading-spinner { width: 48px; height: 48px; border: 4px solid $gray-200; border-top: 4px solid $primary; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.quiz-loading p { margin: 0; font-size: $font-size-base; font-weight: 500; color: $gray-700; }
-.subjective-input { width: 100%; padding: $spacing-md; border: 1px solid $gray-300; border-radius: $border-radius-lg; font-size: $font-size-sm; line-height: 1.5; resize: vertical; min-height: 120px; max-height: 200px; transition: border-color 0.2s ease; }
-.subjective-input:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 2px rgba($primary, 0.25); }
-.subjective-input:disabled { background: $gray-100; opacity: 0.7; }
-.hint-container { background: lighten($warning, 35%); border: 1px solid lighten($warning, 30%); border-radius: $border-radius-lg; padding: $spacing-md; animation: hintSlideIn 0.3s ease-out; flex-shrink: 0; }
-@keyframes hintSlideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-.hint-content { display: flex; align-items: flex-start; gap: $spacing-md * 0.75; }
-.hint-icon { font-size: $font-size-lg; }
-.hint-text { line-height: 1.5; color: darken($warning, 40%); font-weight: 500; }
-.quiz-actions { display: flex; justify-content: space-between; gap: $spacing-md * 0.75; align-items: center; flex-wrap: wrap; flex-shrink: 0; border-top: 1px solid $gray-200; padding-top: $spacing-md; margin-top: auto; }
-.btn { padding: $spacing-md * 0.75 $spacing-md; border: none; border-radius: $border-radius; cursor: pointer; font-weight: 500; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-width: 80px; }
-.btn-primary { background: $primary; color: $white; }
-.btn-primary:hover:not(:disabled) { background: darken($primary, 10%); transform: translateY(-1px); }
-.btn-secondary { background: $secondary; color: $white; }
-.btn-secondary:hover:not(:disabled) { background: darken($secondary, 10%); transform: translateY(-1px); }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-.hint-btn { flex: 0 0 auto; }
-.submit-btn { flex: 1; max-width: 150px; }
-.post-submit-actions { display: flex; flex-direction: column; gap: $spacing-md * 0.75; align-items: center; width: 100%; }
-.submit-success { color: $success; font-weight: 500; padding: $spacing-sm $spacing-md; background: lighten($success, 45%); border: 1px solid lighten($success, 40%); border-radius: $border-radius; text-align: center; width: 100%; }
+/* ============================================= */
+/* QuizInteraction Component           */
+/* ============================================= */
+
+/* --- 기본 레이아웃 --- */
+.quiz-interaction {
+  background: $white;
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  border: 1px solid $gray-300;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  transition: opacity 0.3s ease;
+  overflow: hidden;
+}
+
+.quiz-interaction.active {
+  opacity: 1;
+}
+
+.interaction-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: $spacing-sm;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background: $gray-100; border-radius: 3px; }
+  &::-webkit-scrollbar-thumb { background: $gray-400; border-radius: 3px; }
+  &::-webkit-scrollbar-thumb:hover { background: $gray-500; }
+}
+
+/* --- 로딩 상태 --- */
+.quiz-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-lg;
+  padding: $spacing-lg * 2 1rem;
+  text-align: center;
+  color: $secondary;
+  flex: 1;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid $gray-200;
+  border-top: 4px solid $primary;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.quiz-loading p {
+  margin: 0;
+  font-size: $font-size-base;
+  font-weight: 500;
+  color: $gray-700;
+}
+
+/* --- 공용 헤더 (객관식/주관식) --- */
+
+/* 객관식 헤더: 한 줄에 양쪽 정렬 */
+.options-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid $gray-200;
+  margin-bottom: $spacing-sm;
+}
+
+/* 주관식 헤더: 여러 줄로 세로 정렬 */
+.input-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-xs;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid $gray-200;
+  margin-bottom: $spacing-sm;
+}
+
+/* 헤더 안의 h4 태그 (공통 스타일) */
+.options-header h4, .input-header h4 {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $text-dark;
+  font-weight: 600;
+}
+
+/* 헤더 안의 안내 문구 (공통 스타일) */
+.input-guide {
+  font-size: $font-size-sm;
+  color: $secondary;
+}
+
+/* --- 객관식 퀴즈 영역 --- */
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md * 0.75;
+  flex: 1;
+  min-height: 0;
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md * 0.75;
+  padding: $spacing-md;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: $white;
+
+  &:hover:not(.disabled) {
+    background: $gray-100;
+    border-color: $primary;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba($primary, 0.15);
+  }
+
+  &.selected {
+    background: lighten($primary, 40%);
+    border-color: $primary;
+    box-shadow: 0 0 0 2px rgba($primary, 0.25);
+  }
+
+  &.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.option-indicator {
+  font-size: $font-size-lg;
+  color: $primary;
+  font-weight: bold;
+  min-width: 20px;
+}
+
+.option-content {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex: 1;
+}
+
+.option-number {
+  font-weight: 500;
+  color: $gray-700;
+}
+
+.option-text {
+  line-height: 1.4;
+}
+
+/* --- 주관식 퀴즈 영역 (신규 스타일 적용) --- */
+.subjective-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  height: 100%;
+}
+
+.subjective-input {
+  flex-grow: 1;
+  width: 100%;
+  padding: $spacing-md;
+  border: 1px solid $gray-300;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-sm;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 150px;
+  transition: all 0.2s ease-in-out;
+  color: $text-dark;
+
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba($primary, 0.15);
+  }
+
+  &:disabled {
+    background-color: $gray-100;
+    cursor: not-allowed;
+  }
+}
+
+.character-count {
+  text-align: right;
+  font-size: $font-size-sm * 0.9;
+  color: $gray-600;
+  padding-right: $spacing-xs;
+}
+
+/* --- 힌트 영역 --- */
+.hint-container {
+  background: lighten($warning, 35%);
+  border: 1px solid lighten($warning, 30%);
+  border-radius: $border-radius-lg;
+  padding: $spacing-md;
+  animation: hintSlideIn 0.3s ease-out;
+  flex-shrink: 0;
+}
+
+@keyframes hintSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hint-content {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md * 0.75;
+}
+
+.hint-icon {
+  font-size: $font-size-lg;
+}
+
+.hint-text {
+  line-height: 1.5;
+  color: darken($warning, 40%);
+  font-weight: 500;
+}
+
+/* --- 하단 버튼 영역 --- */
+.quiz-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-md * 0.75;
+  align-items: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  border-top: 1px solid $gray-200;
+  padding-top: $spacing-md;
+  margin-top: auto;
+}
+
+.btn {
+  padding: $spacing-md * 0.75 $spacing-md;
+  border: none;
+  border-radius: $border-radius;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+}
+
+.btn-primary {
+  background: $primary;
+  color: $white;
+  &:hover:not(:disabled) {
+    background: darken($primary, 10%);
+    transform: translateY(-1px);
+  }
+}
+
+.btn-secondary {
+  background: $secondary;
+  color: $white;
+  &:hover:not(:disabled) {
+    background: darken($secondary, 10%);
+    transform: translateY(-1px);
+  }
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.hint-btn {
+  flex: 0 0 auto;
+}
+
+.submit-btn {
+  flex: 1;
+  max-width: 150px;
+}
+
+/* --- 제출 후 상태 --- */
+.post-submit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md * 0.75;
+  align-items: center;
+  width: 100%;
+}
+
+.submit-success {
+  color: $success;
+  font-weight: 500;
+  padding: $spacing-sm $spacing-md;
+  background: lighten($success, 45%);
+  border: 1px solid lighten($success, 40%);
+  border-radius: $border-radius;
+  text-align: center;
+  width: 100%;
+}
 </style>
