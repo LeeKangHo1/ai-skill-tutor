@@ -1,6 +1,6 @@
 <!-- frontend/src/components/learning/ChatInteraction.vue -->
 <template>
-  <div class="chat-mode" :class="{ active: !isLoading }">
+  <div class="chat-mode" :class="{ active: true }">
     <div class="chat-history" ref="chatHistoryRef">
       <div v-for="(message, index) in chatHistory" :key="index" class="chat-message"
         :class="getMessageClass(message.type)">
@@ -12,25 +12,14 @@
           {{ formatTimestamp(message.timestamp) }}
         </div>
       </div>
-
-      <div v-if="isLoading" class="chat-message system-message loading-message">
-        <div class="message-content">
-          <strong class="message-sender">튜터:</strong>
-          <span class="typing-indicator">
-            <span class="typing-dot"></span>
-            <span class="typing-dot"></span>
-            <span class="typing-dot"></span>
-          </span>
-        </div>
-      </div>
     </div>
 
     <div class="chat-input-container">
       <div class="quick-actions" v-if="showQuickActions">
-        <button class="quick-action-btn" @click="handleRetryLearning" :disabled="isLoading || !isFeedbackComplete">
+        <button class="quick-action-btn" @click="handleRetryLearning" :disabled="!isFeedbackComplete">
           🔄 재학습
         </button>
-        <button class="quick-action-btn" @click="handleProceedLearning" :disabled="isLoading || !isFeedbackComplete">
+        <button class="quick-action-btn" @click="handleProceedLearning" :disabled="!isFeedbackComplete">
           ➡️ 다음 학습
         </button>
       </div>
@@ -38,11 +27,10 @@
       <div class="chat-input">
         <input type="text" v-model="currentMessage" ref="messageInputRef"
           placeholder="메시지를 입력하세요 (예: 퀴즈, AI와 머신러닝 차이는?)" @keypress="handleKeyPress" @input="handleInput"
-          :disabled="isLoading" class="message-input" />
-        <button @click="sendMessage" :disabled="isLoading || !currentMessage.trim()" class="send-button"
-          :class="{ 'btn-disabled': isLoading || !currentMessage.trim() }">
-          <span v-if="isLoading" class="button-spinner"></span>
-          <span v-else>전송</span>
+          class="message-input" />
+        <button @click="sendMessage" :disabled="!currentMessage.trim()" class="send-button"
+          :class="{ 'btn-disabled': !currentMessage.trim() }">
+          전송
         </button>
       </div>
 
@@ -88,48 +76,42 @@ import { useRouter } from 'vue-router'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
 
-// [리팩토링] props와 emits를 모두 제거하고, 모든 데이터와 액션은 store를 통해 관리합니다.
-
-// --- 1. 스토어 및 라우터 설정 ---
+// --- 스토어 및 라우터 설정 ---
 const router = useRouter()
 const learningStore = useLearningStore()
 // 필요한 모든 상태를 반응형으로 가져옵니다.
-const { chatHistory, isContentLoading, completedSteps, sessionCompleted, sessionProgressStage } = storeToRefs(learningStore)
+const { chatHistory, completedSteps, sessionCompleted, sessionProgressStage } = storeToRefs(learningStore)
 
 console.log('[ChatInteraction] 🟢 컴포넌트 초기화. Store와 연결되었습니다.')
 
-// --- 2. 로컬 상태 (컴포넌트 내 UI 제어용) ---
+// --- 로컬 상태 (컴포넌트 내 UI 제어용) ---
 const currentMessage = ref('')
 const chatHistoryRef = ref(null)
 const messageInputRef = ref(null)
 const isProcessing = ref(false)
 const isDashboardLoading = ref(false)
 
-// --- 3. 컴퓨티드 속성 (Store 상태를 기반으로 UI 표시 여부 결정) ---
-
-// 로딩 상태를 isContentLoading과 동기화합니다.
-const isLoading = computed(() => isContentLoading.value)
+// --- 컴퓨티드 속성 (Store 상태를 기반으로 UI 표시 여부 결정) ---
 
 // 피드백 단계가 완료되었는지 여부
 const isFeedbackComplete = computed(() => completedSteps.value.feedback)
 
-// [기능 복원] 빠른 액션 버튼 표시 여부
+// 빠른 액션 버튼 표시 여부
 const showQuickActions = computed(() => isFeedbackComplete.value)
 
-// [기능 복원] 입력 힌트 표시 여부
+// 입력 힌트 표시 여부 (이론 학습이 완료되었을 때만)
 const showInputHints = computed(() => {
-  // 이론 학습이 완료되었을 때만 표시
   return sessionProgressStage.value === 'theory_completed'
 })
 
 // 완료 모달 표시 여부
 const showCompletionModal = computed(() => sessionCompleted.value)
 
-// --- 4. 메서드 (Store 액션 호출 또는 로컬 UI 제어) ---
+// --- 메서드 (Store 액션 호출 또는 로컬 UI 제어) ---
 
 const sendMessage = () => {
   const message = currentMessage.value.trim()
-  if (!message || isLoading.value) return
+  if (!message) return
   console.log('[ChatInteraction] 📤 메시지 전송. Store 액션을 호출합니다.')
   learningStore.sendMessage(message)
   currentMessage.value = ''
@@ -162,7 +144,7 @@ const startNewLearning = () => {
   learningStore.startNewSession()
 }
 
-// --- 5. 유틸리티 및 라이프사이클 훅 (원본과 동일) ---
+// --- 유틸리티 및 라이프사이클 훅 (원본과 동일) ---
 const handleKeyPress = (event) => {
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
@@ -199,7 +181,6 @@ const scrollToBottom = () => {
 }
 
 watch(chatHistory, () => scrollToBottom(), { deep: true })
-watch(isLoading, (loading) => { if (loading) scrollToBottom() })
 
 onMounted(() => {
   scrollToBottom()
@@ -208,8 +189,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-/* [기능 복원] 원본의 모든 스타일을 그대로 유지합니다. */
-.chat-mode { display: flex; flex-direction: column; gap: $spacing-md; height: 100%; opacity: 0.7; transition: opacity 0.3s ease; min-height: 0; }
+/* 원본의 모든 스타일을 그대로 유지합니다. */
+.chat-mode { display: flex; flex-direction: column; gap: $spacing-md; height: 100%; transition: opacity 0.3s ease; min-height: 0; }
 .chat-mode.active { opacity: 1; }
 .chat-history { flex: 1; overflow-y: auto; background: $white; border-radius: $border-radius-lg; padding: $spacing-md; border: 1px solid $gray-300; scroll-behavior: smooth; display: flex; flex-direction: column; min-height: 0; }
 .chat-history::-webkit-scrollbar { width: 6px; }
@@ -221,16 +202,10 @@ onMounted(() => {
 .user-message { background: lighten($primary, 40%); margin-left: auto; margin-right: 0; border-bottom-right-radius: $border-radius-sm; align-self: flex-end; }
 .system-message { background: lighten($warning, 38%); margin-right: auto; margin-left: 0; border-bottom-left-radius: $border-radius-sm; align-self: flex-start; }
 .qna-message { background: lighten($brand-purple, 40%); border-left: 3px solid $brand-purple; margin-right: auto; margin-left: 0; align-self: flex-start; }
-.loading-message { background: lighten($warning, 35%); border: 1px solid lighten($warning, 30%); }
 .message-content { display: flex; flex-direction: column; gap: $spacing-xs; }
 .message-sender { font-size: $font-size-sm; color: $gray-700; }
 .message-text { line-height: 1.5; word-wrap: break-word; }
 .message-timestamp { font-size: $font-size-sm * 0.85; color: $secondary; text-align: right; margin-top: $spacing-xs; }
-.typing-indicator { display: inline-flex; align-items: center; gap: $spacing-xs; }
-.typing-dot { width: 6px; height: 6px; border-radius: 50%; background: $secondary; animation: typingBounce 1.4s infinite ease-in-out; }
-.typing-dot:nth-child(1) { animation-delay: -0.32s; }
-.typing-dot:nth-child(2) { animation-delay: -0.16s; }
-@keyframes typingBounce { 0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
 .chat-input-container { display: flex; flex-direction: column; gap: $spacing-md * 0.75; flex-shrink: 0; }
 .quick-actions { display: flex; gap: $spacing-sm; flex-wrap: wrap; }
 .quick-action-btn { padding: $spacing-sm $spacing-md * 0.75; background: $gray-100; border: 1px solid $gray-300; border-radius: $border-radius-pill; font-size: $font-size-sm; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }

@@ -13,7 +13,6 @@
  * 2. 상태는 읽기 전용: 컴포넌트는 getters나 computed 속성을 통해 상태를 읽을 뿐, 직접 수정하지 않습니다.
  * 3. 상태 변경은 액션을 통해서만: 모든 상태 변경은 API 상호작용을 처리하는 액션을 통해 시작됩니다.
  */
-// frontend/src/stores/learningStore.js
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { learningService } from '@/services/learningService'
@@ -25,16 +24,14 @@ export const useLearningStore = defineStore('learning', () => {
 
   // ===== 상태 (State) ===== //
 
-  // --- UI, 로딩, 에러 상태 ---
-  const isContentLoading = ref(false)
+  // --- UI, 에러 상태 ---
   const apiError = ref(null)
   const currentUIMode = ref('chat')
   const contentMode = ref('current')
-  // [추가] 세션 완료 모달 표시 여부 상태
   const sessionCompleted = ref(false)
 
   // --- 세션 상태 ---
-  // [수정] sessionInfo를 authStore와 연동되는 computed 속성으로 변경
+  // sessionInfo를 authStore와 연동되는 computed 속성으로 변경
   const sessionInfo = computed(() => ({
     chapter_number: authStore.currentChapter,
     section_number: authStore.currentSection,
@@ -48,21 +45,16 @@ export const useLearningStore = defineStore('learning', () => {
     feedback: false,
   })
 
-  // --- 컨텐츠 상태 ---
-  const mainContent = ref({
-    type: 'theory',
-    data: null,
-  })
-  
-  const quizData = ref(null)
-  const chatHistory = ref([])
-  const preservedFeedback = ref(null)
+  // --- 컨텐츠 상태 (분리 관리) ---
+  const theoryData = ref(null)    // 이론 데이터 전용
+  const quizData = ref(null)      // 퀴즈 데이터 전용  
+  const feedbackData = ref(null)  // 피드백 데이터 전용
 
+  const chatHistory = ref([])
 
   // ===== 게터 (Getters & Computed) ===== //
   const isQuizMode = computed(() => currentUIMode.value === 'quiz')
   const isChatMode = computed(() => currentUIMode.value === 'chat')
-
 
   // ===== 액션 (Actions) ===== //
 
@@ -70,13 +62,11 @@ export const useLearningStore = defineStore('learning', () => {
    * [ACTION] 새로운 학습 세션을 시작합니다.
    */
   const startNewSession = async () => {
-    isContentLoading.value = true
     apiError.value = null
     console.log('ACTION: startNewSession 호출됨')
 
     _resetSessionState()
 
-    // [수정] computed 속성인 sessionInfo에서 직접 값을 가져옵니다.
     const chapterNumber = sessionInfo.value.chapter_number
     const sectionNumber = sessionInfo.value.section_number
     const userMessage = `${chapterNumber}챕터 ${sectionNumber}섹션 학습을 시작합니다.`
@@ -95,14 +85,12 @@ export const useLearningStore = defineStore('learning', () => {
       console.error('API Error in startNewSession:', errorMessage)
       apiError.value = { message: `세션 시작에 실패했습니다: ${errorMessage}` };
     }
-    isContentLoading.value = false
   }
 
   /**
    * [ACTION] 사용자 메시지 또는 퀴즈 답변을 서버로 전송합니다.
    */
   const sendMessage = async (message) => {
-    isContentLoading.value = true
     apiError.value = null
     console.log(`ACTION: sendMessage 호출됨 (Mode: ${currentUIMode.value})`, { message })
 
@@ -122,7 +110,6 @@ export const useLearningStore = defineStore('learning', () => {
       console.error('API Error in sendMessage:', errorMessage)
       apiError.value = { message: `요청 처리에 실패했습니다: ${errorMessage}` };
     }
-    isContentLoading.value = false
   }
   
   /**
@@ -133,12 +120,11 @@ export const useLearningStore = defineStore('learning', () => {
     contentMode.value = mode
   }
 
-    /**
+  /**
    * [ACTION] 학습 세션을 완료(다음으로 진행 또는 재학습) 처리합니다.
    * @param {'proceed' | 'retry'} decision - 사용자의 결정
    */
   const completeSession = async (decision) => {
-    isContentLoading.value = true
     apiError.value = null
     console.log(`ACTION: completeSession 호출됨 (decision: ${decision})`)
 
@@ -155,9 +141,7 @@ export const useLearningStore = defineStore('learning', () => {
       console.error('API Error in completeSession:', errorMessage)
       apiError.value = { message: `세션 완료 처리에 실패했습니다: ${errorMessage}` };
     }
-    isContentLoading.value = false
   }
-
 
   // ===== 내부 헬퍼 함수 ===== //
 
@@ -170,48 +154,63 @@ export const useLearningStore = defineStore('learning', () => {
     currentUIMode.value = response.ui_mode || 'chat'
     sessionProgressStage.value = response.session_progress_stage || 'unknown'
     
+    // 완료된 단계 업데이트
     switch(currentAgent.value) {
+      case 'theory_educator':
+        completedSteps.value.theory = true
+        break
       case 'quiz_generator':
-        completedSteps.value.quiz = true;
-        break;
+        completedSteps.value.quiz = true
+        break
+      case 'evaluation_feedback_agent':
       case 'evaluation_feedback':
-        completedSteps.value.feedback = true;
-        break;
+        completedSteps.value.feedback = true
+        break
     }
 
+    // 평가 결과가 있는 경우 (evaluation_result가 있는 응답)
+    if (response.evaluation_result) {
+      feedbackData.value = response.evaluation_result.feedback
+      console.log('HELPER: feedbackData 업데이트됨 (evaluation_result)', response.evaluation_result.feedback)
+      return
+    }
+
+    // 세션 완료가 있는 경우
+    if (response.session_completion) {
+      _addTutorMessage(response.session_completion.session_summary || '세션이 완료되었습니다. 다음 학습을 시작해주세요.')
+      console.log('HELPER: 세션 완료 메시지 추가됨')
+      return
+    }
+
+    // content 필드가 있는 경우 (이론, 퀴즈, QnA)
     const content = response.content
     if (!content) {
-      console.warn('Workflow response에 content가 없습니다.')
+      console.warn('Workflow response에 content가 없고 evaluation_result나 session_completion도 없습니다.')
       return
     }
     
+    // 컨텐츠 타입별로 각각의 전용 상태에 저장
     switch (content.type) {
       case 'theory':
-        mainContent.value = { type: 'theory', data: content }
-        quizData.value = null
-        _addTutorMessage(content.refined_content || '왼쪽의 학습 내용을 확인해주세요.')
+        theoryData.value = content
+        console.log('HELPER: theoryData 업데이트됨', content)
         break
+        
       case 'quiz':
         quizData.value = content
-        mainContent.value = { type: 'theory', data: mainContent.value.data }
-        _addTutorMessage(content.refined_content || '퀴즈가 준비되었습니다. 오른쪽에서 답변해주세요.')
+        // 퀴즈 생성 시에만 채팅 메시지 추가
+        _addTutorMessage('퀴즈가 생성되었습니다.')
+        console.log('HELPER: quizData 업데이트됨', content)
         break
+        
       case 'qna':
-        mainContent.value = { type: 'theory', data: mainContent.value.data }
+        // QnA는 채팅창에 표시
         _addTutorMessage(content.answer, 'qna')
+        console.log('HELPER: QnA 응답 채팅에 추가됨', content.answer)
         break
+        
       default:
-        if (response.evaluation_result) {
-            mainContent.value = { type: 'feedback', data: response.evaluation_result.feedback }
-            preservedFeedback.value = response.evaluation_result.feedback
-            quizData.value = null
-            _addTutorMessage(response.evaluation_result.feedback.content || '평가가 완료되었습니다. 왼쪽 결과를 확인하고 다음 단계를 진행해주세요.')
-        } else if(response.session_completion) {
-             _addTutorMessage(response.session_completion.session_summary || '세션이 완료되었습니다. 다음 학습을 시작해주세요.')
-        } else {
-            console.warn('알 수 없는 컨텐츠 유형 또는 구조:', response)
-            _addTutorMessage(content.refined_content || '알 수 없는 응답입니다. 다음 단계로 진행해주세요.')
-        }
+        console.warn('알 수 없는 컨텐츠 유형:', content.type, response)
         break
     }
   }
@@ -231,31 +230,37 @@ export const useLearningStore = defineStore('learning', () => {
   const _resetSessionState = () => {
     console.log('HELPER: _resetSessionState 호출됨')
     chatHistory.value = []
-    mainContent.value = { type: 'theory', data: null }
+    
+    // 각각의 컨텐츠 데이터 초기화
+    theoryData.value = null
     quizData.value = null
+    feedbackData.value = null
+    
     currentUIMode.value = 'chat'
     currentAgent.value = 'session_manager'
     sessionProgressStage.value = 'session_start'
     contentMode.value = 'current'
-    completedSteps.value = { theory: true, quiz: false, feedback: false }
-    preservedFeedback.value = null
+    completedSteps.value = { theory: false, quiz: false, feedback: false }
+    sessionCompleted.value = false
   }
 
   return {
     // State
-    isContentLoading,
     apiError,
     currentUIMode,
     contentMode,
-    sessionCompleted, // [추가]
+    sessionCompleted,
     sessionInfo,
     currentAgent,
     sessionProgressStage,
     completedSteps,
-    mainContent,
+    
+    // 분리된 컨텐츠 데이터
+    theoryData,
     quizData,
+    feedbackData,
+    
     chatHistory,
-    preservedFeedback,
 
     // Getters & Computed
     isQuizMode,
@@ -265,6 +270,6 @@ export const useLearningStore = defineStore('learning', () => {
     startNewSession,
     sendMessage,
     setContentMode,
-    completeSession, // [추가]
+    completeSession,
   }
 })

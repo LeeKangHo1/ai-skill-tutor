@@ -13,204 +13,148 @@
       </div>
     </div>
   </div>
+
+  <!-- 퀴즈 데이터가 없을 때 로딩 상태 표시 -->
   <div v-else class="loading-state">
-    <div class="loading-spinner"></div>
-    <p>퀴즈를 생성하고 있습니다...</p>
+    <div class="loading-content">
+      <div class="loading-icon">📝</div>
+      <h3>퀴즈를 준비하고 있습니다...</h3>
+      <p>잠시만 기다려주세요.</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { watch } from 'vue'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
 
-// [리팩토링] props 정의를 모두 제거합니다.
-
+// --- Store 직접 연결 ---
 const learningStore = useLearningStore()
 // Store에서 quizData를 직접 가져옵니다.
 const { quizData } = storeToRefs(learningStore)
 
 console.log('[QuizContent] 🟢 컴포넌트 초기화. Store와 연결되었습니다.')
+
+// 디버깅용 감시자
+watch(quizData, (newData) => {
+  if (newData) {
+    console.log('[QuizContent] 📝 퀴즈 데이터가 변경되어 화면을 다시 그립니다.', newData)
+  } else {
+    console.log('[QuizContent] ⏳ 퀴즈 데이터가 없어 로딩 상태를 표시합니다.')
+  }
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
-/* 스타일은 원본과 동일하게 유지합니다. */
-.quiz-content { background: linear-gradient(135deg, lighten($warning, 40%), lighten($danger, 45%)); border-left: 4px solid $warning; padding: $spacing-lg; border-radius: $border-radius-lg; margin-bottom: $spacing-md; }
-.quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: $spacing-md; padding-bottom: $spacing-md * 0.75; border-bottom: 1px solid rgba($warning, 0.2); }
-.quiz-header h3 { margin: 0; color: darken($warning, 30%); font-size: $font-size-lg; }
-.quiz-type-badge { padding: $spacing-xs $spacing-md * 0.75; border-radius: $border-radius-pill; font-weight: 500; background: lighten($primary, 40%); color: darken($primary, 10%); }
-.quiz-question-display { display: flex; flex-direction: column; gap: $spacing-md; }
-.question-text { font-size: $font-size-base * 1.1; line-height: 1.6; color: $text-dark; margin: 0; padding: $spacing-md; background: rgba($white, 0.8); border-radius: $border-radius-lg; }
-.quiz-description { background: rgba($white, 0.7); padding: $spacing-md; border-radius: $border-radius; }
-.quiz-description p { margin: 0; font-size: $font-size-sm; }
-.loading-state { display: flex; flex-direction: column; align-items: center; gap: $spacing-md; padding: $spacing-lg * 2; }
-.loading-spinner { width: 32px; height: 32px; border: 3px solid $gray-100; border-top: 3px solid $warning; border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.content-active { display: block; animation: fadeIn 0.3s ease-in; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-</style>
-
-
-
-<style lang="scss" scoped>
-.quiz-content {
-  background: linear-gradient(135deg, lighten($warning, 40%), lighten($danger, 45%));
-  border-left: 4px solid $warning;
-  padding: $spacing-lg;
-  border-radius: $border-radius-lg;
-  margin-bottom: $spacing-md;
+/* 퀴즈 컨텐츠 스타일 */
+.quiz-content { 
+  background: linear-gradient(135deg, lighten($warning, 40%), lighten($danger, 45%)); 
+  border-left: 4px solid $warning; 
+  padding: $spacing-lg; 
+  border-radius: $border-radius-lg; 
+  margin-bottom: $spacing-md; 
 }
 
-/* 퀴즈 헤더 */
-.quiz-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-md;
-  padding-bottom: $spacing-md * 0.75;
-  border-bottom: 1px solid rgba($warning, 0.2);
+.quiz-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: $spacing-md; 
+  padding-bottom: $spacing-md * 0.75; 
+  border-bottom: 1px solid rgba($warning, 0.2); 
 }
 
-.quiz-header h3 {
-  margin: 0;
-  color: darken($warning, 30%);
-  font-size: $font-size-lg;
+.quiz-header h3 { 
+  margin: 0; 
+  color: darken($warning, 30%); 
+  font-size: $font-size-lg; 
 }
 
-.quiz-type-badge {
-  padding: $spacing-xs $spacing-md * 0.75;
-  border-radius: $border-radius-pill;
-  font-weight: 500;
-  font-size: $font-size-sm * 0.85; // 0.75rem
+.quiz-type-badge { 
+  padding: $spacing-xs $spacing-md * 0.75; 
+  border-radius: $border-radius-pill; 
+  font-weight: 500; 
+  background: lighten($primary, 40%); 
+  color: darken($primary, 10%); 
 }
 
-.badge-multiple {
-  background: lighten($primary, 40%);
-  color: darken($primary, 10%);
+.quiz-question-display { 
+  display: flex; 
+  flex-direction: column; 
+  gap: $spacing-md; 
 }
 
-.badge-subjective {
-  background: lighten($brand-purple, 40%);
-  color: darken($brand-purple, 5%);
+.question-text { 
+  font-size: $font-size-base * 1.1; 
+  line-height: 1.6; 
+  color: $text-dark; 
+  margin: 0; 
+  padding: $spacing-md; 
+  background: rgba($white, 0.8); 
+  border-radius: $border-radius-lg; 
 }
 
-.badge-default {
-  background: $gray-100;
-  color: $gray-700;
+.quiz-description { 
+  background: rgba($white, 0.7); 
+  padding: $spacing-md; 
+  border-radius: $border-radius; 
 }
 
-/* 퀴즈 문제 표시 */
-.quiz-question-display {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
+.quiz-description p { 
+  margin: 0; 
+  font-size: $font-size-sm; 
 }
 
-.question-content {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md * 0.75;
-}
-
-.question-text {
-  font-size: $font-size-base * 1.1;
-  line-height: 1.6;
-  color: $text-dark;
-  margin: 0;
-  padding: $spacing-md;
-  background: rgba($white, 0.8);
-  border-radius: $border-radius-lg;
-  border: 1px solid rgba($warning, 0.2);
-}
-
-.quiz-instruction {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  font-size: $font-size-sm;
-  color: $secondary;
-  padding: $spacing-sm $spacing-md;
-  background: rgba($white, 0.6);
-  border-radius: $border-radius;
-}
-
-.instruction-icon {
-  font-size: $font-size-base;
-}
-
-.instruction-text {
-  font-weight: 500;
-}
-
-/* 안내 메시지 */
-.quiz-description {
-  background: rgba($white, 0.7);
-  padding: $spacing-md;
-  border-radius: $border-radius;
-  border: 1px solid rgba($warning, 0.3);
-}
-
-.quiz-description p {
-  margin-bottom: $spacing-sm;
-  font-size: $font-size-sm;
-  line-height: 1.4;
-}
-
-.quiz-description p:last-child {
-  margin-bottom: 0;
-}
-
-/* 로딩 상태 */
+/* 로딩 상태 스타일 */
 .loading-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: $spacing-md * 0.75;
-  padding: $spacing-lg * 1.33; // 2rem
-  background: rgba($white, 0.8);
-  border-radius: $border-radius-lg;
+  justify-content: center;
+  min-height: 300px;
+  background: linear-gradient(135deg, lighten($warning, 50%), lighten($danger, 55%));
   border: 1px solid rgba($warning, 0.2);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg * 2;
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid $gray-100;
-  border-top: 3px solid $warning;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.loading-content {
+  text-align: center;
+  color: darken($warning, 20%);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loading-icon {
+  font-size: 3rem;
+  margin-bottom: $spacing-md;
+  animation: pulse 2s infinite;
+}
+
+.loading-state h3 {
+  margin: 0 0 $spacing-sm 0;
+  font-size: $font-size-lg;
+  color: darken($warning, 25%);
 }
 
 .loading-state p {
   margin: 0;
-  color: $secondary;
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
+  color: darken($warning, 15%);
+  opacity: 0.8;
 }
 
-/* 컨텐츠 표시/숨김 */
-.content-active {
-  display: block;
-  animation: fadeIn 0.3s ease-in;
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
 }
 
-.content-hidden {
-  display: none;
+.content-active { 
+  display: block; 
+  animation: fadeIn 0.3s ease-in; 
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
 }
 </style>

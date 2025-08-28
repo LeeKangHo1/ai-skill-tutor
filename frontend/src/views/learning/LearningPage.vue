@@ -20,13 +20,9 @@
           {{ uiMode === 'chat' ? '💬 채팅' : '📝 퀴즈' }}
         </div>
         
-        <div v-if="!isContentLoading" class="interaction-body">
+        <div class="interaction-body">
           <ChatInteraction v-if="uiMode === 'chat'" @send-message="handleSendMessage" />
           <QuizInteraction v-else-if="uiMode === 'quiz'" @submit-answer="handleSubmitAnswer" />
-        </div>
-        <div v-else class="interaction-loading">
-          <div class="spinner"></div>
-          <p>응답을 기다리고 있습니다...</p>
         </div>
       </div>
     </div>
@@ -45,8 +41,8 @@ import QuizInteraction from '@/components/learning/QuizInteraction.vue'
 
 const router = useRouter()
 const learningStore = useLearningStore()
-// [수정] isContentLoading을 다시 가져와 로딩 상태를 제어합니다.
-const { isContentLoading, currentUIMode: uiMode } = storeToRefs(learningStore)
+// isContentLoading 제거 - 더 이상 전역 로딩 상태를 사용하지 않음
+const { currentUIMode: uiMode } = storeToRefs(learningStore)
 
 const handleSendMessage = (message) => {
   learningStore.sendMessage(message)
@@ -70,26 +66,6 @@ watch(uiMode, (newMode, oldMode) => {
 </script>
 
 <style lang="scss" scoped>
-/* [추가] 상호작용 영역 로딩을 위한 스타일 추가 */
-.interaction-loading {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: $spacing-md;
-  color: $secondary;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid $gray-200;
-  border-top-color: $primary;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
 .learning-page {
   max-width: 1400px;
   margin: 0 auto;

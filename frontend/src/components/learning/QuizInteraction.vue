@@ -16,7 +16,7 @@
         <div v-for="(option, index) in quizData.options" :key="index" class="quiz-option" 
              :class="{
                'selected': selectedAnswer === (index + 1).toString(),
-               'disabled': isContentLoading || isSubmitted
+               'disabled': isSubmitted
              }"
              @click="selectOption((index + 1).toString())">
           
@@ -41,7 +41,7 @@
         <!-- 주관식 답변을 입력받는 textarea -->
         <textarea v-model="subjectiveAnswer" ref="subjectiveInputRef" class="subjective-input"
           placeholder="답변을 입력해주세요... (최대 500자)" 
-          :disabled="isContentLoading || isSubmitted" 
+          :disabled="isSubmitted" 
           rows="4"></textarea>
       </div>
     </div>
@@ -57,15 +57,13 @@
     <!-- 하단 버튼 (힌트 보기, 정답 제출) 영역 -->
     <div class="quiz-actions">
       <!-- 힌트 보기/숨기기 버튼 -->
-      <button class="btn btn-secondary hint-btn" @click="toggleHint" :disabled="isContentLoading || isSubmitted" v-if="quizData.hint">
+      <button class="btn btn-secondary hint-btn" @click="toggleHint" :disabled="isSubmitted" v-if="quizData.hint">
         {{ showHint ? '🔍 힌트 숨기기' : '💡 힌트 보기' }}
       </button>
 
       <!-- 정답 제출 버튼 (아직 제출하지 않았을 때만 보임) -->
-      <button class="btn btn-primary submit-btn" @click="submitAnswer" :disabled="!canSubmit || isContentLoading" v-if="!isSubmitted">
-        <!-- 로딩 중일 때는 스피너를 표시 -->
-        <span v-if="isContentLoading" class="button-spinner"></span>
-        <span v-else>정답 제출</span>
+      <button class="btn btn-primary submit-btn" @click="submitAnswer" :disabled="!canSubmit" v-if="!isSubmitted">
+        정답 제출
       </button>
 
       <!-- 답변을 제출한 후에 표시되는 메시지 -->
@@ -77,6 +75,12 @@
     </div>
 
   </div>
+
+  <!-- 퀴즈 데이터가 없을 때 로딩 상태 표시 -->
+  <div v-else class="quiz-loading">
+    <div class="loading-spinner"></div>
+    <p>퀴즈를 준비하고 있습니다...</p>
+  </div>
 </template>
 
 <script setup>
@@ -84,30 +88,25 @@ import { ref, computed, watch } from 'vue'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
 
-// [리팩토링] props와 emits를 모두 제거하고, 모든 데이터와 액션은 store를 통해 관리합니다.
-
-// --- 1. 스토어 연결 ---
-// Pinia의 learningStore를 가져옵니다.
+// --- 스토어 연결 ---
 const learningStore = useLearningStore()
-// storeToRefs를 사용해 Store의 상태(quizData, isContentLoading)를 반응성을 유지한 채로 가져옵니다.
-const { quizData, isContentLoading } = storeToRefs(learningStore)
+// Store의 quizData 상태를 반응성을 유지한 채로 가져옵니다.
+const { quizData } = storeToRefs(learningStore)
 
 console.log('[QuizInteraction] 🟢 컴포넌트 초기화. Store와 연결되었습니다.')
 
-// --- 2. 로컬 상태 (컴포넌트 내 UI 제어용) ---
-// 이 컴포넌트 내부에서만 사용되는 상태 변수들입니다.
+// --- 로컬 상태 (컴포넌트 내 UI 제어용) ---
 const selectedAnswer = ref('') // 객관식 선택 답안
 const subjectiveAnswer = ref('') // 주관식 작성 답안
 const showHint = ref(false) // 힌트 표시 여부
 const isSubmitted = ref(false) // 사용자가 제출 버튼을 눌렀는지 여부 (UI 비활성화용)
 
-// --- 3. 컴퓨티드 속성 (Computed Properties) ---
-// Store의 상태나 로컬 상태를 기반으로 동적으로 계산되는 값들입니다.
+// --- 컴퓨티드 속성 ---
 
 // 제출 버튼 활성화 여부를 결정합니다.
 const canSubmit = computed(() => {
-  // 로딩 중이거나 이미 제출했다면 비활성화
-  if (isContentLoading.value || isSubmitted.value) return false
+  // 이미 제출했다면 비활성화
+  if (isSubmitted.value) return false
   // 퀴즈 데이터가 없으면 비활성화
   if (!quizData.value) return false
 
@@ -120,22 +119,21 @@ const canSubmit = computed(() => {
   return false
 })
 
-// --- 4. 메서드 (Methods) ---
-// 사용자의 상호작용에 따라 호출되는 함수들입니다.
+// --- 메서드 ---
 
 // 객관식 옵션을 선택했을 때 호출되는 함수
 const selectOption = (value) => {
-  if (isContentLoading.value || isSubmitted.value) return // 로딩 중이거나 제출 후에는 동작하지 않음
+  if (isSubmitted.value) return // 제출 후에는 동작하지 않음
   selectedAnswer.value = value
 }
 
 // 힌트 보기/숨기기 버튼을 클릭했을 때 호출되는 함수
 const toggleHint = () => {
-  if (isContentLoading.value || isSubmitted.value) return
+  if (isSubmitted.value) return
   showHint.value = !showHint.value
 }
 
-// [리팩토링] 정답 제출 시 API를 직접 호출하지 않고, Store의 액션을 호출합니다.
+// 정답 제출 시 Store의 액션을 호출합니다.
 const submitAnswer = () => {
   if (!canSubmit.value) return // 제출 불가능 상태면 함수 종료
 
@@ -149,8 +147,7 @@ const submitAnswer = () => {
   learningStore.sendMessage(answer) // Store의 sendMessage 액션을 호출하여 답안을 서버로 전송
 }
 
-// --- 5. 유틸리티 함수 (Utility Functions) ---
-// 데이터 포맷팅 등 보조적인 역할을 하는 함수입니다.
+// --- 유틸리티 함수 ---
 
 // API에서 받은 선택지 텍스트에서 '1.'과 같은 번호를 제거하여 순수 텍스트만 표시합니다.
 const cleanOptionText = (option, index) => {
@@ -159,8 +156,7 @@ const cleanOptionText = (option, index) => {
   return text.replace(numberPattern, '').trim()
 }
 
-// --- 6. 감시자 (Watchers) ---
-// 특정 데이터의 변경을 감지하여 추가적인 로직을 수행합니다.
+// --- 감시자 ---
 
 // Store의 quizData가 변경되면 (새로운 퀴즈가 출제되면) 로컬 상태를 초기화합니다.
 watch(quizData, (newQuizData) => {
@@ -172,14 +168,12 @@ watch(quizData, (newQuizData) => {
     showHint.value = false
     isSubmitted.value = false 
   }
-}, { deep: true, immediate: true }) // deep: 객체 내부 변경 감지, immediate: 컴포넌트 로드 시 즉시 실행
+}, { deep: true, immediate: true })
 </script>
-
-
 
 <style lang="scss" scoped>
 /* 원본의 모든 스타일을 그대로 유지합니다. */
-.quiz-interaction { background: $white; border-radius: $border-radius-lg; padding: $spacing-md; border: 1px solid $gray-300; height: 100%; display: flex; flex-direction: column; gap: $spacing-md; opacity: 0.7; transition: opacity 0.3s ease; overflow: hidden; }
+.quiz-interaction { background: $white; border-radius: $border-radius-lg; padding: $spacing-md; border: 1px solid $gray-300; height: 100%; display: flex; flex-direction: column; gap: $spacing-md; transition: opacity 0.3s ease; overflow: hidden; }
 .quiz-interaction.active { opacity: 1; }
 .interaction-content { flex: 1; display: flex; flex-direction: column; gap: $spacing-md; overflow-y: auto; min-height: 0; padding-right: $spacing-sm; }
 .interaction-content::-webkit-scrollbar { width: 6px; }
@@ -219,7 +213,6 @@ watch(quizData, (newQuizData) => {
 .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .hint-btn { flex: 0 0 auto; }
 .submit-btn { flex: 1; max-width: 150px; }
-.button-spinner { width: 16px; height: 16px; border: 2px solid transparent; border-top: 2px solid $white; border-radius: 50%; animation: spin 1s linear infinite; }
 .post-submit-actions { display: flex; flex-direction: column; gap: $spacing-md * 0.75; align-items: center; width: 100%; }
 .submit-success { color: $success; font-weight: 500; padding: $spacing-sm $spacing-md; background: lighten($success, 45%); border: 1px solid lighten($success, 40%); border-radius: $border-radius; text-align: center; width: 100%; }
 </style>

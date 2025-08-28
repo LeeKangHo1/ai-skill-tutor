@@ -6,12 +6,7 @@
     </div>
 
     <div class="content-body">
-      <div v-if="isContentLoading" class="loading-container">
-        <div class="loading-spinner"></div>
-        <p>콘텐츠를 불러오는 중...</p>
-      </div>
-
-      <div v-else-if="apiError" class="error-container">
+      <div v-if="apiError" class="error-container">
         <h3>😥 오류가 발생했습니다</h3>
         <p>{{ apiError.message }}</p>
         <span>채팅창에 메시지를 입력하여 다시 시도해주세요.</span>
@@ -55,11 +50,9 @@ import FeedbackContent from './FeedbackContent.vue'
 // --- Store 직접 연결 ---
 const learningStore = useLearningStore()
 const {
-  isContentLoading,
   apiError,
   sessionInfo,
   currentAgent,
-  // [기능 복원] store에서 새로운 상태들을 가져옵니다.
   contentMode,
   completedSteps,
 } = storeToRefs(learningStore)
@@ -77,15 +70,16 @@ const agentContentType = computed(() => {
     theory_educator: 'theory',
     quiz_generator: 'quiz',
     evaluation_feedback: 'feedback',
+    evaluation_feedback_agent: 'feedback', // 추가: API 응답의 실제 에이전트명
     qna_resolver: 'qna',
   }
   return agentMap[currentAgent.value] || 'theory'
 })
 
-// [기능 복원] 피드백을 완료했는지 여부
+// 피드백을 완료했는지 여부
 const hasFeedbackCompleted = computed(() => completedSteps.value.feedback)
 
-// [기능 복원] 어떤 컨텐츠를 보여줄지 결정하는 로직
+// 어떤 컨텐츠를 보여줄지 결정하는 로직
 const shouldShowContent = (contentType) => {
   if (contentMode.value === 'current') {
     return contentType === agentContentType.value
@@ -97,7 +91,7 @@ const shouldShowContent = (contentType) => {
   return false
 }
 
-// [기능 복원] 네비게이션 버튼 표시 여부 결정 로직
+// 네비게이션 버튼 표시 여부 결정 로직
 const canShowNavigationButton = (buttonType) => {
   const isAfterQuiz = completedSteps.value.quiz
   const isCurrentMode = contentMode.value === 'current'
@@ -111,16 +105,14 @@ const canShowNavigationButton = (buttonType) => {
   return false
 }
 
-// [기능 복원] 네비게이션 버튼 클릭 핸들러
+// 네비게이션 버튼 클릭 핸들러
 const handleNavigationClick = (mode) => {
   console.log(`[MainContentArea] 🖱️ 네비게이션 클릭: ${mode} 모드로 변경`)
-  // store의 액션을 호출하여 contentMode를 변경합니다.
   learningStore.setContentMode(mode)
 }
 </script>
 
 <style lang="scss" scoped>
-/* 스타일은 기존과 동일하게 유지합니다. */
 .main-content-area {
   background: $white;
   padding: $spacing-lg * 1.33; /* 2rem */
@@ -135,38 +127,26 @@ const handleNavigationClick = (mode) => {
   margin-bottom: $spacing-sm;
 }
 .content-body { min-height: 400px; }
-.loading-container, .error-container {
+.error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 300px;
   color: $secondary;
-  background-color: $gray-100;
+  border-left: 4px solid $danger;
+  background-color: lighten($danger, 45%);
   border-radius: $border-radius-lg;
   padding: $spacing-lg;
   text-align: center;
 }
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid $gray-200;
-  border-top: 4px solid $primary;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: $spacing-md;
-}
 .error-container {
-  border-left: 4px solid $danger;
-  background-color: lighten($danger, 45%);
   color: darken($danger, 20%);
 }
 .error-container h3 { margin-top: 0; margin-bottom: $spacing-sm; }
 .error-container p { margin-bottom: $spacing-md; }
 .error-container span { font-size: $font-size-sm; color: $gray-600; }
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* [기능 복원] 이전 컨텐츠 접근 버튼 스타일 */
 .content-navigation {
   margin-top: $spacing-lg * 1.33; // 2rem
   padding-top: $spacing-md;

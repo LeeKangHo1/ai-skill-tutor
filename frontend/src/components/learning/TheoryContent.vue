@@ -2,10 +2,11 @@
 <template>
   <div v-if="theoryData" class="theory-content content-active">
     
-    <h3 class="theory-title">{{ theoryData.title }}</h3>
+    <h3 class="theory-title">{{ theoryData.title || theoryData.content?.title }}</h3>
 
-    <div v-if="theoryData.sections" class="theory-sections">
-      <div v-for="(section, index) in theoryData.sections" :key="index" class="theory-section" :class="`section-${section.type}`">
+    <!-- API 응답 구조: theoryData.content.sections 경로로 sections 접근 -->
+    <div v-if="theoryData.content?.sections" class="theory-sections">
+      <div v-for="(section, index) in theoryData.content.sections" :key="index" class="theory-section" :class="`section-${section.type}`">
 
         <div v-if="section.type === 'introduction'" class="introduction-section">
           <p class="introduction-text">{{ section.content }}</p>
@@ -43,51 +44,46 @@
       </div>
     </div>
 
+    <!-- sections가 없을 때 fallback - 단순 텍스트 표시 -->
     <div v-else class="theory-body">
-      <div class="theory-description">{{ theoryData.description || theoryData.content }}</div>
+      <div class="theory-description">{{ theoryData.description || theoryData.content || '이론 내용을 불러오는 중입니다.' }}</div>
     </div>
 
+  </div>
+
+  <!-- 이론 데이터가 없을 때 로딩 메시지 표시 -->
+  <div v-else class="loading-state">
+    <div class="loading-content">
+      <div class="loading-icon">📚</div>
+      <h3>이론 내용을 준비하고 있습니다...</h3>
+      <p>잠시만 기다려주세요.</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { watch } from 'vue'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
 
 // --- Store 직접 연결 ---
 const learningStore = useLearningStore()
-const { mainContent } = storeToRefs(learningStore)
+// 분리된 theoryData를 직접 구독
+const { theoryData } = storeToRefs(learningStore)
 
-console.log('[TheoryContent] 🟢 컴포넌트 초기화. Store와 연결되었습니다.')
-
-// --- Store 상태 기반 Computed 속성 ---
-const theoryData = computed(() => {
-  // store의 mainContent 상태가 'theory' 타입이고, 내부에 데이터가 있을 때만 값을 반환합니다.
-  if (mainContent.value?.type === 'theory' && mainContent.value?.data) {
-    // [수정] API 응답 형식에 맞춰 중첩된 content 객체를 바라보도록 수정
-    const contentPayload = mainContent.value.data.content
-    if (contentPayload && contentPayload.sections) {
-      console.log('[TheoryContent] 🧠 이론 데이터를 Store에서 가져옵니다 (중첩 구조).', contentPayload)
-      return contentPayload
-    }
-  }
-  
-  // 조건에 맞지 않으면 null을 반환하여 템플릿 렌더링을 막습니다.
-  console.log('[TheoryContent] ⚠️ 현재 컨텐츠가 이론 타입이 아니거나 데이터가 없습니다.')
-  return null
-})
+console.log('[TheoryContent] 🟢 컴포넌트 초기화. Store의 theoryData와 연결되었습니다.')
 
 // 디버깅용 감시자
 watch(theoryData, (newData) => {
   if (newData) {
-    console.log('[TheoryContent] 🔄 이론 데이터가 변경되어 화면을 다시 그립니다.')
+    console.log('[TheoryContent] 📄 이론 데이터가 변경되어 화면을 다시 그립니다.', newData)
+  } else {
+    console.log('[TheoryContent] ⏳ 이론 데이터가 없어 로딩 상태를 표시합니다.')
   }
-})
+}, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
-/* 스타일은 변경되지 않았으므로 그대로 유지합니다. */
 .theory-content {
   background: linear-gradient(135deg, lighten($primary, 40%), lighten($brand-purple, 40%));
   border-left: 4px solid $primary;
@@ -222,6 +218,49 @@ watch(theoryData, (newData) => {
   line-height: 1.6;
   color: $gray-700;
 }
+
+/* 로딩 상태 스타일 */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  background: linear-gradient(135deg, lighten($primary, 50%), lighten($brand-purple, 50%));
+  border: 1px solid rgba($primary, 0.2);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg * 2;
+}
+
+.loading-content {
+  text-align: center;
+  color: darken($primary, 10%);
+}
+
+.loading-icon {
+  font-size: 3rem;
+  margin-bottom: $spacing-md;
+  animation: pulse 2s infinite;
+}
+
+.loading-state h3 {
+  margin: 0 0 $spacing-sm 0;
+  font-size: $font-size-lg;
+  color: darken($primary, 15%);
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: $font-size-base;
+  color: darken($primary, 10%);
+  opacity: 0.8;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+}
+
 .content-active {
   display: block;
   animation: fadeIn 0.3s ease-in;
