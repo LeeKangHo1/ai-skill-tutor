@@ -15,6 +15,17 @@
     </div>
 
     <div class="chat-input-container">
+      <!-- 입력 힌트를 메시지 입력칸 위로 이동 -->
+      <div class="input-hints" v-if="showInputHints">
+        <div class="hint-item">
+          💡 <strong>팁:</strong> "다음"이라고 입력하면 퀴즈로 이동합니다.
+        </div>
+        <div class="hint-item">
+          🤔 <strong>질문:</strong> 학습 내용에 대해 궁금한 점을 자유롭게 물어보세요.
+        </div>
+      </div>
+
+
       <div class="quick-actions" v-if="showQuickActions">
         <button class="quick-action-btn" @click="handleRetryLearning" :disabled="!isFeedbackComplete">
           🔄 재학습
@@ -32,15 +43,6 @@
           :class="{ 'btn-disabled': !currentMessage.trim() }">
           전송
         </button>
-      </div>
-
-      <div class="input-hints" v-if="showInputHints">
-        <div class="hint-item">
-          💡 <strong>팁:</strong> "다음"이라고 입력하면 퀴즈로 이동합니다.
-        </div>
-        <div class="hint-item">
-          🤔 <strong>질문:</strong> 학습 내용에 대해 궁금한 점을 자유롭게 물어보세요.
-        </div>
       </div>
     </div>
 
@@ -207,10 +209,9 @@ onMounted(() => {
 .message-text { line-height: 1.5; word-wrap: break-word; }
 .message-timestamp { font-size: $font-size-sm * 0.85; color: $secondary; text-align: right; margin-top: $spacing-xs; }
 .chat-input-container { display: flex; flex-direction: column; gap: $spacing-md * 0.75; flex-shrink: 0; }
-.quick-actions { display: flex; gap: $spacing-sm; flex-wrap: wrap; }
-.quick-action-btn { padding: $spacing-sm $spacing-md * 0.75; background: $gray-100; border: 1px solid $gray-300; border-radius: $border-radius-pill; font-size: $font-size-sm; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
-.quick-action-btn:hover:not(:disabled) { background: $gray-200; border-color: $gray-500; transform: translateY(-1px); }
-.quick-action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.input-hints { background: $gray-100; border: 1px solid $gray-300; border-radius: $border-radius; padding: $spacing-md * 0.75; font-size: $font-size-sm; }
+.hint-item { margin-bottom: $spacing-sm; line-height: 1.4; color: $gray-700; }
+.hint-item:last-child { margin-bottom: 0; }
 .chat-input { display: flex; gap: $spacing-sm; align-items: flex-end; }
 .message-input { flex: 1; padding: $spacing-md * 0.75; border: 1px solid $gray-300; border-radius: $border-radius; font-size: $font-size-sm; line-height: 1.5; resize: none; min-height: 44px; max-height: 120px; transition: border-color 0.2s ease; }
 .message-input:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 2px rgba($primary, 0.25); }
@@ -218,11 +219,12 @@ onMounted(() => {
 .send-button { padding: $spacing-md * 0.75 $spacing-md; background: $primary; color: $white; border: none; border-radius: $border-radius; cursor: pointer; font-weight: 500; transition: all 0.2s ease; min-width: 60px; display: flex; align-items: center; justify-content: center; }
 .send-button:hover:not(:disabled) { background: darken($primary, 10%); transform: translateY(-1px); }
 .send-button:disabled, .send-button.btn-disabled { background: $gray-500; cursor: not-allowed; transform: none; }
+.quick-actions { display: flex; gap: $spacing-sm; flex-wrap: wrap; }
+.quick-action-btn { padding: $spacing-sm $spacing-md * 0.75; background: $gray-100; border: 1px solid $gray-300; border-radius: $border-radius-pill; font-size: $font-size-sm; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+.quick-action-btn:hover:not(:disabled) { background: $gray-200; border-color: $gray-500; transform: translateY(-1px); }
+.quick-action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .button-spinner { width: 16px; height: 16px; border: 2px solid transparent; border-top: 2px solid $white; border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.input-hints { background: $gray-100; border: 1px solid $gray-300; border-radius: $border-radius; padding: $spacing-md * 0.75; font-size: $font-size-sm; }
-.hint-item { margin-bottom: $spacing-sm; line-height: 1.4; color: $gray-700; }
-.hint-item:last-child { margin-bottom: 0; }
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba($black, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .modal-content { background: $white; border-radius: $border-radius-lg * 1.5; box-shadow: 0 10px 25px rgba($black, 0.15); max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease; }

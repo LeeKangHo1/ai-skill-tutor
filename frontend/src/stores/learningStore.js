@@ -229,7 +229,6 @@ export const useLearningStore = defineStore('learning', () => {
    */
   const _resetSessionState = () => {
     console.log('HELPER: _resetSessionState 호출됨')
-    chatHistory.value = []
     
     // 각각의 컨텐츠 데이터 초기화
     theoryData.value = null
@@ -242,6 +241,9 @@ export const useLearningStore = defineStore('learning', () => {
     contentMode.value = 'current'
     completedSteps.value = { theory: false, quiz: false, feedback: false }
     sessionCompleted.value = false
+
+    // 학습 시작 안내 메시지 추가
+    _addTutorMessage('🎓 학습을 시작합니다! 이론 내용을 불러오겠습니다.')
   }
 
   return {
