@@ -3,12 +3,13 @@
   <div v-if="quizData" class="quiz-content content-active">
     <div class="quiz-header">
       <h3>📝 퀴즈 문제</h3>
-      <div class="quiz-type-badge">{{ quizData.type === 'multiple_choice' ? '객관식' : '주관식' }}</div>
+      <div class="quiz-type-badge">{{ quizData.quiz_type === 'multiple_choice' ? '객관식' : '주관식' }}</div>
     </div>
     <div class="quiz-question-display">
       <p class="question-text"><strong>{{ quizData.question }}</strong></p>
       <div class="quiz-description">
         <p>💡 오른쪽 상호작용 영역에서 답변을 선택해주세요.</p>
+        <p>⚠️ 답변을 제출하기 전까지는 다른 내용을 볼 수 없습니다.</p>
       </div>
     </div>
   </div>

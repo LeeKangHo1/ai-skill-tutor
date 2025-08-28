@@ -1,0 +1,43 @@
+API 클라이언트 초기화 완료
+api.js:235 Base URL: http://localhost:5000/api/v1
+api.js:236 쿠키 전송 활성화: withCredentials = true
+2api.js:59 API 요청: GET /auth/me
+api.js:75 API 응답: 200 /auth/me
+authService.js:151 getCurrentUser - 원본 응답: Object
+authService.js:152 getCurrentUser - response.data: Object
+authService.js:153 getCurrentUser - response.data.success: true
+authService.js:154 getCurrentUser - response.data.data: Object
+authService.js:159 getCurrentUser - 사용할 사용자 데이터: Object
+api.js:59 API 요청: GET /system/version
+api.js:75 API 응답: 200 /auth/me
+authService.js:151 getCurrentUser - 원본 응답: Object
+authService.js:152 getCurrentUser - response.data: Object
+authService.js:153 getCurrentUser - response.data.success: true
+authService.js:154 getCurrentUser - response.data.data: Object
+authService.js:159 getCurrentUser - 사용할 사용자 데이터: Object
+index.js:169 페이지 이동: unknown → home
+api.js:75 API 응답: 200 /system/version
+index.js:169 페이지 이동: home → learning
+MainContentArea.vue:67 [MainContentArea] 🟢 컴포넌트 초기화. Store와 직접 연결되었습니다.
+TheoryContent.vue:62 [TheoryContent] 🟢 컴포넌트 초기화. Store와 연결되었습니다.
+TheoryContent.vue:77 [TheoryContent] ⚠️ 현재 컨텐츠가 이론 타입이 아니거나 데이터가 없습니다.
+ChatInteraction.vue:99 [ChatInteraction] 🟢 컴포넌트 초기화. Store와 연결되었습니다.
+learningStore.js:75 ACTION: startNewSession 호출됨
+learningStore.js:232 HELPER: _resetSessionState 호출됨
+prepare.js:1 🍍 "learning" store installed 🆕
+api.js:59 API 요청: POST /learning/session/start
+api.js:75 API 응답: 200 /learning/session/start
+learningStore.js:91 ✅ 세션 시작 API 성공 {data: {…}, message: '학습 세션이 시작되었습니다.', success: true}
+learningStore.js:168 HELPER: _processWorkflowResponse 처리 시작 {content: {…}, current_agent: 'theory_educator', session_progress_stage: 'theory_completed', ui_mode: 'chat'}
+ChatInteraction.vue:99 [ChatInteraction] 🟢 컴포넌트 초기화. Store와 연결되었습니다.
+TheoryContent.vue:62 [TheoryContent] 🟢 컴포넌트 초기화. Store와 연결되었습니다.
+TheoryContent.vue:71 [TheoryContent] 🧠 이론 데이터를 Store에서 가져옵니다 (중첩 구조). Proxy(Object) {chapter_info: '📚 1-1', sections: Array(3), title: '글자로 그림을? 이미지 생성 프롬프트 맛보기 🎨'}
+ChatInteraction.vue:133 [ChatInteraction] 📤 메시지 전송. Store 액션을 호출합니다.
+learningStore.js:107 ACTION: sendMessage 호출됨 (Mode: chat) {message: '다음'}
+api.js:59 API 요청: POST /learning/session/message
+api.js:75 API 응답: 200 /learning/session/message
+learningStore.js:118 ✅ 메시지/답변 API 성공 {data: {…}, message: '메시지가 처리되었습니다.', success: true}
+learningStore.js:168 HELPER: _processWorkflowResponse 처리 시작 {content: {…}, current_agent: 'quiz_generator', session_progress_stage: 'theory_completed', ui_mode: 'quiz'}
+LearningPage.vue:68 [LearningPage] 🔄 UI 모드 변경 감지: chat -> quiz
+QuizInteraction.vue:74 [QuizInteraction] 🟢 컴포넌트 초기화. Store와 연결되었습니다.
+QuizContent.vue:32 [QuizContent] 🟢 컴포넌트 초기화. Store와 연결되었습니다.
