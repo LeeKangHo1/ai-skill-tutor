@@ -165,73 +165,11 @@ class DashboardService {
   }
 
   /**
-   * 대시보드 데이터 캐싱 (옵션)
-   */
-  async getDashboardDataWithCache(forceRefresh = false) {
-    const cacheKey = 'dashboard_data'
-    const cacheTimeout = 5 * 60 * 1000 // 5분
-
-    // 강제 새로고침이 아니고 캐시가 유효한 경우
-    if (!forceRefresh) {
-      const cachedData = this.getCachedData(cacheKey, cacheTimeout)
-      if (cachedData) {
-        return cachedData
-      }
-    }
-
-    // 새 데이터 조회
-    const freshData = await this.getDashboardOverview()
-    
-    // 캐시 저장
-    this.setCachedData(cacheKey, freshData)
-    
-    return freshData
-  }
-
-  /**
-   * 캐시 데이터 조회
-   */
-  getCachedData(key, timeout) {
-    try {
-      const cached = localStorage.getItem(key)
-      if (!cached) return null
-
-      const { data, timestamp } = JSON.parse(cached)
-      
-      // 캐시 만료 확인
-      if (Date.now() - timestamp > timeout) {
-        localStorage.removeItem(key)
-        return null
-      }
-
-      return data
-    } catch (error) {
-      console.warn('캐시 데이터 조회 실패:', error)
-      return null
-    }
-  }
-
-  /**
-   * 캐시 데이터 저장
-   */
-  setCachedData(key, data) {
-    try {
-      const cacheData = {
-        data,
-        timestamp: Date.now()
-      }
-      localStorage.setItem(key, JSON.stringify(cacheData))
-    } catch (error) {
-      console.warn('캐시 데이터 저장 실패:', error)
-    }
-  }
-
-  /**
    * 대시보드 데이터 종합 처리 (백엔드 계산 결과 + UI 포맷팅)
    */
-  async getFormattedDashboardData(forceRefresh = false) {
+  async getFormattedDashboardData() {
     try {
-      const response = await this.getDashboardDataWithCache(forceRefresh)
+      const response = await this.getDashboardOverview()
       
       if (!response.success) {
         throw new Error('대시보드 데이터 조회 실패')

@@ -38,7 +38,7 @@ export const useDashboardStore = defineStore('dashboard', {
     // 챕터별 상태
     chapterStatus: [],
 
-    // 로딩 상태
+    // 로딩 상태 (✅ 더 엄격한 관리)
     isLoading: false,
     isRefreshing: false,
 
@@ -93,16 +93,11 @@ export const useDashboardStore = defineStore('dashboard', {
 
   actions: {
     /**
-     * 대시보드 데이터 초기화
+     * 대시보드 데이터 초기화 (항상 최신 데이터 로드)
      */
     async initialize() {
-      if (this.isInitialized) {
-        return // 이미 초기화된 경우 스킵
-      }
-
-      this.isLoading = true
+      this.isLoading = true // ✅ 초기화 시작 시 로딩 활성화
       this.error = null
-
       try {
         await this.fetchDashboardData()
         this.isInitialized = true
@@ -110,22 +105,26 @@ export const useDashboardStore = defineStore('dashboard', {
         console.error('대시보드 초기화 실패:', error)
         this.handleError(error)
       } finally {
-        this.isLoading = false
+        this.isLoading = false // ✅ 성공/실패 관계없이 로딩 비활성화
       }
     },
 
     /**
-     * 대시보드 데이터 조회
+     * 대시보드 데이터 조회 (캐싱 로직 제거됨)
      */
-    async fetchDashboardData(forceRefresh = false) {
+    async fetchDashboardData() {
       // 새로고침 중이면 중복 요청 방지
-      if (this.isRefreshing && !forceRefresh) return
+      if (this.isRefreshing) return
 
+      // ✅ API 호출 시작 시 로딩 상태 설정
+      if (!this.isLoading) {
+        this.isLoading = true
+      }
       this.isRefreshing = true
       this.error = null
 
       try {
-        const response = await dashboardService.getFormattedDashboardData(forceRefresh)
+        const response = await dashboardService.getFormattedDashboardData()
 
         if (response.success) {
           this.updateDashboardData(response.data)
@@ -139,6 +138,10 @@ export const useDashboardStore = defineStore('dashboard', {
         throw error
       } finally {
         this.isRefreshing = false
+        // ✅ API 응답 완료 후 로딩 비활성화 (initialize에서 관리하지 않는 경우만)
+        if (this.isInitialized) {
+          this.isLoading = false
+        }
       }
     },
 
@@ -168,14 +171,13 @@ export const useDashboardStore = defineStore('dashboard', {
      * 데이터 새로고침
      */
     async refreshData() {
-      this.isLoading = true
-
+      this.isLoading = true // ✅ 새로고침 시 로딩 활성화
       try {
-        await this.fetchDashboardData(true) // 강제 새로고침
+        await this.fetchDashboardData()
       } catch (error) {
         console.error('데이터 새로고침 실패:', error)
       } finally {
-        this.isLoading = false
+        this.isLoading = false // ✅ 새로고침 완료 후 로딩 비활성화
       }
     },
 
@@ -210,7 +212,7 @@ export const useDashboardStore = defineStore('dashboard', {
 
       // 서버에서 최신 데이터 조회
       try {
-        await this.fetchDashboardData(true)
+        await this.fetchDashboardData()
       } catch (error) {
         console.warn('학습 후 대시보드 업데이트 실패:', error)
       }
@@ -274,6 +276,9 @@ export const useDashboardStore = defineStore('dashboard', {
       this.error = null
       this.lastUpdated = null
       this.isInitialized = false
+      // ✅ 로딩 상태도 초기화
+      this.isLoading = false
+      this.isRefreshing = false
     },
 
     /**
@@ -289,6 +294,7 @@ export const useDashboardStore = defineStore('dashboard', {
       this.autoRefreshInterval = setInterval(async () => {
         if (!this.isLoading && !this.isRefreshing) {
           try {
+            // ✅ 자동 새로고침은 백그라운드에서 진행 (로딩 인디케이터 표시 안 함)
             await this.fetchDashboardData()
           } catch (error) {
             console.warn('자동 새로고침 실패:', error)

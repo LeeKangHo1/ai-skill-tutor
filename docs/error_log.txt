@@ -1,0 +1,12 @@
+페이지 이동: home → dashboard
+chunk-FIAHBV72.js?v=c461d0e5:2142 [Vue warn]: Unhandled error during execution of setup function 
+  at <DashboardPage onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< null > > 
+  at <RouterView > 
+  at <App>
+chunk-FIAHBV72.js?v=c461d0e5:2142 [Vue warn]: Unhandled error during execution of component update 
+  at <RouterView > 
+  at <App>
+index.js:174 라우터 에러: TypeError: Cannot read properties of null (reading 'effect')
+    at setup (DashboardPage.vue:169:9)
+pinia.js?v=c461d0e5:5849 Uncaught (in promise) TypeError: Cannot read properties of null (reading 'effect')
+    at setup (DashboardPage.vue:169:9)

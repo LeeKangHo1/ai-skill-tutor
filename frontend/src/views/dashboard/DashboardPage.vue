@@ -1,9 +1,9 @@
 <!-- frontend/src/views/dashboard/DashboardPage.vue -->
-<!-- 대시보드 페이지 - 리팩터링 완료 -->
+<!-- 대시보드 페이지 - 로딩 조건 개선 -->
  
 <template>
   <div class="dashboard-page">
-    <div v-if="isLoading && !isInitialized" class="loading-overlay">
+    <div v-if="dashboardStore.isLoading" class="loading-overlay">
       <div class="loading-spinner">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">대시보드 로딩 중...</span>
@@ -28,22 +28,22 @@
           <div class="header-actions">
             <button
               @click="refreshDashboard"
-              :disabled="isRefreshing"
+              :disabled="dashboardStore.isRefreshing"
               class="refresh-btn"
             >
-              <i class="fas fa-sync-alt" :class="{ 'fa-spin': isRefreshing }"></i>
-              {{ isRefreshing ? '새로고침 중...' : '새로고침' }}
+              <i class="fas fa-sync-alt" :class="{ 'fa-spin': dashboardStore.isRefreshing }"></i>
+              {{ dashboardStore.isRefreshing ? '새로고침 중...' : '새로고침' }}
             </button>
           </div>
         </div>
       </div>
 
       <!-- 에러 알림 -->
-      <div v-if="error" class="error-alert">
+      <div v-if="dashboardStore.error" class="error-alert">
         <div class="alert alert-danger">
           <i class="fas fa-exclamation-triangle"></i>
           <div class="error-content">
-            <strong>오류 발생:</strong> {{ error.message }}
+            <strong>오류 발생:</strong> {{ dashboardStore.error.message }}
             <button @click="clearError" class="error-close">
               <i class="fas fa-times"></i>
             </button>
@@ -52,7 +52,7 @@
       </div>
 
       <!-- 학습 현황 요약 -->
-      <div v-if="dashboardData" class="learning-overview">
+      <div v-if="!dashboardStore.isLoading" class="learning-overview">
         <div class="overview-grid">
           <!-- 진행률 카드 -->
           <div class="overview-card progress-card">
@@ -65,13 +65,13 @@
             <div class="card-body">
               <div class="progress-info">
                 <div class="current-chapter">
-                  <span class="chapter-label">{{ dashboardData.userProgress.current_chapter }}챕터</span>
-                  <span class="section-label">{{ dashboardData.userProgress.current_section }}섹션</span>
+                  <span class="chapter-label">{{ dashboardStore.userProgress.current_chapter }}챕터</span>
+                  <span class="section-label">{{ dashboardStore.userProgress.current_section }}섹션</span>
                 </div>
                 <div class="progress-percentage">
-                  <div class="percentage-circle" :style="{'--percentage': dashboardData.userProgress.completion_percentage + '%'}">
+                  <div class="percentage-circle" :style="{'--percentage': dashboardStore.userProgress.completion_percentage + '%'}">
                     <div class="percentage-text">
-                      {{ dashboardData.userProgress.formatted_completion_percentage }}
+                      {{ dashboardStore.userProgress.formatted_completion_percentage }}
                     </div>
                   </div>
                 </div>
@@ -80,7 +80,7 @@
                 <div class="progress-bar">
                   <div
                     class="progress-fill"
-                    :style="{ width: dashboardData.userProgress.formatted_completion_percentage }"
+                    :style="{ width: dashboardStore.userProgress.formatted_completion_percentage }"
                   ></div>
                 </div>
                 <span class="progress-label">전체 진행률</span>
@@ -99,25 +99,25 @@
             <div class="card-body">
               <div class="stats-grid">
                 <div class="stat-item">
-                  <div class="stat-value">{{ dashboardData.learningStatistics.formatted_study_time }}</div>
+                  <div class="stat-value">{{ dashboardStore.learningStatistics.formatted_study_time }}</div>
                   <div class="stat-label">총 학습시간</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-value">{{ dashboardData.learningStatistics.total_study_sessions }}회</div>
+                  <div class="stat-value">{{ dashboardStore.learningStatistics.total_study_sessions }}회</div>
                   <div class="stat-label">학습 세션</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-value">{{ dashboardData.learningStatistics.formatted_multiple_choice_accuracy }}</div>
+                  <div class="stat-value">{{ dashboardStore.learningStatistics.formatted_multiple_choice_accuracy }}</div>
                   <div class="stat-label">객관식 정답률</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-value">{{ dashboardData.learningStatistics.formatted_subjective_average_score }}</div>
+                  <div class="stat-value">{{ dashboardStore.learningStatistics.formatted_subjective_average_score }}</div>
                   <div class="stat-label">주관식 평균</div>
                 </div>
               </div>
-              <div v-if="dashboardData.learningStatistics.formatted_last_study_date" class="last-study">
+              <div v-if="dashboardStore.learningStatistics.formatted_last_study_date" class="last-study">
                 <i class="fas fa-calendar-alt"></i>
-                마지막 학습: {{ dashboardData.learningStatistics.formatted_last_study_date }}
+                마지막 학습: {{ dashboardStore.learningStatistics.formatted_last_study_date }}
               </div>
             </div>
           </div>
@@ -126,12 +126,12 @@
 
       <!-- 챕터 섹션 -->
       <ChapterSection
-        v-if="dashboardData"
-        :chapter-status="dashboardData.chapterStatus"
-        :current-chapter="dashboardData.userProgress.current_chapter"
-        :current-section="dashboardData.userProgress.current_section"
-        :completed-count="dashboardData.completedChaptersCount"
-        :total-count="dashboardData.totalChaptersCount"
+        v-if="!dashboardStore.isLoading"
+        :chapter-status="dashboardStore.chapterStatus"
+        :current-chapter="dashboardStore.userProgress.current_chapter"
+        :current-section="dashboardStore.userProgress.current_section"
+        :completed-count="dashboardStore.completedChaptersCount"
+        :total-count="dashboardStore.totalChaptersCount"
         @start-learning="goToLearningPage"
       />
     </div>
@@ -139,10 +139,9 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted, nextTick, watchEffect } from 'vue'
+import { onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardStore } from '../../stores/dashboardStore'
-import { useAuthStore } from '../../stores/authStore'
 import ChapterSection from '../../components/dashboard/ChapterSection.vue'
 
 export default {
@@ -155,122 +154,38 @@ export default {
   setup() {
     const router = useRouter()
     const dashboardStore = useDashboardStore()
-    const authStore = useAuthStore()
 
-    // 로컬 상태
-    const isLoading = ref(true)
-    const isRefreshing = ref(false)
-    const error = ref(null)
-    const isInitialized = ref(false)
-    const dashboardData = ref(null)
-
-    // 스토어 상태 안전하게 접근하기 위한 computed
-    const safeStoreData = computed(() => {
-      try {
-        if (!dashboardStore) return null
-        
-        return {
-          userProgress: dashboardStore.userProgress || {},
-          learningStatistics: dashboardStore.learningStatistics || {},
-          chapterStatus: dashboardStore.chapterStatus || [],
-          completedChaptersCount: dashboardStore.completedChaptersCount || 0,
-          totalChaptersCount: dashboardStore.totalChaptersCount || 0
-        }
-      } catch (err) {
-        console.error('스토어 데이터 접근 오류:', err)
-        return null
-      }
-    })
-
-    // watchEffect로 스토어 데이터 변화 감지
-    watchEffect(() => {
-      const storeData = safeStoreData.value
-      if (storeData && storeData.userProgress && Object.keys(storeData.userProgress).length > 0) {
-        dashboardData.value = storeData
-        isLoading.value = false
-      }
-    })
+    // storeToRefs를 사용하지 않고, 스토어 인스턴스 자체를 템플릿에서 사용합니다.
 
     // 메서드들
     const refreshDashboard = async () => {
-      try {
-        isRefreshing.value = true
-        error.value = null
-        
-        if (dashboardStore && typeof dashboardStore.refreshData === 'function') {
-          await dashboardStore.refreshData()
-        }
-      } catch (err) {
-        console.error('대시보드 새로고침 실패:', err)
-        error.value = { message: err.message || '대시보드를 새로고침할 수 없습니다.' }
-      } finally {
-        isRefreshing.value = false
-      }
+      await dashboardStore.refreshData()
     }
 
     const clearError = () => {
-      error.value = null
-      if (dashboardStore && typeof dashboardStore.clearError === 'function') {
-        dashboardStore.clearError()
-      }
+      dashboardStore.clearError()
     }
 
     const goToLearningPage = () => {
       router.push('/learning')
     }
 
-    // 안전한 초기화 함수
-    const initializeDashboard = async () => {
-      try {
-        isLoading.value = true
-        error.value = null
-        
-        // 스토어가 존재하고 초기화 메서드가 있는지 확인
-        if (dashboardStore && typeof dashboardStore.initialize === 'function') {
-          await dashboardStore.initialize()
-          
-          // 자동 새로고침 시작
-          if (typeof dashboardStore.startAutoRefresh === 'function') {
-            dashboardStore.startAutoRefresh(10)
-          }
-        } else {
-          throw new Error('대시보드 스토어가 초기화되지 않았습니다.')
-        }
-        
-        isInitialized.value = true
-      } catch (err) {
-        console.error('대시보드 초기화 실패:', err)
-        error.value = { message: err.message || '대시보드를 초기화할 수 없습니다.' }
-        isLoading.value = false
-      }
-    }
-
     // 컴포넌트 라이프사이클
     onMounted(async () => {
       await nextTick()
-      await initializeDashboard()
+      await dashboardStore.initialize()
+      dashboardStore.startAutoRefresh(10)
     })
 
     onUnmounted(() => {
-      try {
-        // 자동 새로고침 중지
-        if (dashboardStore && typeof dashboardStore.stopAutoRefresh === 'function') {
-          dashboardStore.stopAutoRefresh()
-        }
-      } catch (err) {
-        console.error('컴포넌트 정리 중 오류:', err)
-      }
+      dashboardStore.stopAutoRefresh()
     })
 
     return {
-      // 상태
-      isLoading,
-      isRefreshing,
-      error,
-      isInitialized,
-      dashboardData,
-      
-      // 메서드
+      // 템플릿에서 스토어의 상태와 getter에 접근할 수 있도록 인스턴스를 반환합니다.
+      dashboardStore,
+
+      // 템플릿에서 사용할 수 있도록 메서드를 반환합니다.
       refreshDashboard,
       clearError,
       goToLearningPage
