@@ -8,4 +8,9 @@ from .start import session_start_bp
 from .message import session_message_bp
 from .complete import session_complete_bp
 
-__all__ = ['session_start_bp', 'session_message_bp', 'session_complete_bp']
+from .message_qna import message_qna_bp  # ← 추가
+from .qna_stream import qna_stream_bp
+
+
+__all__ = ['session_start_bp', 'session_message_bp', 'message_qna_bp', 'session_complete_bp', 'qna_stream_bp']  # ← message_qna_bp 추가
+# __all__ = ['session_start_bp', 'session_message_bp', 'session_complete_bp']

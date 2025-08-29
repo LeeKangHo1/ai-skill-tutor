@@ -100,6 +100,11 @@ def register_blueprints(app):
     app.register_blueprint(quiz_submit_bp, url_prefix='/api/v1/learning/quiz')
     app.register_blueprint(session_complete_bp, url_prefix='/api/v1/learning/session')
 
+    from .routes.learning.session.message_qna import message_qna_bp
+    app.register_blueprint(message_qna_bp, url_prefix='/api/v1/learning')
+    from .routes.learning.session.qna_stream import qna_stream_bp
+    app.register_blueprint(qna_stream_bp, url_prefix='/api/v1/learning')
+
     # 대시보드 관련 Blueprint들 등록
     from .routes.dashboard.overview import overview_bp
     app.register_blueprint(overview_bp, url_prefix='/api/v1/dashboard')

@@ -81,14 +81,17 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, nextTick, watch, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLearningStore } from '@/stores/learningStore'
 import { storeToRefs } from 'pinia'
+
+// formatMessage 함수 - 마크다운 제거
 const formatMessage = (text) => {
   if (!text) return '';
-  // ##, ** 와 같은 마크다운 문자를 제거합니다.
+  // ## 과 ** 마크다운 문자를 제거합니다.
   return text.replace(/##\s?/g, '').replace(/\*\*/g, '');
 };
 
@@ -115,11 +118,92 @@ const isTutorReplying = computed(() =>
   chatHistory.value.some(message => message.type === 'loading')
 )
 
-const sendMessage = () => {
+// 임시 테스트용 sendMessage 함수 (QnA API 직접 호출)
+const sendMessage = async () => {
   const message = currentMessage.value.trim()
   if (!message) return
-  console.log('[ChatInteraction] 📤 메시지 전송. Store 액션을 호출합니다.')
-  learningStore.sendMessage(message)
+  
+  console.log('[ChatInteraction] 📤 QnA 테스트 메시지 전송. 임시 API 호출합니다.')
+  
+  // 사용자 메시지를 채팅 기록에 추가
+  chatHistory.value.push({ 
+    sender: '나', 
+    message, 
+    type: 'user', 
+    timestamp: Date.now() 
+  })
+  
+  // 로딩 메시지 추가
+  const loadingMessage = {
+    id: `loading-${Date.now()}`,
+    sender: '튜터',
+    message: '...',
+    type: 'loading',
+    timestamp: Date.now()
+  };
+  chatHistory.value.push(loadingMessage)
+  
+  try {
+    // 임시: 직접 API 호출 (learningStore 우회)
+    const response = await fetch('/api/v1/learning/message-qna', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+      },
+      body: JSON.stringify({
+        user_message: message
+      })
+    })
+    
+    const result = await response.json()
+    
+    // 로딩 메시지 제거
+    const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessage.id)
+    if (loadingIndex !== -1) {
+      chatHistory.value.splice(loadingIndex, 1)
+    }
+    
+    if (result.success && result.data?.workflow_response?.content) {
+      const content = result.data.workflow_response.content
+      
+      if (content.type === 'qna') {
+        // QnA 응답을 채팅에 추가
+        chatHistory.value.push({
+          sender: '튜터',
+          message: formatMessage(content.answer), // 마크다운 제거
+          type: 'qna',
+          timestamp: Date.now()
+        })
+        console.log('[ChatInteraction] ✅ QnA 응답 표시 완료')
+      } else {
+        console.warn('[ChatInteraction] ⚠️ 예상하지 못한 content type:', content.type)
+      }
+    } else {
+      console.error('[ChatInteraction] ❌ API 응답 오류:', result)
+      chatHistory.value.push({
+        sender: '튜터',
+        message: '죄송합니다. 응답 처리 중 오류가 발생했습니다.',
+        type: 'system',
+        timestamp: Date.now()
+      })
+    }
+  } catch (error) {
+    // 로딩 메시지 제거
+    const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessage.id)
+    if (loadingIndex !== -1) {
+      chatHistory.value.splice(loadingIndex, 1)
+    }
+    
+    console.error('[ChatInteraction] ❌ API 호출 실패:', error)
+    chatHistory.value.push({
+      sender: '튜터',
+      message: '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+      type: 'system',
+      timestamp: Date.now()
+    })
+  }
+  
   currentMessage.value = ''
   nextTick(() => messageInputRef.value?.focus())
 }
