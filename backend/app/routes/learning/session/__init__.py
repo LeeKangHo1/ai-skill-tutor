@@ -8,7 +8,6 @@ from .start import session_start_bp
 from .message import session_message_bp
 from .complete import session_complete_bp
 
-from .message_qna import message_qna_bp  # ← 추가
 from .qna_stream import qna_stream_bp
 
 

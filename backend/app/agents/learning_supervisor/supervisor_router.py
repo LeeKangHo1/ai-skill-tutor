@@ -29,6 +29,11 @@ def supervisor_router(state: TutorState) -> str:
         print(f"[Router] - user_intent: '{user_intent}'")
         print(f"[Router] - session_stage: '{session_stage}'")
         print(f"[Router] - session_decision: '{session_decision}'")
+
+        # === 🚀 NEW: 스트리밍 질문 처리 ===
+        if user_intent == "question_streaming":
+            print("[Router] → learning_supervisor_output (스트리밍 질문 - 워크플로우 우회)")
+            return "learning_supervisor_output"
         
         # 1. 퀴즈 답변 처리 (의도 분석 없이 바로 평가로)
         if user_intent == "quiz_answer":

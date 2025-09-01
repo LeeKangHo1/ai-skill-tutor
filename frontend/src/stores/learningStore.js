@@ -85,11 +85,73 @@ export const useLearningStore = defineStore('learning', () => {
     chatHistory.value.push({ sender: '나', message, type: 'user', timestamp: Date.now() })
     
     if (isChatMode.value && sessionProgressStage.value !== 'session_start') {
-      await startQnAStreaming(message);
+        // === 🚀 MODIFIED: 일반 워크플로우 요청 후 스트리밍 응답 확인 ===
+        const result = await learningService.sendSessionMessage(message);
+        
+        if (result.success && result.data?.data?.workflow_response?.temp_session_id) {
+            // 스트리밍 응답인 경우 자동으로 스트리밍 시작
+            const tempId = result.data.data.workflow_response.temp_session_id;
+            console.log('🚀 스트리밍 tempId 감지:', tempId);
+            await _startStreamingWithTempId(tempId, message);
+        } else {
+            // 일반 응답 처리 (기존 QnA Resolver 등)
+            if (result.success && result.data?.data?.workflow_response) {
+                _processWorkflowResponse(result.data.data.workflow_response);
+            } else {
+                const errorMessage = result.error?.message || '알 수 없는 오류';
+                apiError.value = { message: `요청 처리 실패: ${errorMessage}` };
+                _addTutorMessage(`오류: ${errorMessage}`, 'system');
+            }
+        }
     } else {
-      await _proceedWorkflow(message);
+        await _proceedWorkflow(message);
     }
   }
+
+  const _startStreamingWithTempId = async (tempId, userMessage) => {
+    if (streamingQnA.value.isStreaming) return;
+    
+    const streamMessageId = `streaming-${Date.now()}`;
+    streamingQnA.value = {
+        isStreaming: true,
+        content: '',
+        messageId: streamMessageId,
+        eventSource: null,
+    };
+    
+    chatHistory.value.push({
+        id: streamMessageId,
+        sender: '튜터',
+        message: '',
+        type: 'qna-streaming',
+        timestamp: Date.now(),
+    });
+
+    try {
+        // 🚀 기존 startQnAStreaming 로직과 동일하지만 tempId를 직접 사용
+        streamingStartTime = performance.now();
+
+        const eventSource = learningService.connectQnAStream({
+            tempId, // 이미 생성된 tempId 사용
+            onMessage: (data) => {
+                _handleStreamMessage(data);
+            },
+            onError: (error) => {
+                console.error("SSE Error:", error);
+                _stopStreaming('스트리밍 중 오류가 발생했습니다.');
+            },
+            onClose: () => {
+                _stopStreaming();
+            }
+        });
+        
+        streamingQnA.value.eventSource = eventSource;
+
+    } catch (error) {
+        console.error("Error starting QnA stream with tempId:", error);
+        _stopStreaming(error.message || '스트리밍 연결에 실패했습니다.');
+    }
+};
 
   const startQnAStreaming = async (userMessage) => {
     if (streamingQnA.value.isStreaming) return;

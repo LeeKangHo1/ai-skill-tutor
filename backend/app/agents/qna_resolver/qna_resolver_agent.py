@@ -92,6 +92,127 @@ class QnAResolverAgent:
                 message_type="system"
             )
             return error_state
+        
+    # === 🚀 NEW METHOD: 스트리밍용 State 관리 ===
+    def process_streaming_state(self, temp_session_data: dict) -> dict:
+        """
+        스트리밍용 State 관리 전용 메서드
+        - 실제 스트리밍은 qna_stream.py가 처리
+        - State 업데이트만 담당 (대화 기록, 에이전트 전환, draft 업데이트)
+        
+        Args:
+            temp_session_data: qna_stream.py에서 전달받은 세션 데이터
+            
+        Returns:
+            업데이트된 state 정보
+        """
+        try:
+            print(f"[{self.agent_name}] 스트리밍용 State 관리 시작")
+            
+            # 1. 원본 State 복원
+            original_state = temp_session_data.get("original_state", {})
+            user_message = temp_session_data.get("user_message", "")
+            
+            print(f"[{self.agent_name}] 스트리밍 질문: '{user_message}'")
+            
+            # 2. State 업데이트 - 에이전트 draft는 스트리밍 완료 후 업데이트 예정
+            updated_state = state_manager.update_agent_transition(
+                original_state,
+                self.agent_name
+            )
+            
+            # 3. 대화 기록 추가 - 스트리밍 시작 로그
+            updated_state = state_manager.add_conversation(
+                updated_state,
+                agent_name=self.agent_name,
+                message=f"QnA 스트리밍 시작 - 질문: '{user_message[:50]}{'...' if len(user_message) > 50 else ''}'",
+                message_type="system"
+            )
+            
+            # # 4. 스트리밍 진행 상황을 위한 임시 draft 설정 (선택적)
+            # updated_state = state_manager.update_agent_draft(
+            #     updated_state,
+            #     self.agent_name,
+            #     f"스트리밍 답변 생성 중... (질문: {user_message})"
+            # )
+            
+            print(f"[{self.agent_name}] 스트리밍용 State 관리 완료")
+            
+            return {
+                "success": True,
+                "state": updated_state,
+                "message": "QnA 스트리밍 State 업데이트 완료"
+            }
+            
+        except Exception as e:
+            print(f"[{self.agent_name}] 스트리밍 State 관리 오류: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "QnA 스트리밍 State 관리 실패"
+            }
+    
+    # === 🚀 NEW METHOD: 스트리밍 완료 후 State 최종 업데이트 ===
+    def finalize_streaming_state(self, temp_session_data: dict, final_qna_response: str) -> dict:
+        """
+        스트리밍 완료 후 State 최종 업데이트
+        - 완성된 QnA 답변을 draft에 저장
+        - 최종 대화 기록 추가
+        
+        Args:
+            temp_session_data: 세션 데이터
+            final_qna_response: 완성된 QnA 답변
+            
+        Returns:
+            최종 업데이트된 state 정보
+        """
+        try:
+            print(f"[{self.agent_name}] 스트리밍 완료 후 State 최종 업데이트 시작")
+            
+            # 1. 원본 State 복원
+            original_state = temp_session_data.get("original_state", {})
+            user_message = temp_session_data.get("user_message", "")
+            
+            # 2. 최종 QnA 답변을 draft에 업데이트
+            updated_state = state_manager.update_agent_draft(
+                original_state,
+                self.agent_name,
+                final_qna_response
+            )
+            
+            # 3. 에이전트 전환 정보 업데이트
+            updated_state = state_manager.update_agent_transition(
+                updated_state,
+                self.agent_name
+            )
+            
+            # 4. 최종 대화 기록 추가
+            updated_state = state_manager.add_conversation(
+                updated_state,
+                agent_name=self.agent_name,
+                message=f"QnA 스트리밍 완료 - 답변 길이: {len(final_qna_response)}자",
+                message_type="system"
+            )
+            
+            # 5. 대화 로그 저장
+            from app.utils.common.chat_logger import chat_logger
+            chat_logger.save_session_log(updated_state, session_complete=False)
+            
+            print(f"[{self.agent_name}] 스트리밍 완료 후 State 최종 업데이트 완료")
+            
+            return {
+                "success": True,
+                "state": updated_state,
+                "message": "QnA 스트리밍 최종 State 업데이트 완료"
+            }
+            
+        except Exception as e:
+            print(f"[{self.agent_name}] 스트리밍 최종 State 업데이트 오류: {str(e)}")
+            return {
+                "success": False,
+                "error": str(e),
+                "message": "QnA 스트리밍 최종 State 업데이트 실패"
+            }
     
     def _extract_latest_user_message(self, state: TutorState) -> str:
         """

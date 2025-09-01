@@ -1,9 +1,11 @@
-# backend/app/tools/external/vector_search_tools_fixed.py
+# backend/app/tools/external/vector_search_tools.py
 
 import logging
 import os
 from typing import List, Dict, Any
 from chromadb.utils import embedding_functions
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from app.core.external.chroma_client import get_chroma_client
 
@@ -326,6 +328,161 @@ def _search_other_chunks(collection, chapter: int, section: int) -> List[Dict[st
     except Exception as e:
         logging.getLogger(__name__).error(f"기타 청크 검색 실패: {str(e)}")
         return []
+
+def search_qna_materials_parallel(search_queries: List[str]) -> List[Dict]:
+    """
+    병렬 벡터 검색 실행 및 결과 통합 (동기 버전)
+    
+    Args:
+        search_queries: 검색 쿼리 리스트 (최대 3개)
+        
+    Returns:
+        통합된 벡터 검색 결과 리스트
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"병렬 벡터 검색 시작 - 쿼리 {len(search_queries)}개")
+        
+        # ThreadPoolExecutor를 사용한 병렬 실행
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # 최대 3개 쿼리로 제한
+            limited_queries = search_queries[:3]
+            
+            # 병렬 검색 실행
+            future_to_query = {
+                executor.submit(search_qna_materials, query): query 
+                for query in limited_queries
+            }
+            
+            # 결과 수집
+            all_results = []
+            for future in future_to_query:
+                query = future_to_query[future]
+                try:
+                    results = future.result(timeout=10)  # 10초 타임아웃
+                    if results:
+                        all_results.extend(results)
+                        logger.info(f"쿼리 '{query}' 검색 완료: {len(results)}개 결과")
+                except Exception as e:
+                    logger.warning(f"쿼리 '{query}' 검색 실패: {str(e)}")
+        
+        # 결과 통합 및 중복 제거
+        combined_results = _combine_and_deduplicate_results(all_results)
+        
+        logger.info(f"병렬 벡터 검색 완료 - 총 {len(combined_results)}개 결과")
+        return combined_results
+        
+    except Exception as e:
+        logger.error(f"병렬 벡터 검색 실패: {str(e)}")
+        # 오류 시 첫 번째 쿼리로 단일 검색
+        if search_queries:
+            logger.info(f"단일 검색으로 폴백: '{search_queries[0]}'")
+            return search_qna_materials(search_queries[0])
+        return []
+
+
+def _combine_and_deduplicate_results(all_results: List[Dict]) -> List[Dict]:
+    """
+    벡터 검색 결과 통합 및 중복 제거
+    
+    Args:
+        all_results: 여러 검색 결과의 합집합
+        
+    Returns:
+        중복 제거된 상위 결과 리스트
+    """
+    if not all_results:
+        return []
+    
+    # 중복 제거 (내용 기준)
+    seen_contents = set()
+    unique_results = []
+    
+    for result in all_results:
+        content = result.get('content', '')
+        if content and content not in seen_contents:
+            seen_contents.add(content)
+            unique_results.append(result)
+    
+    # 유사도 점수 기준 정렬 (상위 5개만)
+    unique_results.sort(
+        key=lambda x: x.get('similarity_score', x.get('content_quality_score', 0)), 
+        reverse=True
+    )
+    
+    return unique_results[:5]
+
+
+async def search_qna_materials_parallel_async(search_queries: List[str]) -> List[Dict]:
+    """
+    병렬 벡터 검색 실행 및 결과 통합 (비동기 버전)
+    
+    Args:
+        search_queries: 검색 쿼리 리스트 (최대 3개)
+        
+    Returns:
+        통합된 벡터 검색 결과 리스트
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        logger.info(f"비동기 병렬 벡터 검색 시작 - 쿼리 {len(search_queries)}개")
+        
+        # 비동기 검색 작업 생성
+        search_tasks = [
+            _async_vector_search_wrapper(query) 
+            for query in search_queries[:3]  # 최대 3개로 제한
+        ]
+        
+        # 병렬 실행
+        all_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+        
+        # 결과 통합
+        combined_results = []
+        for i, results in enumerate(all_results):
+            if isinstance(results, Exception):
+                logger.warning(f"검색 쿼리 '{search_queries[i]}' 실패: {str(results)}")
+                continue
+                
+            if isinstance(results, list) and results:
+                combined_results.extend(results)
+        
+        # 중복 제거 및 정렬
+        final_results = _combine_and_deduplicate_results(combined_results)
+        
+        logger.info(f"비동기 병렬 벡터 검색 완료 - 총 {len(final_results)}개 결과")
+        return final_results
+        
+    except Exception as e:
+        logger.error(f"비동기 병렬 벡터 검색 실패: {str(e)}")
+        # 오류 시 첫 번째 쿼리로 단일 검색
+        if search_queries:
+            return search_qna_materials(search_queries[0])
+        return []
+
+
+async def _async_vector_search_wrapper(query: str) -> List[Dict]:
+    """
+    비동기 벡터 검색 래퍼 함수
+    
+    Args:
+        query: 검색 쿼리
+        
+    Returns:
+        벡터 검색 결과
+    """
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # search_qna_materials가 동기 함수이므로 asyncio.to_thread 사용
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, search_qna_materials, query)
+        return result
+    except Exception as e:
+        logger.error(f"비동기 벡터 검색 실패 (쿼리: '{query}'): {str(e)}")
+        return []
+
 
 
 def get_vector_search_statistics(chapter: int = None, section: int = None) -> Dict[str, Any]:

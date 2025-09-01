@@ -3,6 +3,8 @@
 
 from typing import Dict, Any
 from app.core.langraph.state_manager import TutorState, state_manager
+import uuid
+import time
 
 
 class ResponseGenerator:
@@ -37,7 +39,14 @@ class ResponseGenerator:
             
             # 현재 활성 에이전트 확인
             current_agent = state.get("current_agent", "")
+            user_intent = state.get("user_intent", "")  # 추가
+
             print(f"[DEBUG] ResponseGenerator - current_agent: {current_agent}")
+            print(f"[DEBUG] ResponseGenerator - user_intent: {user_intent}")  # 추가
+
+            # === 🚀 해결 방안: 스트리밍 의도를 최우선으로 처리 ===
+            if user_intent == "question_streaming":
+                return self._create_streaming_qna_workflow_response(state)
             
             # 에이전트별 workflow_response 생성
             if "theory_educator" in current_agent:
@@ -134,6 +143,48 @@ class ResponseGenerator:
         # 채팅 모드로 UI 전환
         updated_state = state_manager.update_ui_mode(updated_state, "chat")
         
+        return updated_state
+    
+    def _create_streaming_qna_workflow_response(self, state: TutorState) -> TutorState:
+        """
+        스트리밍 QnA workflow_response 생성 (대화 기록에서 temp_id 추출)
+        """
+        # 1. 사용자 질문 추출
+        user_question = self._extract_user_message(state)
+        
+        # 2. 대화 기록에서 temp_session_id 추출
+        temp_session_id = None
+        conversations = state.get("current_session_conversations", [])
+        
+        for conv in reversed(conversations):  # 최신 것부터 검색
+            if (conv.get("agent_name") == "learning_supervisor" and 
+                conv.get("message_type") == "system" and 
+                "스트리밍 세션 준비 (ID:" in conv.get("message", "")):
+                
+                # 메시지에서 ID 추출: "질문 의도 감지 - 스트리밍 세션 준비 (ID: uuid)"
+                message = conv.get("message", "")
+                import re
+                match = re.search(r"ID: ([a-f0-9-]+)", message)
+                if match:
+                    temp_session_id = match.group(1)
+                    break
+        
+        # 3. workflow_response 구조 생성
+        workflow_response = {
+            "current_agent": "qna_resolver",
+            "session_progress_stage": state.get("session_progress_stage", "theory_completed"),
+            "ui_mode": "chat", 
+            "user_intent": "question_streaming",
+            "temp_session_id": temp_session_id,
+            "content": {
+                "type": "streaming_qna",
+                "question": user_question,
+                "message": "질문에 대한 답변을 실시간으로 생성하고 있습니다."
+            }
+        }
+        
+        # 4. State 업데이트
+        updated_state = state_manager.update_workflow_response(state, workflow_response)
         return updated_state
     
     def _process_qna_response(self, state: TutorState) -> TutorState:

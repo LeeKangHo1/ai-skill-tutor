@@ -292,7 +292,7 @@ VALID_VALUES = {
     "session_progress_stage": ["session_start", "theory_completed", "quiz_and_feedback_completed"],
     "ui_mode": ["chat", "quiz"],
     "quiz_type": ["multiple_choice", "subjective"],
-    "user_intent": ["next_step", "question", "quiz_answer"],
+    "user_intent": ["next_step", "question", "quiz_answer", "question_streaming", "theory_streaming"],
     "retry_decision_result": ["proceed", "retry", ""],
     "agent_names": [
         "session_manager", "learning_supervisor", "theory_educator", 

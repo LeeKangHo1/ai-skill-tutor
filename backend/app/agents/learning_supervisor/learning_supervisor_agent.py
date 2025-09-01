@@ -6,6 +6,8 @@ from app.core.langraph.state_manager import TutorState, state_manager
 from app.tools.analysis.intent_analysis_tools import user_intent_analysis_tool
 from app.agents.learning_supervisor.response_generator import response_generator
 from app.utils.common.chat_logger import chat_logger
+import uuid
+import time
 
 
 class LearningSupervisor:
@@ -186,7 +188,11 @@ class LearningSupervisor:
         analyzed_intent = self._analyze_user_intent(state, user_message)
         print(f"[DEBUG] 분석된 사용자 의도: '{analyzed_intent}'")
         
-        # 분석 결과를 State에 저장
+        # === 🚀 NEW: question 의도에 대한 특별 처리 ===
+        if analyzed_intent == "question":
+            return self._handle_question_intent_for_streaming(state, user_message)
+        
+        # 분석 결과를 State에 저장 (기존 로직)
         updated_state = state.copy()
         updated_state["user_intent"] = analyzed_intent
         print(f"[DEBUG] State에 user_intent 저장 완료: '{analyzed_intent}'")
@@ -206,6 +212,73 @@ class LearningSupervisor:
         chat_logger.save_session_log(updated_state, session_complete=False)
         
         print(f"[DEBUG] _handle_with_intent_analysis 완료, 반환할 user_intent: '{updated_state.get('user_intent')}'")
+        return updated_state
+    
+    # === 🚀 NEW METHOD: 질문 의도에 대한 스트리밍 준비 처리 ===
+    def _handle_question_intent_for_streaming(self, state: TutorState, user_message: str) -> TutorState:
+        """
+        질문 의도 감지 시 스트리밍 준비 상태로 전환
+        
+        Args:
+            state: 현재 TutorState
+            user_message: 사용자 질문
+            
+        Returns:
+            스트리밍 준비 상태로 설정된 TutorState
+        """
+        import uuid
+        import time
+        
+        print(f"[DEBUG] _handle_question_intent_for_streaming 시작 - 질문: '{user_message}'")
+        
+        # 1. 임시 스트리밍 세션 ID 생성
+        temp_session_id = str(uuid.uuid4())
+        
+        # 2. 스트리밍 세션 데이터 준비 (전역 임시 저장소에 저장)
+        from app.routes.learning.session.qna_stream import streaming_sessions
+        
+        streaming_session_data = {
+            "user_message": user_message,
+            "context": {
+                "chapter": state.get("current_chapter", 1),
+                "section": state.get("current_section", 1),
+                "session_stage": state.get("session_progress_stage", ""),
+                "user_type": state.get("user_type", "beginner")
+            },
+            "expires_at": time.time() + 30,  # 30초 후 만료
+            "original_state": state.copy()  # QnA Agent에서 State 관리할 때 사용
+        }
+        
+        # 3. 전역 임시 저장소에 스트리밍 세션 저장
+        streaming_sessions[temp_session_id] = streaming_session_data
+        
+        # 4. State 업데이트 (TutorState 구조 유지)
+        updated_state = state.copy()
+        updated_state["user_intent"] = "question_streaming"  # 특별한 의도로 설정
+        
+        # 5. 현재 에이전트 정보 업데이트
+        updated_state = state_manager.update_agent_transition(updated_state, self.agent_name)
+        
+        # # 6. 사용자 질문을 대화 기록에 추가
+        # updated_state = state_manager.add_conversation(
+        #     updated_state,
+        #     agent_name="user",  # 사용자 메시지로 기록
+        #     message=user_message,
+        #     message_type="user"
+        # )
+        
+        # 7. 스트리밍 준비 로그 추가
+        updated_state = state_manager.add_conversation(
+            updated_state,
+            agent_name=self.agent_name,
+            message=f"질문 의도 감지 - 스트리밍 세션 준비 (ID: {temp_session_id})",
+            message_type="system"
+        )
+        
+        # 8. 대화 로그 저장
+        chat_logger.save_session_log(updated_state, session_complete=False)
+        
+        print(f"[DEBUG] 스트리밍 세션 준비 완료 - ID: {temp_session_id}")
         return updated_state
     
     def _handle_default_input(self, state: TutorState) -> TutorState:
