@@ -24,19 +24,14 @@ export const useLearningStore = defineStore('learning', () => {
 
   // ===== 상태 (State) ===== //
 
-  // --- UI, 에러 상태 ---
   const apiError = ref(null)
   const currentUIMode = ref('chat')
   const contentMode = ref('current')
   const sessionCompleted = ref(false)
-
-  // --- 세션 상태 ---
-  // sessionInfo를 authStore와 연동되는 computed 속성으로 변경
   const sessionInfo = computed(() => ({
     chapter_number: authStore.currentChapter,
     section_number: authStore.currentSection,
   }))
-  
   const currentAgent = ref('session_manager')
   const sessionProgressStage = ref('session_start')
   const completedSteps = ref({
@@ -44,237 +39,250 @@ export const useLearningStore = defineStore('learning', () => {
     quiz: false,
     feedback: false,
   })
-
-  // --- 컨텐츠 상태 (분리 관리) ---
-  const theoryData = ref(null)    // 이론 데이터 전용
-  const quizData = ref(null)      // 퀴즈 데이터 전용  
-  const feedbackData = ref(null)  // 피드백 데이터 전용
-
+  const theoryData = ref(null)
+  const quizData = ref(null)
+  const feedbackData = ref(null)
   const chatHistory = ref([])
+  const streamingQnA = ref({
+    isStreaming: false,
+    content: '',
+    messageId: null,
+    eventSource: null,
+  })
+
+  // 🚀 TTFT 측정을 위한 변수 추가
+  let streamingStartTime = 0;
 
   // ===== 게터 (Getters & Computed) ===== //
   const isQuizMode = computed(() => currentUIMode.value === 'quiz')
   const isChatMode = computed(() => currentUIMode.value === 'chat')
+  const isTutorReplying = computed(() => 
+    chatHistory.value.some(message => message.type === 'loading') || streamingQnA.value.isStreaming
+  );
 
   // ===== 액션 (Actions) ===== //
 
-  /**
-   * [ACTION] 새로운 학습 세션을 시작합니다.
-   */
   const startNewSession = async () => {
     apiError.value = null
-    console.log('ACTION: startNewSession 호출됨')
-
     _resetSessionState()
 
     const chapterNumber = sessionInfo.value.chapter_number
     const sectionNumber = sessionInfo.value.section_number
     const userMessage = `${chapterNumber}챕터 ${sectionNumber}섹션 학습을 시작합니다.`
 
-    const result = await learningService.startLearningSession(
-      chapterNumber,
-      sectionNumber,
-      userMessage
-    )
+    const result = await learningService.startLearningSession(chapterNumber, sectionNumber, userMessage)
 
     if (result.success && result.data?.data?.workflow_response) {
-      console.log('✅ 세션 시작 API 성공', result.data)
       _processWorkflowResponse(result.data.data.workflow_response)
     } else {
-      const errorMessage = result.error?.message || '알 수 없는 오류가 발생했습니다.'
-      console.error('API Error in startNewSession:', errorMessage)
-      apiError.value = { message: `세션 시작에 실패했습니다: ${errorMessage}` };
+      const errorMessage = result.error?.message || '알 수 없는 오류'
+      apiError.value = { message: `세션 시작 실패: ${errorMessage}` };
     }
   }
 
-  /**
-   * [ACTION] 사용자 메시지 또는 퀴즈 답변을 서버로 전송합니다.
-   */
   const sendMessage = async (message) => {
     apiError.value = null
-    let loadingMessageId = null // 로딩 메시지를 식별할 ID
-
-    // 채팅 모드일 때만 사용자 메시지 추가 및 로딩 시작
-    if (isChatMode.value) {
-      // 1. 사용자 메시지를 채팅 기록에 추가
-      chatHistory.value.push({ sender: '나', message, type: 'user', timestamp: Date.now() })
-      
-      // 2. 키워드 검사 없이 무조건 로딩 메시지 추가
-      const loadingMessage = {
-        id: `loading-${Date.now()}`,
-        sender: '튜터',
-        message: '...',
-        type: 'loading',
-        timestamp: Date.now()
-      };
-      loadingMessageId = loadingMessage.id
-      chatHistory.value.push(loadingMessage)
-    }
-
-    // API 호출 (퀴즈 모드 또는 채팅 모드)
-    const result = isQuizMode.value
-      ? await learningService.submitQuizAnswerV2(message)
-      : await learningService.sendSessionMessage(message)
-
-    // 3. API 응답 후 로딩 메시지가 있었다면 제거
-    if (loadingMessageId) {
-      const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessageId)
-      if (loadingIndex !== -1) {
-        chatHistory.value.splice(loadingIndex, 1)
-      }
-    }
-
-    // 4. 실제 API 결과 처리
-    if (result.success && result.data?.data?.workflow_response) {
-      console.log('✅ 메시지/답변 API 성공', result.data)
-      _processWorkflowResponse(result.data.data.workflow_response)
+    chatHistory.value.push({ sender: '나', message, type: 'user', timestamp: Date.now() })
+    
+    if (isChatMode.value && sessionProgressStage.value !== 'session_start') {
+      await startQnAStreaming(message);
     } else {
-      const errorMessage = result.error?.message || '알 수 없는 오류가 발생했습니다.'
-      console.error('API Error in sendMessage:', errorMessage)
-      apiError.value = { message: `요청 처리에 실패했습니다: ${errorMessage}` };
-      // 오류 발생 시 사용자에게도 알려주는 메시지 추가
-      _addTutorMessage(`오류가 발생했습니다. 잠시 후 다시 시도해주세요: ${errorMessage}`, 'system');
+      await _proceedWorkflow(message);
     }
   }
-  
-  /**
-   * [ACTION] 컨텐츠 표시 모드를 변경하는 액션
-   */
+
+  const startQnAStreaming = async (userMessage) => {
+    if (streamingQnA.value.isStreaming) return;
+    
+    const streamMessageId = `streaming-${Date.now()}`;
+    streamingQnA.value = {
+      isStreaming: true,
+      content: '',
+      messageId: streamMessageId,
+      eventSource: null,
+    };
+    
+    chatHistory.value.push({
+      id: streamMessageId,
+      sender: '튜터',
+      message: '',
+      type: 'qna-streaming',
+      timestamp: Date.now(),
+    });
+
+    try {
+      // 🚀 1. 요청 시작 시간 기록
+      streamingStartTime = performance.now();
+
+      const startResult = await learningService.startQnAStreamSession({
+          user_message: userMessage,
+          chapter: sessionInfo.value.chapter_number,
+          section: sessionInfo.value.section_number,
+      });
+
+      if (!startResult.success || !startResult.data?.data?.stream_session_id) {
+        throw new Error(startResult.error?.message || '스트리밍 세션을 시작할 수 없습니다.');
+      }
+      
+      const tempId = startResult.data.data.stream_session_id;
+
+      const eventSource = learningService.connectQnAStream({
+        tempId,
+        onMessage: (data) => {
+          _handleStreamMessage(data);
+        },
+        onError: (error) => {
+          console.error("SSE Error:", error);
+          _stopStreaming('스트리밍 중 오류가 발생했습니다.');
+        },
+        onClose: () => {
+           _stopStreaming();
+        }
+      });
+      
+      streamingQnA.value.eventSource = eventSource;
+
+    } catch (error) {
+      console.error("Error starting QnA stream:", error);
+      _stopStreaming(error.message || '스트리밍 연결에 실패했습니다.');
+    }
+  };
+
   const setContentMode = (mode) => {
-    console.log(`ACTION: setContentMode 호출됨. 모드 변경: ${contentMode.value} -> ${mode}`)
     contentMode.value = mode
   }
 
-  /**
-   * [ACTION] 학습 세션을 완료(다음으로 진행 또는 재학습) 처리합니다.
-   * @param {'proceed' | 'retry'} decision - 사용자의 결정
-   */
   const completeSession = async (decision) => {
     apiError.value = null
-    console.log(`ACTION: completeSession 호출됨 (decision: ${decision})`)
-
     const result = await learningService.completeSession(decision)
 
     if (result.success) {
-      console.log('✅ 세션 완료 API 성공', result.data)
       await authStore.updateUserInfo()
       sessionCompleted.value = true
     } else {
-      const errorMessage = result.error?.message || '알 수 없는 오류가 발생했습니다.'
-      console.error('API Error in completeSession:', errorMessage)
-      apiError.value = { message: `세션 완료 처리에 실패했습니다: ${errorMessage}` };
+      const errorMessage = result.error?.message || '알 수 없는 오류'
+      apiError.value = { message: `세션 완료 처리 실패: ${errorMessage}` };
     }
   }
 
   // ===== 내부 헬퍼 함수 ===== //
 
-  /**
-   * [HELPER] 워크플로우 응답을 처리하여 모든 상태를 업데이트합니다.
-   */
-  const _processWorkflowResponse = (response) => {
-    console.log('HELPER: _processWorkflowResponse 처리 시작', response)
+  const _proceedWorkflow = async (message) => {
+    const loadingMessage = { id: `loading-${Date.now()}`, sender: '튜터', message: '...', type: 'loading', timestamp: Date.now() };
+    if (isChatMode.value) {
+      chatHistory.value.push(loadingMessage);
+    }
 
+    const result = isQuizMode.value
+      ? await learningService.submitQuizAnswerV2(message)
+      : await learningService.sendSessionMessage(message);
+
+    if (isChatMode.value) {
+      const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessage.id);
+      if (loadingIndex !== -1) chatHistory.value.splice(loadingIndex, 1);
+    }
+
+    if (result.success && result.data?.data?.workflow_response) {
+      _processWorkflowResponse(result.data.data.workflow_response);
+    } else {
+      const errorMessage = result.error?.message || '알 수 없는 오류';
+      apiError.value = { message: `요청 처리 실패: ${errorMessage}` };
+      _addTutorMessage(`오류: ${errorMessage}`, 'system');
+    }
+  }
+  
+  const _handleStreamMessage = (data) => {
+    const streamingMessage = chatHistory.value.find(m => m.id === streamingQnA.value.messageId);
+    if (!streamingMessage) return;
+
+    switch (data.type) {
+      case 'content_chunk':
+        // 🚀 2. 첫 번째 청크 수신 시에만 시간 계산 및 출력
+        if (streamingStartTime > 0) {
+          const ttft = performance.now() - streamingStartTime;
+          console.log(`🚀 TTFT (Time to First Token): ${ttft.toFixed(2)} ms`);
+          streamingStartTime = 0; // 중복 측정을 방지하기 위해 리셋
+        }
+        
+        streamingMessage.message += data.chunk;
+        break;
+      case 'stream_complete':
+        streamingMessage.type = 'qna';
+        console.log('Streaming complete.');
+        _stopStreaming();
+        break;
+      case 'stream_error':
+         _stopStreaming(data.message || '서버에서 스트리밍 오류가 발생했습니다.');
+        break;
+    }
+  }
+  
+  const _stopStreaming = (errorMessage = null) => {
+      if (!streamingQnA.value.isStreaming) return;
+
+      if (errorMessage) {
+          const streamingMessage = chatHistory.value.find(m => m.id === streamingQnA.value.messageId);
+          if (streamingMessage) {
+              streamingMessage.message = errorMessage;
+              streamingMessage.type = 'system';
+          } else {
+              _addTutorMessage(errorMessage, 'system');
+          }
+      }
+
+      if (streamingQnA.value.eventSource) {
+          streamingQnA.value.eventSource.close();
+      }
+
+      streamingQnA.value.isStreaming = false;
+      streamingQnA.value.eventSource = null;
+      streamingQnA.value.messageId = null;
+  }
+  
+  const _processWorkflowResponse = (response) => {
     if (response.current_agent !== 'qna_resolver') {
       currentAgent.value = response.current_agent || 'session_manager'
     }
-    
     currentUIMode.value = response.ui_mode || 'chat'
     sessionProgressStage.value = response.session_progress_stage || 'unknown'
     
     switch(currentAgent.value) {
-      case 'theory_educator':
-        completedSteps.value.theory = true
-        break
-      case 'quiz_generator':
-        completedSteps.value.quiz = true
-        break
+      case 'theory_educator': completedSteps.value.theory = true; break
+      case 'quiz_generator': completedSteps.value.quiz = true; break
       case 'evaluation_feedback_agent':
-      case 'evaluation_feedback':
-        completedSteps.value.feedback = true
-        break
+      case 'evaluation_feedback': completedSteps.value.feedback = true; break
     }
-
     if (response.evaluation_result) {
-      feedbackData.value = response.evaluation_result.feedback
-      console.log('HELPER: feedbackData 업데이트됨 (evaluation_result)', response.evaluation_result.feedback)
-      return
+      feedbackData.value = response.evaluation_result.feedback; return;
     }
-
     if (response.session_completion) {
-      _addTutorMessage(response.session_completion.session_summary || '세션이 완료되었습니다. 다음 학습을 시작해주세요.')
-      console.log('HELPER: 세션 완료 메시지 추가됨')
-      return
+      _addTutorMessage(response.session_completion.session_summary || '세션이 완료되었습니다.'); return;
     }
-
-    const content = response.content
-    if (!content) {
-      console.warn('Workflow response에 content가 없고 evaluation_result나 session_completion도 없습니다.')
-      return
-    }
-    
-    if (content.type === 'theory') {
-      theoryData.value = content
-      console.log('HELPER: theoryData 업데이트됨', content)
-    } else if (content.type === 'quiz') {
-      quizData.value = content
-      _addTutorMessage('퀴즈가 생성되었습니다.')
-      console.log('HELPER: quizData 업데이트됨', content)
-    } else if (content.type === 'qna') {
-      _addTutorMessage(content.answer, 'qna')
-      console.log('HELPER: QnA 응답 채팅에 추가됨', content.answer)
-    } else {
-      console.warn('알 수 없는 컨텐츠 유형:', content.type, response)
-    }
+    const content = response.content; if (!content) return;
+    if (content.type === 'theory') theoryData.value = content
+    else if (content.type === 'quiz') { quizData.value = content; _addTutorMessage('퀴즈가 생성되었습니다.') }
+    else if (content.type === 'qna') _addTutorMessage(content.answer, 'qna')
   }
 
-  /**
-   * [HELPER] 튜터 메시지를 채팅 기록에 추가합니다.
-   */
   const _addTutorMessage = (message, type = 'system') => {
-    if (message) {
-      chatHistory.value.push({ sender: '튜터', message, type, timestamp: Date.now() })
-    }
+    if (message) chatHistory.value.push({ sender: '튜터', message, type, timestamp: Date.now() })
   }
 
-  /**
-   * [HELPER] 새로운 세션 시작 시 모든 관련 상태를 초기화합니다.
-   */
   const _resetSessionState = () => {
-    console.log('HELPER: _resetSessionState 호출됨')
-    
-    theoryData.value = null
-    quizData.value = null
-    feedbackData.value = null
-    chatHistory.value = []
-    
-    currentUIMode.value = 'chat'
-    currentAgent.value = 'session_manager'
-    sessionProgressStage.value = 'session_start'
-    contentMode.value = 'current'
-    completedSteps.value = { theory: false, quiz: false, feedback: false }
-    sessionCompleted.value = false
-
-    _addTutorMessage('🎓 학습을 시작합니다! 이론 내용을 불러오겠습니다.')
+    _stopStreaming();
+    theoryData.value = null; quizData.value = null; feedbackData.value = null;
+    chatHistory.value = []; currentUIMode.value = 'chat';
+    currentAgent.value = 'session_manager'; sessionProgressStage.value = 'session_start';
+    contentMode.value = 'current';
+    completedSteps.value = { theory: false, quiz: false, feedback: false };
+    sessionCompleted.value = false;
+    _addTutorMessage('🎓 학습을 시작합니다! 이론 내용을 불러오겠습니다.');
   }
 
   return {
-    apiError,
-    currentUIMode,
-    contentMode,
-    sessionCompleted,
-    sessionInfo,
-    currentAgent,
-    sessionProgressStage,
-    completedSteps,
-    theoryData,
-    quizData,
-    feedbackData,
-    chatHistory,
-    isQuizMode,
-    isChatMode,
-    startNewSession,
-    sendMessage,
-    setContentMode,
-    completeSession,
+    apiError, currentUIMode, contentMode, sessionCompleted, sessionInfo, currentAgent,
+    sessionProgressStage, completedSteps, theoryData, quizData, feedbackData, chatHistory,
+    isQuizMode, isChatMode, isTutorReplying, streamingQnA,
+    startNewSession, sendMessage, setContentMode, completeSession, startQnAStreaming,
   }
 })

@@ -1,18 +1,17 @@
+<!-- frontend/src/components/learning/ChatInteraction.vue -->
 <template>
   <div class="chat-mode" :class="{ active: true }">
     <div class="chat-history" ref="chatHistoryRef">
-      <div v-for="(message, index) in chatHistory" :key="index" class="chat-message"
-        :class="getMessageClass(message.type)">
+      <div v-for="message in chatHistory" :key="message.id || message.timestamp" class="chat-message"
+        :class="getMessageClass(message)">
         <div class="message-content">
           <strong class="message-sender">{{ message.sender }}:</strong>
           
-          <div v-if="message.type === 'loading'" class="typing-indicator">
-            <span></span>
-            <span></span>
-            <span></span>
+          <div v-if="message.type === 'loading' || (message.type === 'qna-streaming' && !message.message)" class="typing-indicator">
+            <span></span><span></span><span></span>
           </div>
+          
           <span v-else class="message-text">{{ formatMessage(message.message) }}</span>
-
         </div>
         <div class="message-timestamp">
           {{ formatTimestamp(message.timestamp) }}
@@ -21,7 +20,6 @@
     </div>
 
     <div class="chat-input-container">
-
       <div class="quick-actions" v-if="showQuickActions">
         <button class="quick-action-btn" @click="handleRetryLearning" :disabled="!isFeedbackComplete">
           🔄 재학습
@@ -40,244 +38,107 @@
         </div>
       </div>
 
-
       <div class="chat-input">
         <input type="text" v-model="currentMessage" ref="messageInputRef"
-          placeholder="메시지를 입력하세요"           @keypress="handleKeyPress" @input="handleInput"
+          placeholder="메시지를 입력하거나 질문해보세요..." @keypress.enter.prevent="handleSendMessage"
+          :disabled="isTutorReplying"
           class="message-input" />
         <button 
-          @click="sendMessage" 
-          :disabled="!currentMessage.trim() || sessionProgressStage === 'session_start' || isTutorReplying" 
+          @click="handleSendMessage" 
+          :disabled="!currentMessage.trim() || isTutorReplying" 
           class="send-button">
-          전송
+          {{ isTutorReplying ? '응답 중...' : '전송' }}
         </button>
       </div>
-
     </div>
-
+    
     <div v-if="showCompletionModal" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>학습 세션 완료</h3>
-          <button class="modal-close-btn" @click="closeModal">×</button>
-        </div>
-        <div class="modal-body">
-          <p>학습 세션이 완료되었습니다. 다음 단계를 선택해주세요.</p>
-        </div>
-        <div class="modal-footer">
-          <button class="modal-btn dashboard-btn" @click="goToDashboard" :disabled="isDashboardLoading">
-            <span v-if="isDashboardLoading" class="button-spinner"></span>
-            <span v-else>📊</span>
-            {{ isDashboardLoading ? '이동 중...' : '대시보드' }}
-          </button>
-          <button class="modal-btn start-learning-btn" @click="startNewLearning" :disabled="isProcessing">
-            <span v-if="isProcessing" class="button-spinner"></span>
-            <span v-else>🚀</span>
-            {{ isProcessing ? '학습 준비 중...' : '학습 시작' }}
-          </button>
-        </div>
       </div>
-    </div>
   </div>
 </template>
 
-
 <script setup>
-import { ref, nextTick, watch, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useLearningStore } from '@/stores/learningStore'
-import { storeToRefs } from 'pinia'
+import { ref, nextTick, watch, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useLearningStore } from '@/stores/learningStore';
+import { storeToRefs } from 'pinia';
 
-// formatMessage 함수 - 마크다운 제거
-const formatMessage = (text) => {
-  if (!text) return '';
-  // ## 과 ** 마크다운 문자를 제거합니다.
-  return text.replace(/##\s?/g, '').replace(/\*\*/g, '');
+// 스토어 연결
+const router = useRouter();
+const learningStore = useLearningStore();
+const { 
+  chatHistory, 
+  completedSteps, 
+  sessionCompleted, 
+  sessionProgressStage,
+  isTutorReplying
+} = storeToRefs(learningStore);
+
+console.log('[ChatInteraction] 🟢 컴포넌트 초기화 완료.');
+
+const currentMessage = ref('');
+const chatHistoryRef = ref(null);
+const messageInputRef = ref(null);
+
+// computed 속성
+const isFeedbackComplete = computed(() => completedSteps.value.feedback);
+const showQuickActions = computed(() => isFeedbackComplete.value);
+const showInputHints = computed(() => sessionProgressStage.value === 'theory_completed');
+const showCompletionModal = computed(() => sessionCompleted.value);
+
+const handleSendMessage = () => {
+  const message = currentMessage.value.trim();
+  if (!message || isTutorReplying.value) return;
+  
+  console.log(`[ChatInteraction] 📤 메시지 전송: "${message}"`);
+  learningStore.sendMessage(message);
+  
+  currentMessage.value = '';
+  nextTick(() => messageInputRef.value?.focus());
 };
 
-const router = useRouter()
-const learningStore = useLearningStore()
-const { chatHistory, completedSteps, sessionCompleted, sessionProgressStage } = storeToRefs(learningStore)
+// 재학습/다음학습 핸들러
+const handleRetryLearning = () => learningStore.completeSession('retry');
+const handleProceedLearning = () => learningStore.completeSession('proceed');
+const closeModal = () => learningStore.sessionCompleted = false;
+const goToDashboard = () => { closeModal(); router.push('/dashboard'); };
+const startNewLearning = () => { closeModal(); learningStore.startNewSession(); };
 
-console.log('[ChatInteraction] 🟢 컴포넌트 초기화. Store와 연결되었습니다.')
+// 메시지 포맷 및 스타일링
+const formatMessage = (text) => text ? text.replace(/##\s?/g, '').replace(/\*\*/g, '') : '';
 
-const currentMessage = ref('')
-const chatHistoryRef = ref(null)
-const messageInputRef = ref(null)
-const isProcessing = ref(false)
-const isDashboardLoading = ref(false)
-
-const isFeedbackComplete = computed(() => completedSteps.value.feedback)
-const showQuickActions = computed(() => isFeedbackComplete.value)
-const showInputHints = computed(() => {
-  return sessionProgressStage.value === 'theory_completed'
-})
-const showCompletionModal = computed(() => sessionCompleted.value)
-
-const isTutorReplying = computed(() => 
-  chatHistory.value.some(message => message.type === 'loading')
-)
-
-// 임시 테스트용 sendMessage 함수 (QnA API 직접 호출)
-const sendMessage = async () => {
-  const message = currentMessage.value.trim()
-  if (!message) return
-  
-  console.log('[ChatInteraction] 📤 QnA 테스트 메시지 전송. 임시 API 호출합니다.')
-  
-  // 사용자 메시지를 채팅 기록에 추가
-  chatHistory.value.push({ 
-    sender: '나', 
-    message, 
-    type: 'user', 
-    timestamp: Date.now() 
-  })
-  
-  // 로딩 메시지 추가
-  const loadingMessage = {
-    id: `loading-${Date.now()}`,
-    sender: '튜터',
-    message: '...',
-    type: 'loading',
-    timestamp: Date.now()
-  };
-  chatHistory.value.push(loadingMessage)
-  
-  try {
-    // 임시: 직접 API 호출 (learningStore 우회)
-    const response = await fetch('/api/v1/learning/message-qna', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      },
-      body: JSON.stringify({
-        user_message: message
-      })
-    })
-    
-    const result = await response.json()
-    
-    // 로딩 메시지 제거
-    const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessage.id)
-    if (loadingIndex !== -1) {
-      chatHistory.value.splice(loadingIndex, 1)
-    }
-    
-    if (result.success && result.data?.workflow_response?.content) {
-      const content = result.data.workflow_response.content
-      
-      if (content.type === 'qna') {
-        // QnA 응답을 채팅에 추가
-        chatHistory.value.push({
-          sender: '튜터',
-          message: formatMessage(content.answer), // 마크다운 제거
-          type: 'qna',
-          timestamp: Date.now()
-        })
-        console.log('[ChatInteraction] ✅ QnA 응답 표시 완료')
-      } else {
-        console.warn('[ChatInteraction] ⚠️ 예상하지 못한 content type:', content.type)
-      }
-    } else {
-      console.error('[ChatInteraction] ❌ API 응답 오류:', result)
-      chatHistory.value.push({
-        sender: '튜터',
-        message: '죄송합니다. 응답 처리 중 오류가 발생했습니다.',
-        type: 'system',
-        timestamp: Date.now()
-      })
-    }
-  } catch (error) {
-    // 로딩 메시지 제거
-    const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessage.id)
-    if (loadingIndex !== -1) {
-      chatHistory.value.splice(loadingIndex, 1)
-    }
-    
-    console.error('[ChatInteraction] ❌ API 호출 실패:', error)
-    chatHistory.value.push({
-      sender: '튜터',
-      message: '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
-      type: 'system',
-      timestamp: Date.now()
-    })
+const getMessageClass = (message) => {
+  const baseClass = 'chat-message';
+  switch (message.type) {
+    case 'user': return `${baseClass} user-message`;
+    case 'system': return `${baseClass} system-message`;
+    case 'qna': return `${baseClass} qna-message`;
+    case 'loading': return `${baseClass} system-message loading-message`;
+    case 'qna-streaming': return `${baseClass} qna-message`; // 🚀 [핵심 수정] 스트리밍 메시지는 기본 qna 스타일만 적용
+    default: return `${baseClass} system-message`;
   }
-  
-  currentMessage.value = ''
-  nextTick(() => messageInputRef.value?.focus())
-}
+};
 
-const handleRetryLearning = () => {
-  console.log('[ChatInteraction] 🔄 재학습 요청. Store 액션을 호출합니다.')
-  learningStore.completeSession('retry')
-}
+const formatTimestamp = (ts) => new Date(ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 
-const handleProceedLearning = () => {
-  console.log('[ChatInteraction] ➡️ 다음 학습 요청. Store 액션을 호출합니다.')
-  learningStore.completeSession('proceed')
-}
-
-const closeModal = () => {
-  console.log('[ChatInteraction] 모달 닫기.')
-  learningStore.sessionCompleted = false
-}
-
-const goToDashboard = () => {
-  closeModal()
-  router.push('/dashboard')
-}
-
-const startNewLearning = () => {
-  closeModal()
-  learningStore.startNewSession()
-}
-
-const handleKeyPress = (event) => {
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault()
-    sendMessage()
-  }
-}
-
-const handleInput = (event) => {
-  const target = event.target
-  target.style.height = 'auto'
-  target.style.height = target.scrollHeight + 'px'
-}
-
-const getMessageClass = (messageType) => {
-  const baseClass = 'chat-message'
-  switch (messageType) {
-    case 'user': return `${baseClass} user-message`
-    case 'system': return `${baseClass} system-message`
-    case 'qna': return `${baseClass} qna-message`
-    case 'loading': return `${baseClass} system-message loading-message`
-    default: return `${baseClass} system-message`
-  }
-}
-
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '방금 전'
-  const date = new Date(timestamp)
-  return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-}
-
+// 스크롤 처리
 const scrollToBottom = () => {
   nextTick(() => {
-    chatHistoryRef.value?.scrollTo({ top: chatHistoryRef.value.scrollHeight, behavior: 'smooth' })
-  })
-}
+    if (chatHistoryRef.value) {
+      chatHistoryRef.value.scrollTop = chatHistoryRef.value.scrollHeight;
+    }
+  });
+};
 
-watch(chatHistory, () => scrollToBottom(), { deep: true })
-
+watch(chatHistory, () => scrollToBottom(), { deep: true });
 onMounted(() => {
-  scrollToBottom()
-  messageInputRef.value?.focus()
-})
+  scrollToBottom();
+  messageInputRef.value?.focus();
+});
 </script>
 
 <style lang="scss" scoped>
+/* style 태그의 내용은 이전과 완전히 동일합니다. */
 .chat-mode {
   display: flex;
   flex-direction: column;
@@ -646,9 +507,9 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
-/* --- 타이핑 애니메이션 스타일 (신규 추가) --- */
+/* --- 타이핑 애니메이션 스타일 --- */
 .loading-message {
-  padding-bottom: 1.1rem; /* 애니메이션 높이에 맞게 패딩 조정 */
+  padding-bottom: 1.1rem;
 }
 
 .typing-indicator {
