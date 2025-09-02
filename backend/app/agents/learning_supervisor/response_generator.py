@@ -79,11 +79,12 @@ class ResponseGenerator:
         """
         theory_draft = state.get("theory_draft", "")
         
-        if not theory_draft:
+        # 딕셔너리인 경우와 문자열인 경우 모두 처리
+        if not theory_draft or (isinstance(theory_draft, str) and not theory_draft.strip()):
             # 대본이 없으면 기본 응답
             final_response = self._generate_theory_fallback(state)
         else:
-            # 이론 설명 대본 정제
+            # 이론 설명 대본 정제 (딕셔너리면 그대로, 문자열이면 정제)
             final_response = self._refine_theory_content(theory_draft, state)
         
         # 정제된 응답을 theory_draft에 다시 저장
@@ -244,37 +245,45 @@ class ResponseGenerator:
         ]
         
         for agent_name, draft_content in drafts:
-            if draft_content and draft_content.strip():
-                # 내용이 있는 첫 번째 대본 처리
-                if "theory" in agent_name:
+            # theory_draft는 딕셔너리일 수 있으므로 별도 처리
+            if "theory" in agent_name:
+                if draft_content and (isinstance(draft_content, dict) or (isinstance(draft_content, str) and draft_content.strip())):
                     return self._process_theory_response(state)
-                elif "quiz" in agent_name:
-                    return self._process_quiz_response(state)
-                elif "feedback" in agent_name:
-                    return self._process_feedback_response(state)
-                elif "qna" in agent_name:
-                    return self._process_qna_response(state)
+            else:
+                # 다른 draft들은 문자열로 처리
+                if draft_content and draft_content.strip():
+                    if "quiz" in agent_name:
+                        return self._process_quiz_response(state)
+                    elif "feedback" in agent_name:
+                        return self._process_feedback_response(state)
+                    elif "qna" in agent_name:
+                        return self._process_qna_response(state)
         
         # 모든 대본이 비어있으면 기본 메시지
         return self._generate_error_response(state)
     
-    def _refine_theory_content(self, theory_draft: str, state: TutorState) -> str:
+    def _refine_theory_content(self, theory_draft, state: TutorState):
         """
         이론 설명 내용 정제
         
         Args:
-            theory_draft: 원본 이론 설명 대본
+            theory_draft: 원본 이론 설명 대본 (str 또는 dict)
             state: TutorState
             
         Returns:
-            정제된 이론 설명
+            정제된 이론 설명 (dict인 경우 그대로 반환, str인 경우 정제된 문자열)
         """
+        # theory_draft가 딕셔너리인 경우 그대로 반환 (프론트엔드에서 구조화된 데이터 사용)
+        if isinstance(theory_draft, dict):
+            return theory_draft
+        
+        # 문자열인 경우에만 기존 정제 로직 적용
         user_type = state.get("user_type", "beginner")
         current_chapter = state.get("current_chapter", 1)
         current_section = state.get("current_section", 1)
         
         # 원본 내용에서 불필요한 부분 제거
-        refined_content = theory_draft.strip()
+        refined_content = theory_draft.strip() if theory_draft else ""
         
         # Theory Educator 접두사 제거 (있는 경우)
         if refined_content.startswith("🤖 Theory Educator:"):
@@ -744,9 +753,22 @@ class ResponseGenerator:
         
         return ""
     
-    def _extract_key_points(self, content: str) -> list:
+    def _extract_key_points(self, content) -> list:
         """이론 내용에서 핵심 포인트 추출"""
-        # 간단한 키워드 추출 (실제로는 더 정교한 로직 필요)
+        # 딕셔너리인 경우 구조화된 데이터에서 추출
+        if isinstance(content, dict):
+            key_points = []
+            sections = content.get('sections', [])
+            for section in sections:
+                if section.get('type') == 'definition':
+                    key_points.append(f"📌 {section.get('title', '')}")
+                elif section.get('type') == 'examples':
+                    items = section.get('items', [])
+                    for item in items[:2]:  # 최대 2개
+                        key_points.append(f"💡 {item.get('category', '')}")
+            return key_points[:3]  # 최대 3개
+        
+        # 문자열인 경우 기존 로직
         key_points = []
         lines = content.split('\n')
         for line in lines:
@@ -755,9 +777,24 @@ class ResponseGenerator:
         
         return key_points[:3]  # 최대 3개
     
-    def _extract_examples(self, content: str) -> list:
+    def _extract_examples(self, content) -> list:
         """이론 내용에서 예시 추출"""
-        # 간단한 예시 추출 (실제로는 더 정교한 로직 필요)
+        # 딕셔너리인 경우 구조화된 데이터에서 추출
+        if isinstance(content, dict):
+            examples = []
+            sections = content.get('sections', [])
+            for section in sections:
+                if section.get('type') == 'examples':
+                    items = section.get('items', [])
+                    for item in items[:2]:  # 최대 2개
+                        examples.append(f"{item.get('category', '')}: {item.get('description', '')}")
+                elif 'analogy' in section:
+                    analogy = section.get('analogy', {})
+                    if analogy:
+                        examples.append(f"비유: {analogy.get('concept', '')} → {analogy.get('comparison', '')}")
+            return examples[:2]  # 최대 2개
+        
+        # 문자열인 경우 기존 로직
         examples = []
         lines = content.split('\n')
         for line in lines:

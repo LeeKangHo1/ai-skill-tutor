@@ -214,7 +214,7 @@ class QuizGenerator:
             print(f"[{self.agent_name}] 섹션 데이터 로드 실패: {str(e)}")
             return None
     
-    def _get_theory_draft_from_state(self, state: TutorState) -> str:
+    def _get_theory_draft_from_state(self, state: TutorState):
         """
         State에서 theory_draft 내용을 추출
         
@@ -222,13 +222,18 @@ class QuizGenerator:
             state: 현재 TutorState
             
         Returns:
-            theory_draft 내용 (없으면 빈 문자열)
+            theory_draft 내용 (dict 또는 str, 없으면 빈 문자열)
         """
         try:
             theory_draft = state.get("theory_draft", "")
             
-            if theory_draft and theory_draft.strip():
-                print(f"[{self.agent_name}] theory_draft 발견 - 길이: {len(theory_draft)}자")
+            # 딕셔너리인 경우 그대로 반환
+            if isinstance(theory_draft, dict):
+                print(f"[{self.agent_name}] theory_draft 발견 (딕셔너리) - 섹션 수: {len(theory_draft.get('sections', []))}")
+                return theory_draft
+            # 문자열인 경우 기존 로직
+            elif theory_draft and theory_draft.strip():
+                print(f"[{self.agent_name}] theory_draft 발견 (문자열) - 길이: {len(theory_draft)}자")
                 return theory_draft.strip()
             else:
                 print(f"[{self.agent_name}] theory_draft가 비어있거나 없음")

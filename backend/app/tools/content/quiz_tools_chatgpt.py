@@ -275,7 +275,7 @@ def _create_theory_draft_prompt_template(user_type: str, is_retry_session: bool,
     )
 
 
-def _prepare_input_data(section_data: Dict[str, Any], quiz_type: str, theory_content: str, content_source: str = "fallback") -> Dict[str, str]:
+def _prepare_input_data(section_data: Dict[str, Any], quiz_type: str, theory_content, content_source: str = "fallback") -> Dict[str, str]:
     """
     PromptTemplate에 전달할 입력 데이터 준비
     """
@@ -284,11 +284,14 @@ def _prepare_input_data(section_data: Dict[str, Any], quiz_type: str, theory_con
         # theory_draft 기반 모드 - 개선된 섹션 데이터 활용
         section_title = section_data.get('section_title', '') or section_data.get('title', '')
         
+        # theory_content가 딕셔너리인 경우 문자열로 변환
+        theory_text = _convert_theory_dict_to_text(theory_content) if isinstance(theory_content, dict) else str(theory_content)
+        
         if quiz_type == "auto":
             # 자동 결정 모드 (기존 로직 유지)
             return {
                 "section_title": section_title,
-                "theory_content": theory_content
+                "theory_content": theory_text
             }
         else:
             # 특정 퀴즈 타입 지정 모드
@@ -296,7 +299,7 @@ def _prepare_input_data(section_data: Dict[str, Any], quiz_type: str, theory_con
             reference_question = quiz_data.get('question', '')
             
             # 이론 내용 컨텍스트 생성
-            theory_context = f"\n학습한 이론 내용:\n{theory_content[:300]}..." if theory_content else ""
+            theory_context = f"\n학습한 이론 내용:\n{theory_text[:300]}..." if theory_text else ""
             
             return {
                 "section_title": section_title,
@@ -356,3 +359,92 @@ def _generate_fallback_response(section_data: Dict[str, Any], quiz_type: str, er
         }
     
     return json.dumps(fallback, ensure_ascii=False, indent=2)
+
+
+def _convert_theory_dict_to_text(theory_dict: Dict[str, Any]) -> str:
+    """
+    딕셔너리 형태의 이론 데이터를 텍스트로 변환
+    
+    Args:
+        theory_dict: 구조화된 이론 데이터 딕셔너리
+        
+    Returns:
+        프롬프트에 포함할 수 있는 텍스트 형태의 이론 내용
+    """
+    if not isinstance(theory_dict, dict):
+        return str(theory_dict)
+    
+    text_parts = []
+    
+    # 챕터 정보와 제목
+    chapter_info = theory_dict.get('chapter_info', '')
+    title = theory_dict.get('title', '')
+    
+    if chapter_info:
+        text_parts.append(f"챕터 정보: {chapter_info}")
+    if title:
+        text_parts.append(f"제목: {title}")
+    
+    # 섹션들 처리
+    sections = theory_dict.get('sections', [])
+    
+    for i, section in enumerate(sections, 1):
+        section_type = section.get('type', '')
+        section_title = section.get('title', '')
+        section_content = section.get('content', '')
+        
+        # 섹션 헤더
+        if section_type == 'introduction':
+            text_parts.append(f"\n[도입부]")
+        elif section_type == 'definition':
+            text_parts.append(f"\n[정의 및 핵심 개념]")
+            if section_title:
+                text_parts.append(f"소제목: {section_title}")
+        elif section_type == 'examples':
+            text_parts.append(f"\n[실생활 예시]")
+            if section_title:
+                text_parts.append(f"소제목: {section_title}")
+        else:
+            text_parts.append(f"\n[{section_type}]")
+            if section_title:
+                text_parts.append(f"소제목: {section_title}")
+        
+        # 섹션 내용
+        if section_content:
+            text_parts.append(f"내용: {section_content}")
+        
+        # 비유 설명 (analogy) 처리
+        if 'analogy' in section:
+            analogy = section['analogy']
+            concept = analogy.get('concept', '')
+            comparison = analogy.get('comparison', '')
+            details = analogy.get('details', [])
+            
+            text_parts.append(f"비유 설명:")
+            if concept and comparison:
+                text_parts.append(f"  - {concept} → {comparison}")
+            
+            for detail in details:
+                text_parts.append(f"  - {detail}")
+        
+        # 예시 항목들 (items) 처리
+        if 'items' in section:
+            items = section['items']
+            text_parts.append(f"구체적 예시들:")
+            
+            for j, item in enumerate(items, 1):
+                category = item.get('category', '')
+                description = item.get('description', '')
+                benefit = item.get('benefit', '')
+                
+                if category:
+                    text_parts.append(f"  {j}. {category}")
+                if description:
+                    text_parts.append(f"     설명: {description}")
+                if benefit:
+                    text_parts.append(f"     효과: {benefit}")
+    
+    # 모든 텍스트 조합
+    full_text = '\n'.join(text_parts)
+    
+    return full_text

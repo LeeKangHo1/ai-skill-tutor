@@ -53,7 +53,24 @@
     </div>
     
     <div v-if="showCompletionModal" class="modal-overlay" @click="closeModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>학습 세션 완료</h3>
+          <button class="modal-close-btn" @click="closeModal">×</button>
+        </div>
+        <div class="modal-body">
+          <p>학습 세션이 완료되었습니다. 다음 단계를 선택해주세요.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn dashboard-btn" @click="goToDashboard">
+            📊 대시보드
+          </button>
+          <button class="modal-btn start-learning-btn" @click="startNewLearning">
+            🚀 학습 시작
+          </button>
+        </div>
       </div>
+    </div>
   </div>
 </template>
 
