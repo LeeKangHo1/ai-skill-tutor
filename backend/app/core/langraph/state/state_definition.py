@@ -165,6 +165,8 @@ class TutorState(TypedDict):
     - "next_step": 다음 단계 진행 (기본값)
     - "question": 질문 답변 요청
     - "quiz_answer": 퀴즈 답변 제출
+    - "question_streaming": 질문 답변 스트리밍 요청
+    - "theory_streaming": 이론 설명 스트리밍 요청
     """
     
     previous_agent: str
