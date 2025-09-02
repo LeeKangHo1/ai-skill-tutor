@@ -81,32 +81,79 @@ export const useLearningStore = defineStore('learning', () => {
   }
 
   const sendMessage = async (message) => {
-    apiError.value = null
-    chatHistory.value.push({ sender: '나', message, type: 'user', timestamp: Date.now() })
-    
-    if (isChatMode.value && sessionProgressStage.value !== 'session_start') {
-        // === 🚀 MODIFIED: 일반 워크플로우 요청 후 스트리밍 응답 확인 ===
-        const result = await learningService.sendSessionMessage(message);
-        
-        if (result.success && result.data?.data?.workflow_response?.temp_session_id) {
-            // 스트리밍 응답인 경우 자동으로 스트리밍 시작
-            const tempId = result.data.data.workflow_response.temp_session_id;
-            console.log('🚀 스트리밍 tempId 감지:', tempId);
-            await _startStreamingWithTempId(tempId, message);
-        } else {
-            // 일반 응답 처리 (기존 QnA Resolver 등)
-            if (result.success && result.data?.data?.workflow_response) {
-                _processWorkflowResponse(result.data.data.workflow_response);
-            } else {
-                const errorMessage = result.error?.message || '알 수 없는 오류';
-                apiError.value = { message: `요청 처리 실패: ${errorMessage}` };
-                _addTutorMessage(`오류: ${errorMessage}`, 'system');
-            }
-        }
-    } else {
-        await _proceedWorkflow(message);
-    }
-  }
+   apiError.value = null
+   let loadingMessageId = null // 로딩 메시지를 식별할 ID
+
+   // 채팅 모드일 때만 사용자 메시지 추가 및 로딩 시작
+   if (isChatMode.value) {
+     // 1. 사용자 메시지를 채팅 기록에 추가
+     chatHistory.value.push({ sender: '나', message, type: 'user', timestamp: Date.now() })
+     
+     // 2. 키워드 검사 없이 무조건 로딩 메시지 추가 (노란 배경)
+     const loadingMessage = {
+       id: `loading-${Date.now()}`,
+       sender: '튜터',
+       message: '...',
+       type: 'loading',
+       timestamp: Date.now()
+     };
+     loadingMessageId = loadingMessage.id
+     chatHistory.value.push(loadingMessage)
+   }
+
+   if (isChatMode.value && sessionProgressStage.value !== 'session_start') {
+       // === 🚀 MODIFIED: 일반 워크플로우 요청 후 스트리밍/일반 응답 구분 처리 ===
+       const result = await learningService.sendSessionMessage(message);
+       
+       // 3. API 응답 후 로딩 메시지 제거
+       if (loadingMessageId) {
+           const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessageId)
+           if (loadingIndex !== -1) {
+               chatHistory.value.splice(loadingIndex, 1)
+           }
+       }
+       
+       if (result.success && result.data?.data?.workflow_response?.temp_session_id) {
+           // 🔄 스트리밍 응답인 경우 → 보라색 배경 스트리밍 시작
+           const tempId = result.data.data.workflow_response.temp_session_id;
+           console.log('🚀 스트리밍 tempId 감지:', tempId);
+           await _startStreamingWithTempId(tempId, message);
+       } else if (result.success && result.data?.data?.workflow_response) {
+           // 🆕 일반 응답 처리 (퀴즈 생성, 이론 설명, 피드백 등)
+           console.log('📝 일반 워크플로우 응답 처리:', result.data.data.workflow_response);
+           _processWorkflowResponse(result.data.data.workflow_response);
+       } else {
+           // ❌ 에러 처리
+           const errorMessage = result.error?.message || '알 수 없는 오류';
+           apiError.value = { message: `요청 처리 실패: ${errorMessage}` };
+           _addTutorMessage(`오류: ${errorMessage}`, 'system');
+       }
+   } else {
+       // 🔄 기존 워크플로우 처리 (세션 시작 단계 등)
+       const result = isQuizMode.value
+         ? await learningService.submitQuizAnswerV2(message)
+         : await learningService.sendSessionMessage(message)
+
+       // 3. API 응답 후 로딩 메시지 제거
+       if (loadingMessageId) {
+         const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessageId)
+         if (loadingIndex !== -1) {
+           chatHistory.value.splice(loadingIndex, 1)
+         }
+       }
+
+       // 4. 실제 API 결과 처리
+       if (result.success && result.data?.data?.workflow_response) {
+         console.log('✅ 메시지/답변 API 성공', result.data)
+         _processWorkflowResponse(result.data.data.workflow_response)
+       } else {
+         const errorMessage = result.error?.message || '알 수 없는 오류가 발생했습니다.'
+         console.error('API Error in sendMessage:', errorMessage)
+         apiError.value = { message: `요청 처리에 실패했습니다: ${errorMessage}` };
+         _addTutorMessage(`오류가 발생했습니다. 잠시 후 다시 시도해주세요: ${errorMessage}`, 'system');
+       }
+   }
+ }
 
   const _startStreamingWithTempId = async (tempId, userMessage) => {
     if (streamingQnA.value.isStreaming) return;
@@ -151,7 +198,7 @@ export const useLearningStore = defineStore('learning', () => {
         console.error("Error starting QnA stream with tempId:", error);
         _stopStreaming(error.message || '스트리밍 연결에 실패했습니다.');
     }
-};
+  };
 
   const startQnAStreaming = async (userMessage) => {
     if (streamingQnA.value.isStreaming) return;
@@ -322,7 +369,10 @@ export const useLearningStore = defineStore('learning', () => {
     }
     const content = response.content; if (!content) return;
     if (content.type === 'theory') theoryData.value = content
-    else if (content.type === 'quiz') { quizData.value = content; _addTutorMessage('퀴즈가 생성되었습니다.') }
+    else if (content.type === 'quiz') { 
+      quizData.value = content; 
+      _addTutorMessage('퀴즈가 생성되었습니다.') 
+    }
     else if (content.type === 'qna') _addTutorMessage(content.answer, 'qna')
   }
 

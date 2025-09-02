@@ -222,18 +222,6 @@ export const learningService = {
       };
     }
   },
-
-  // =============================================================
-  // ===== 🔄 이전 버전 호환성 유지 =====
-  // =============================================================
-
-  /**
-   * @deprecated - v2.0에서 submitQuizAnswerV2로 대체됨
-   */
-  async submitQuizAnswer(userAnswer) {
-    console.warn('submitQuizAnswer는 deprecated됩니다. submitQuizAnswerV2를 사용하세요.');
-    return this.submitQuizAnswerV2(userAnswer);
-  }
 };
 
 export default learningService;
