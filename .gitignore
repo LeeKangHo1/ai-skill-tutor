@@ -129,8 +129,8 @@ tmp/
 temp/
 
 # Logs
-# logs/
-# *.log
+logs/
+*.log
 
 # Database
 *.db
@@ -166,6 +166,7 @@ chroma_db/
 .coverage
 htmlcov/
 backend/test/
+backend/tests/
 frontend/src/__tests__/
 
 # 벡터 데이터 원본

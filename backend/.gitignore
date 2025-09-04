@@ -43,8 +43,8 @@ instance/
 *.sqlite3
 
 # 로그 파일
-# logs/
-# *.log
+logs/
+*.log
 
 # 테스트 관련
 .pytest_cache/
@@ -53,6 +53,7 @@ htmlcov/
 .tox/
 .nox/
 test/
+tests/
 
 # 채팅 로그 데이터
 data/chat_log/
