@@ -59,7 +59,7 @@ SessionManager (세션 관리 전담)
 - **구현 로그 참조**: 개발 진행 상황은 `docs/my_docs/implementation_log.md`에서 확인
 
 ### 테스트 코드 작성 규칙
-- **테스트 위치**: 모든 테스트 코드는 반드시 `backend/tests/0812/` 또는 `frontend/tests/0812/` 폴더 내에 작성 (날짜별 폴더 구조)
+- **테스트 위치**: 모든 테스트 코드는 반드시 `backend/test/0812/` 또는 `frontend/test/0812/` 폴더 내에 작성 (날짜별 폴더 구조)
 - **테스트 파일명**: `test_` 접두사 사용 (예: `test_auth.py`, `test_user_service.py`)
 - **테스트 범위**: 단위 테스트, 통합 테스트 모두 `tests/0812/` 폴더 내에서 관리
 - **날짜별 관리**: 테스트 코드는 작성 날짜에 따라 `MMDD` 형식의 하위 폴더에서 관리

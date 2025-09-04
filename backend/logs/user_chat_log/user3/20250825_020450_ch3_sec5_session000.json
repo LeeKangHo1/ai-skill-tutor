@@ -1,0 +1,102 @@
+{
+    "session_info": {
+        "session_id": "user3_ch3_session000_20250825_020450",
+        "user_id": 3,
+        "user_type": "beginner",
+        "chapter": 3,
+        "section": 5,
+        "session_start_time": "2025-08-25 02:04:50.757760",
+        "session_complete": true,
+        "saved_at": "2025-08-25 02:04:58.068245"
+    },
+    "session_progress": {
+        "current_stage": "theory_completed",
+        "ui_mode": "chat",
+        "current_agent": "theory_educator",
+        "previous_agent": "learning_supervisor"
+    },
+    "conversations": [
+        {
+            "message_sequence": 1,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "학습을 시작합니다",
+            "timestamp": "2025-08-25 02:04:50.757758",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 2,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "학습을 시작합니다",
+            "timestamp": "2025-08-25 02:04:50.761125",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 3,
+            "agent_name": "theory_educator",
+            "message_type": "system",
+            "message_content": "챕터 3 섹션 5 이론 설명 생성 완료 (출처: 벡터 DB (2개 자료))",
+            "timestamp": "2025-08-25 02:04:58.066155",
+            "session_stage": "theory_completed"
+        }
+    ],
+    "quiz_info": {
+        "question_type": "",
+        "question_number": 0,
+        "question_content": "",
+        "user_answer": "",
+        "is_answer_correct": 0,
+        "evaluation_feedback": "",
+        "hint_usage_count": 0
+    },
+    "agent_drafts": {
+        "theory_draft": {
+            "chapter_info": "📚 1-1",
+            "title": "무료? 유료? 무엇을 선택해야 할까? 🤔",
+            "sections": [
+                {
+                    "type": "introduction",
+                    "content": "안녕하세요! 😊 오늘은 AI 챗봇의 무료 버전과 유료 버전 중 어떤 것을 선택해야 할지 고민해보는 시간을 가져볼게요. 어떤 상황에서 어떤 선택이 더 좋을지 함께 알아보아요!"
+                },
+                {
+                    "type": "definition",
+                    "title": "무료와 유료의 차이점 🌟",
+                    "content": "AI 챗봇은 무료 버전과 유료 버전이 있어요. 무료 버전은 기본적인 기능을 제공하고, 유료 버전은 더 많은 기능과 빠른 속도를 제공해요.",
+                    "analogy": {
+                        "concept": "AI 챗봇",
+                        "comparison": "공공 도서관과 전문가용 소프트웨어",
+                        "details": [
+                            "무료 버전은 누구나 이용할 수 있는 도서관처럼, 기본적인 정보와 지식을 제공해요.",
+                            "유료 버전은 전문가가 사용하는 소프트웨어처럼, 더 복잡하고 전문적인 작업을 할 수 있게 도와줘요."
+                        ]
+                    }
+                },
+                {
+                    "type": "examples",
+                    "title": "실생활 예시 📖",
+                    "items": [
+                        {
+                            "category": "일상적인 질문 🤔",
+                            "description": "무료 버전의 AI 챗봇을 사용하면 간단한 질문에 대한 답변을 쉽게 얻을 수 있어요.",
+                            "benefit": "기본적인 정보 검색이나 궁금증 해결에 유용해요."
+                        },
+                        {
+                            "category": "전문적인 작업 🧑‍💻",
+                            "description": "유료 버전의 AI 챗봇은 데이터 분석이나 이미지 생성 같은 고급 기능을 제공해요.",
+                            "benefit": "업무의 효율성을 높이고, 더 나은 결과물을 만들어낼 수 있어요."
+                        }
+                    ]
+                }
+            ]
+        },
+        "quiz_draft": "",
+        "feedback_draft": "",
+        "qna_draft": ""
+    },
+    "session_result": {
+        "decision": "",
+        "session_count": 0,
+        "study_duration_minutes": 0
+    }
+}

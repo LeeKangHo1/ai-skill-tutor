@@ -1,0 +1,120 @@
+{
+    "session_info": {
+        "session_id": "user1_ch1_session000_20250824_134730",
+        "user_id": 1,
+        "user_type": "beginner",
+        "chapter": 1,
+        "section": 1,
+        "session_start_time": "2025-08-24 13:47:30.628855",
+        "session_complete": true,
+        "saved_at": "2025-08-24 13:51:58.874277"
+    },
+    "session_progress": {
+        "current_stage": "quiz_and_feedback_completed",
+        "ui_mode": "chat",
+        "current_agent": "session_manager",
+        "previous_agent": "learning_supervisor"
+    },
+    "conversations": [
+        {
+            "message_sequence": 1,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "1챕터 1섹션을 시작할게요",
+            "timestamp": "2025-08-24 13:47:30.628853",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 2,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "1챕터 1섹션을 시작할게요",
+            "timestamp": "2025-08-24 13:47:30.956135",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 3,
+            "agent_name": "theory_educator",
+            "message_type": "system",
+            "message_content": "챕터 1 섹션 1 이론 설명 생성 완료 (출처: 벡터 DB (5개 자료))",
+            "timestamp": "2025-08-24 13:47:42.188274",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 4,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "next",
+            "timestamp": "2025-08-24 13:50:01.591697",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 5,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "next",
+            "timestamp": "2025-08-24 13:50:01.595442",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 6,
+            "agent_name": "quiz_generator",
+            "message_type": "system",
+            "message_content": "챕터 1 섹션 1 퀴즈 생성 완료",
+            "timestamp": "2025-08-24 13:50:04.437090",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 7,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "2",
+            "timestamp": "2025-08-24 13:51:45.715485",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 8,
+            "agent_name": "evaluation_feedback_agent",
+            "message_type": "system",
+            "message_content": "평가 완료 - 점수: 0, 결정: retry",
+            "timestamp": "2025-08-24 13:51:47.404258",
+            "session_stage": "quiz_and_feedback_completed"
+        },
+        {
+            "message_sequence": 9,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "2",
+            "timestamp": "2025-08-24 13:51:58.843348",
+            "session_stage": "quiz_and_feedback_completed"
+        },
+        {
+            "message_sequence": 10,
+            "agent_name": "session_manager",
+            "message_type": "system",
+            "message_content": "1챕터 1섹션이 성공적으로 완료되었습니다. (세션 ID: 3)",
+            "timestamp": "2025-08-24 13:51:58.872768",
+            "session_stage": "quiz_and_feedback_completed"
+        }
+    ],
+    "quiz_info": {
+        "question_type": "",
+        "question_number": 0,
+        "question_content": "",
+        "user_answer": "",
+        "is_answer_correct": 0,
+        "evaluation_feedback": "좋은 시도였어요! 😊 요리하는 레시피 앱도 정말 유용한 도구인데, AI와는 조금 다른 분야에 속해요. \n\nAI 기술이 활용된 사례로는 자동차가 스스로 주차하는 기능이 있어요. 이 기능은 주변 환경을 인식하고 판단하여 주차를 도와준답니다. 🚗✨\n\n다음에는 더 많은 예시를 생각해보면서 AI의 활용을 이해해보면 좋을 것 같아요! 계속해서 도전해보세요! 💪",
+        "hint_usage_count": 0
+    },
+    "agent_drafts": {
+        "theory_draft": "📚 1챕터 1섹션\n\n안녕하세요! 😊 오늘은 \"AI는 어떻게 우리 삶에 들어와 있을까?\"에 대해 알아보려고 해요. AI, 즉 인공지능은 요즘 정말 많이 듣는 말인데, 과연 우리 일상에서 어떤 역할을 하고 있는지 함께 살펴보겠습니다. 그럼 시작해볼게요! 🚀\n\n### 1단계: AI란 무엇인가요? 🤔\nAI는 쉽게 말해, 기계가 사람처럼 생각하고 배우는 기술이에요. 마치 우리가 새로운 것을 배우듯이, AI도 많은 데이터를 통해 스스로 학습하고 판단을 내릴 수 있답니다. 예를 들어, 고양이 사진을 많이 보여주면 AI는 '고양이'의 특징을 배우고, 나중에 새로운 사진 속 고양이를 찾아낼 수 있어요. 🐱\n\n### 2단계: AI가 우리 삶에 어떻게 들어왔을까요? 🏠\nAI는 이미 우리 일상 곳곳에 숨어 있어요. 우리가 아침에 일어나서 스마트폰으로 날씨를 확인하거나, 유튜브에서 영상을 추천받는 순간에도 AI가 작동하고 있답니다. 이제 몇 가지 예를 들어볼게요!\n\n#### 예시 1: 유튜브와 넷플릭스 🎥\n유튜브나 넷플릭스에서 \"이런 영상은 어때?\" 하고 추천받은 적 있죠? 이건 AI가 여러분의 시청 기록과 취향을 분석해서 맞춤형 콘텐츠를 추천해주는 거예요. 마치 친구가 \"너 이런 거 좋아할 것 같아!\" 하고 추천해주는 것과 비슷하죠. 😊\n\n#### 예시 2: 내비게이션 🚗\n네이버 지도 같은 내비게이션 앱은 실시간 교통 정보를 바탕으로 가장 빠른 길을 찾아줘요. 막히는 길을 피하고, 최적의 경로를 안내해주는 AI 덕분에 우리는 더 빠르고 편리하게 이동할 수 있답니다. 🗺️\n\n#### 예시 3: 음성 비서 🎤\n스마트폰의 음성 비서(예: 시리, 빅스비 등)에게 \"오늘 날씨 어때?\" 하고 물어보면, 금세 답해주죠? 이건 AI가 여러분의 목소리를 인식하고 질문의 의미를 이해해서 대답해주는 거예요. 마치 대화하는 친구처럼요! 🗣️\n\n### 3단계: AI의 다양한 활용 사례 🌟\nAI는 그 외에도 많은 곳에서 우리를 도와주고 있어요. 예를 들어:\n\n- **이메일 스팸 필터**: 스팸 메일을 자동으로 걸러주는 AI 덕분에 중요한 메일을 놓치지 않을 수 있어요. 📧\n- **온라인 쇼핑**: \"이 상품을 본 고객은 이런 상품도 봤어요\"라는 추천은 AI가 여러분의 구매 패턴을 분석해서 제공하는 서비스예요. 🛍️\n- **자동차 안전 시스템**: 차선 이탈 경고나 충돌 방지 시스템도 AI의 도움으로 안전한 주행을 도와준답니다. 🚦\n\n### 4단계: AI와 함께하는 미래 🌈\n이렇게 AI는 이미 우리의 일상에서 많은 역할을 하고 있어요. 앞으로 AI와 함께한다면 우리의 삶은 더욱 편리하고 풍요로워질 거예요. 반복적인 일을 대신해주고, 더 나은 선택을 하도록 도와주는 든든한 친구가 되어줄 거랍니다. 🤗\n\n정리하자면, AI는 더 이상 먼 미래의 이야기가 아니에요. 지금 이 순간에도 우리 곁에서 함께하고 있는 똑똑한 친구랍니다! 앞으로도 AI와 함께하는 멋진 일상이 기대되네요. 그럼 오늘도 좋은 하루 보내세요! 🌟\n\n💡 궁금한 점이 있으시면 언제든 질문해주세요. 이해하셨다면 '다음'이라고 말씀해주시면 퀴즈를 진행하겠습니다.",
+        "quiz_draft": "📝 이제 퀴즈를 풀어보겠습니다! 정답을 선택해주세요.\n\n천천히 생각해보세요. 틀려도 괜찮으니 편하게 답변해주시면 됩니다! 💪\n\n**문제**: 다음 중 AI 기술이 활용된 사례로 가장 적절한 것은 무엇일까요? 🧐\n\n**선택지**:\n1. 자동차가 스스로 주차하는 기능 🚗\n2. 사람이 직접 요리하는 레시피 앱 🍳\n3. 종이로 만든 종이비행기 비행 거리 측정 📏\n4. 사람이 직접 쓴 편지의 내용 분석 📬\n\n💡 **힌트**: 자동차가 주차할 때, 주변을 잘 살펴보는 친구가 있다고 생각해보세요! 👀\n\n✏️ 답변을 입력해주세요!",
+        "feedback_draft": "\n📋 **답변 정보**:\n• 정답: 1\n• 선택한 답: 2\n💪 좋은 시도였어요! 😊 요리하는 레시피 앱도 정말 유용한 도구인데, AI와는 조금 다른 분야에 속해요. \n\nAI 기술이 활용된 사례로는 자동차가 스스로 주차하는 기능이 있어요. 이 기능은 주변 환경을 인식하고 판단하여 주차를 도와준답니다. 🚗✨\n\n다음에는 더 많은 예시를 생각해보면서 AI의 활용을 이해해보면 좋을 것 같아요! 계속해서 도전해보세요! 💪\n🎯 **다음 단계 안내**:\n• 이번 학습은 아쉬운 부분이 있었습니다.\n• 추가로 궁금한 점이 있으시면 언제든 질문해주세요\n• 다음 학습으로 넘어가려면 '다음'이라고 말씀해주세요\n• 이 부분을 다시 학습하고 싶으시면 '재학습'이라고 말씀해주세요",
+        "qna_draft": ""
+    },
+    "session_result": {
+        "decision": "",
+        "session_count": 0,
+        "study_duration_minutes": 4
+    }
+}

@@ -129,8 +129,8 @@ tmp/
 temp/
 
 # Logs
-logs/
-*.log
+# logs/
+# *.log
 
 # Database
 *.db
@@ -165,11 +165,8 @@ chroma_db/
 .pytest_cache/
 .coverage
 htmlcov/
-backend/tests/
+backend/test/
 frontend/src/__tests__/
-
-# 채팅 로그 데이터
-backend/data/chat_log/
 
 # 벡터 데이터 원본
 backend/data/chapters_vec/

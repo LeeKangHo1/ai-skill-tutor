@@ -1,0 +1,145 @@
+{
+    "session_info": {
+        "session_id": "user2_ch6_session000_20250902_104156",
+        "user_id": 2,
+        "user_type": "beginner",
+        "chapter": 6,
+        "section": 2,
+        "session_start_time": "2025-09-02 10:41:56.772837",
+        "session_complete": true,
+        "saved_at": "2025-09-02 10:44:21.578892"
+    },
+    "session_progress": {
+        "current_stage": "quiz_and_feedback_completed",
+        "ui_mode": "chat",
+        "current_agent": "session_manager",
+        "previous_agent": "learning_supervisor"
+    },
+    "conversations": [
+        {
+            "message_sequence": 1,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "6챕터 2섹션 학습을 시작합니다.",
+            "timestamp": "2025-09-02 10:41:56.772835",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 2,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "6챕터 2섹션 학습을 시작합니다.",
+            "timestamp": "2025-09-02 10:41:56.776267",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 3,
+            "agent_name": "theory_educator",
+            "message_type": "system",
+            "message_content": "챕터 6 섹션 2 이론 설명 생성 완료 (출처: 벡터 DB (3개 자료))",
+            "timestamp": "2025-09-02 10:42:03.308548",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 4,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "다음",
+            "timestamp": "2025-09-02 10:42:18.391908",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 5,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "다음",
+            "timestamp": "2025-09-02 10:42:18.395824",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 6,
+            "agent_name": "quiz_generator",
+            "message_type": "system",
+            "message_content": "챕터 6 섹션 2 퀴즈 생성 완료 (출처: theory_draft 기반)",
+            "timestamp": "2025-09-02 10:42:21.632311",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 7,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "친구야 해외여행 가자",
+            "timestamp": "2025-09-02 10:44:01.653699",
+            "session_stage": "theory_completed"
+        },
+        {
+            "message_sequence": 8,
+            "agent_name": "evaluation_feedback_agent",
+            "message_type": "system",
+            "message_content": "평가 완료 - 점수: 70, 결정: proceed",
+            "timestamp": "2025-09-02 10:44:08.271420",
+            "session_stage": "quiz_and_feedback_completed"
+        },
+        {
+            "message_sequence": 9,
+            "agent_name": "session_manager",
+            "message_type": "system",
+            "message_content": "6챕터 2섹션이 성공적으로 완료되었습니다. (세션 ID: 57)",
+            "timestamp": "2025-09-02 10:44:21.576917",
+            "session_stage": "quiz_and_feedback_completed"
+        }
+    ],
+    "quiz_info": {
+        "question_type": "",
+        "question_number": 0,
+        "question_content": "",
+        "user_answer": "",
+        "is_answer_correct": 0,
+        "evaluation_feedback": "잘하셨어요! 친구에게 여행을 제안하는 것이 정말 좋은 아이디어입니다. 😊 하지만 조금 더 부드럽고 친근한 표현을 사용하면 더욱 좋을 것 같아요. 예를 들어, '우리 함께 해외여행 가는 거 어때?'라고 하면 더 자연스러울 거예요. 다음에는 이렇게 해보세요!",
+        "hint_usage_count": 0
+    },
+    "agent_drafts": {
+        "theory_draft": {
+            "chapter_info": "📚 1-1",
+            "title": "어색한 번역은 이제 그만! 똑똑한 AI 번역기 🤖",
+            "sections": [
+                {
+                    "type": "introduction",
+                    "content": "안녕하세요! 😊 오늘은 어색한 번역을 피하고, 똑똑한 AI 번역기를 활용하는 방법에 대해 이야기해보겠습니다."
+                },
+                {
+                    "type": "definition",
+                    "title": "AI 번역기의 원리 🧠",
+                    "content": "AI 번역기는 과거의 기계 번역과는 다르게, 문장의 전체 의미와 문맥을 이해해서 자연스러운 번역을 제공합니다. 이는 마치 사람처럼 문장을 이해하고 번역하는 방식이에요.",
+                    "analogy": {
+                        "concept": "AI 번역기",
+                        "comparison": "센스 있는 문화 통역사",
+                        "details": [
+                            "단순한 사전은 단어만 번역하지만, 문화 통역사는 상황에 맞는 표현을 알려줍니다.",
+                            "예를 들어, 결혼식에서 '축하해!'라고 전할 때, 문화 통역사는 그 나라의 축하 방식도 함께 알려줍니다."
+                        ]
+                    }
+                },
+                {
+                    "type": "examples",
+                    "title": "실생활 예시 📝",
+                    "items": [
+                        {
+                            "category": "비즈니스 이메일 ✉️",
+                            "description": "프로젝트 지연을 알리는 이메일을 작성할 때, AI에게 상황을 설명하면 더 정중하고 자연스러운 번역을 얻을 수 있습니다.",
+                            "benefit": "문화적 뉘앙스를 고려한 효과적인 커뮤니케이션이 가능해집니다."
+                        }
+                    ]
+                }
+            ]
+        },
+        "quiz_draft": "📝 이제 실습 문제를 풀어보겠습니다! 자유롭게 답변해주세요.\n\n천천히 생각해보세요. 틀려도 괜찮으니 편하게 답변해주시면 됩니다! 💪\n\n**문제**: 당신은 친구와 해외 여행을 계획하고 있습니다. 친구에게 보내는 메시지를 '친근하고 자연스러운 한국어'로 번역하도록 AI에게 요청하는 프롬프트를 작성해보세요. 아래 영어 문장을 참고하세요.\n\n💡 **힌트**: 친구에게 보내는 메시지이니, 너무 격식 차리지 말고 편안한 표현을 사용해 보세요!\n\n✏️ 답변을 입력해주세요!",
+        "feedback_draft": "잘하셨어요! 친구에게 여행을 제안하는 것이 정말 좋은 아이디어입니다. 😊 하지만 조금 더 부드럽고 친근한 표현을 사용하면 더욱 좋을 것 같아요. 예를 들어, '우리 함께 해외여행 가는 거 어때?'라고 하면 더 자연스러울 거예요. 다음에는 이렇게 해보세요!",
+        "qna_draft": ""
+    },
+    "session_result": {
+        "decision": "",
+        "session_count": 0,
+        "study_duration_minutes": 2
+    }
+}

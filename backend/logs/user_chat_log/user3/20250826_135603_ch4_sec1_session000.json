@@ -1,0 +1,102 @@
+{
+    "session_info": {
+        "session_id": "user3_ch4_session000_20250826_135603",
+        "user_id": 3,
+        "user_type": "beginner",
+        "chapter": 4,
+        "section": 1,
+        "session_start_time": "2025-08-26 13:56:03.102766",
+        "session_complete": true,
+        "saved_at": "2025-08-26 13:56:15.488081"
+    },
+    "session_progress": {
+        "current_stage": "theory_completed",
+        "ui_mode": "chat",
+        "current_agent": "theory_educator",
+        "previous_agent": "learning_supervisor"
+    },
+    "conversations": [
+        {
+            "message_sequence": 1,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "학습을 시작합니다",
+            "timestamp": "2025-08-26 13:56:03.102765",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 2,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "학습을 시작합니다",
+            "timestamp": "2025-08-26 13:56:03.107025",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 3,
+            "agent_name": "theory_educator",
+            "message_type": "system",
+            "message_content": "챕터 4 섹션 1 이론 설명 생성 완료 (출처: 벡터 DB (4개 자료))",
+            "timestamp": "2025-08-26 13:56:15.486691",
+            "session_stage": "theory_completed"
+        }
+    ],
+    "quiz_info": {
+        "question_type": "",
+        "question_number": 0,
+        "question_content": "",
+        "user_answer": "",
+        "is_answer_correct": 0,
+        "evaluation_feedback": "",
+        "hint_usage_count": 0
+    },
+    "agent_drafts": {
+        "theory_draft": {
+            "chapter_info": "📚 1-1",
+            "title": "프롬프트, AI를 움직이는 주문 ✨",
+            "sections": [
+                {
+                    "type": "introduction",
+                    "content": "안녕하세요! 😊 오늘은 AI와 소통하는 데 중요한 역할을 하는 '프롬프트'에 대해 알아보려고 해요. 프롬프트는 AI에게 원하는 작업을 시키기 위한 명령문이나 질문이에요. 그럼 함께 살펴볼까요?"
+                },
+                {
+                    "type": "definition",
+                    "title": "프롬프트란? 📝",
+                    "content": "프롬프트는 AI에게 우리가 원하는 작업을 알려주는 언어적 지시문이에요. 쉽게 말해, AI에게 '무엇을 해달라'고 요청하는 방법이죠. 프롬프트가 잘 작성되면 AI의 답변도 더 정확하고 유용해져요.",
+                    "analogy": {
+                        "concept": "프롬프트",
+                        "comparison": "소원을 들어주는 램프의 요정 지니",
+                        "details": [
+                            "지니는 소원을 어떻게 표현하느냐에 따라 결과가 달라져요.",
+                            "모호한 소원은 예측할 수 없는 결과를 가져오지만, 구체적인 소원은 원하는 결과를 정확히 만들어줘요."
+                        ]
+                    }
+                },
+                {
+                    "type": "examples",
+                    "title": "프롬프트의 예시 🌟",
+                    "items": [
+                        {
+                            "category": "좋은 프롬프트 👍",
+                            "description": "어제 오후 2시에 진행된 '알파 프로젝트' 킥오프 미팅 참석자들에게 보낼 후속 이메일 초안을 작성해줘. 참석자는 우리 팀 3명과 클라이언트사 5명이야. 전문적이지만 친근한 톤을 유지해줘.",
+                            "benefit": "AI가 필요한 모든 정보를 알고, 바로 사용할 수 있는 완성도 높은 이메일 초안을 만들어줘요."
+                        },
+                        {
+                            "category": "나쁜 프롬프트 👎",
+                            "description": "미팅 후 이메일 써줘.",
+                            "benefit": "너무 막연해서 AI가 쓸모없는 결과물을 생성할 가능성이 높아요."
+                        }
+                    ]
+                }
+            ]
+        },
+        "quiz_draft": "",
+        "feedback_draft": "",
+        "qna_draft": ""
+    },
+    "session_result": {
+        "decision": "",
+        "session_count": 0,
+        "study_duration_minutes": 0
+    }
+}

@@ -1,0 +1,64 @@
+{
+    "session_info": {
+        "session_id": "user999_ch1_session000_20250824_133813",
+        "user_id": 999,
+        "user_type": "beginner",
+        "chapter": 1,
+        "section": 1,
+        "session_start_time": "2025-08-24 13:38:13.311995",
+        "session_complete": true,
+        "saved_at": "2025-08-24 13:38:24.210362"
+    },
+    "session_progress": {
+        "current_stage": "theory_completed",
+        "ui_mode": "chat",
+        "current_agent": "theory_educator",
+        "previous_agent": "learning_supervisor"
+    },
+    "conversations": [
+        {
+            "message_sequence": 1,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "1챕터 1섹션을 시작할게요",
+            "timestamp": "2025-08-24 13:38:13.312016",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 2,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "1챕터 1섹션을 시작할게요",
+            "timestamp": "2025-08-24 13:38:13.557072",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 3,
+            "agent_name": "theory_educator",
+            "message_type": "system",
+            "message_content": "챕터 1 섹션 1 이론 설명 생성 완료 (출처: 벡터 DB (5개 자료))",
+            "timestamp": "2025-08-24 13:38:24.208560",
+            "session_stage": "theory_completed"
+        }
+    ],
+    "quiz_info": {
+        "question_type": "",
+        "question_number": 0,
+        "question_content": "",
+        "user_answer": "",
+        "is_answer_correct": 0,
+        "evaluation_feedback": "",
+        "hint_usage_count": 0
+    },
+    "agent_drafts": {
+        "theory_draft": "📚 1챕터 1섹션\n\n안녕하세요! 😊 오늘은 \"AI는 어떻게 우리 삶에 들어와 있을까?\"에 대해 이야기해볼게요. AI는 인공지능의 줄임말로, 우리 주변에서 아주 자연스럽게 사용되고 있는 기술이에요. 그럼, 차근차근 알아보도록 할게요!\n\n### 1단계: AI란 무엇인가요? 🤔\nAI는 쉽게 말해, 기계가 사람처럼 생각하고 배우는 능력을 갖추게 하는 기술이에요. 마치 요리사가 다양한 재료를 가지고 요리를 하는 것처럼, AI도 많은 데이터를 가지고 스스로 학습해요. 예를 들어, 고양이 사진을 많이 보여주면 AI는 '고양이'의 특징을 배우고, 새로운 사진 속 고양이를 알아볼 수 있게 되는 거죠. 🐱\n\n### 2단계: AI가 우리 삶에 어떻게 들어왔을까요? 🌍\n이제 AI가 우리 일상에 어떻게 스며들었는지 살펴볼게요. 아침에 일어나서 스마트폰으로 날씨를 확인할 때, \"헤이 시리\"라고 음성 비서를 부르면 날씨를 바로 알려주죠. 이 모든 것이 AI 덕분이에요! ☀️\n\n#### 예시 1: OTT 서비스 🎬\n넷플릭스나 유튜브 같은 서비스에서는 AI가 우리의 시청 기록을 분석해서 우리가 좋아할 만한 영화를 추천해줘요. 마치 친구가 \"이 영화 재밌어!\"라고 추천해주는 것과 비슷하죠. 그래서 우리는 원하는 콘텐츠를 쉽게 찾을 수 있어요!\n\n#### 예시 2: 내비게이션 🚗\n네이버 지도 같은 내비게이션 앱도 AI를 사용해요. 실시간 교통 정보를 분석해서 막히지 않는 빠른 길을 찾아주죠. 예를 들어, 출근길에 교통체증이 심한 길을 피해서 더 빠르게 도착할 수 있게 도와주는 거예요.\n\n#### 예시 3: 이메일 스팸 필터 📧\n이메일에서도 AI가 큰 역할을 해요. 스팸 메일 필터는 수많은 이메일을 분석해서 스팸일 가능성이 높은 메일을 자동으로 걸러줘요. 예전에는 특정 단어로만 필터링했지만, 지금은 AI가 문맥을 이해해서 더 똑똑하게 스팸을 걸러낸답니다.\n\n### 3단계: AI의 도움으로 더 편리해진 생활 🛍️\nAI는 우리가 아침에 눈을 뜨고 밤에 잠들 때까지 다양한 방식으로 도움을 주고 있어요. 예를 들어, 온라인 쇼핑몰에서 \"이 상품을 본 고객은 이런 상품도 봤어요\"라는 추천은 AI가 우리의 취향을 분석해서 제공하는 서비스예요. 이렇게 AI 덕분에 우리의 일상은 훨씬 더 편리해졌죠!\n\n### 4단계: AI와 함께하는 미래 🌟\nAI는 이제 단순한 기술이 아니라, 우리의 삶을 더 풍요롭게 만들어주는 친구가 되었어요. 앞으로 AI와 함께한다면 반복적인 일을 대신해주고, 더 나은 선택을 하도록 도와주는 든든한 조력자가 될 거예요. 그러니 AI를 잘 활용하면 우리의 생활이 더욱 편리해질 거예요!\n\n### 정리하자면! 📝\nAI는 이제 더 이상 먼 미래의 이야기만이 아니에요. 바로 지금, 우리의 일상 속에서 다양한 방식으로 도움을 주고 있는 친구랍니다. AI 덕분에 우리는 더 많은 시간을 절약하고, 더 나은 선택을 할 수 있게 되었어요. 앞으로도 AI와 함께하는 멋진 미래를 기대해보아요! 😊✨\n\n이렇게 AI가 어떻게 우리 삶에 들어와 있는지 알아보았어요. 궁금한 점이 있다면 언제든지 물어보세요!\n\n💡 궁금한 점이 있으시면 언제든 질문해주세요. 이해하셨다면 '다음'이라고 말씀해주시면 퀴즈를 진행하겠습니다.",
+        "quiz_draft": "",
+        "feedback_draft": "",
+        "qna_draft": ""
+    },
+    "session_result": {
+        "decision": "",
+        "session_count": 0,
+        "study_duration_minutes": 0
+    }
+}

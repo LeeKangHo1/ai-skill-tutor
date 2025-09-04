@@ -1,0 +1,51 @@
+{
+    "session_info": {
+        "session_id": "user3_ch4_session000_20250826_150943",
+        "user_id": 3,
+        "user_type": "beginner",
+        "chapter": 4,
+        "section": 1,
+        "session_start_time": "2025-08-26 15:09:43.957203",
+        "session_complete": false,
+        "saved_at": "2025-08-26 15:09:43.960144"
+    },
+    "session_progress": {
+        "current_stage": "session_start",
+        "ui_mode": "chat",
+        "current_agent": "learning_supervisor",
+        "previous_agent": "session_manager"
+    },
+    "conversations": [
+        {
+            "message_sequence": 1,
+            "agent_name": "user",
+            "message_type": "user",
+            "message_content": "학습을 시작합니다",
+            "timestamp": "2025-08-26 15:09:43.957201",
+            "session_stage": "session_start"
+        },
+        {
+            "message_sequence": 2,
+            "agent_name": "learning_supervisor",
+            "message_type": "user",
+            "message_content": "학습을 시작합니다",
+            "timestamp": "2025-08-26 15:09:43.960087",
+            "session_stage": "session_start"
+        }
+    ],
+    "quiz_info": {
+        "question_type": "",
+        "question_number": 0,
+        "question_content": "",
+        "user_answer": "",
+        "is_answer_correct": 0,
+        "evaluation_feedback": "",
+        "hint_usage_count": 0
+    },
+    "agent_drafts": {
+        "theory_draft": "",
+        "quiz_draft": "",
+        "feedback_draft": "",
+        "qna_draft": ""
+    }
+}
