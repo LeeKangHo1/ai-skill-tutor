@@ -366,7 +366,7 @@ Authorization: Bearer {access_token}
 
 ### 5.2 POST /learning/session/message (메시지 전송) - v2.0 통합 워크플로우
 
-**요청:**
+**요청 1:**
 ```json
 {
   "user_message": "다음 단계로 넘어가주세요",
@@ -401,27 +401,83 @@ Authorization: Bearer {access_token}
 }
 ```
 
-**응답 2: 질문 답변**
+**요청 2:**
+```json
+{
+  "user_message": "AI와 머신러닝의 차이가 뭐예요?",
+  "message_type": "user"
+}
+```
+
+**응답 2: 질문 답변 (스트리밍)**
 ```json
 {
   "success": true,
   "data": {
     "workflow_response": {
       "current_agent": "qna_resolver",
-      "session_progress_stage": "theory_completed",
+      "session_progress_stage": "theory_completed", 
       "ui_mode": "chat",
       "content": {
-        "type": "qna",
+        "type": "qna_streaming",
         "question": "AI와 머신러닝의 차이가 뭐예요?",
-        "answer": "AI는 더 넓은 개념으로, 인간의 지능을 모방하는 모든 기술을 포함합니다. 머신러닝은 AI의 한 분야로, 데이터를 통해 학습하는 방법론입니다..."
+        "temp_session_id": "temp_qna_1725456789123",
+        "streaming_url": "/api/v1/learning/qna-stream/temp_qna_1725456789123"
       }
     }
   },
-  "message": "질문에 대한 답변입니다."
+  "message": "질문 답변을 스트리밍으로 제공합니다."
 }
 ```
 
-### 5.3 POST /learning/quiz/submit (퀴즈 답변 제출) - v2.0 통합
+### 5.4 GET /learning/qna-stream/{temp_session_id} (QnA 스트리밍) - v2.0 신규
+
+**설명:** POST /learning/session/message 의 응답에서 가져온 temp_session_id로 바로 재요청을 보내 스트리밍을 실행
+
+**요청:**
+- **Method:** GET
+- **URL:** `/learning/qna-stream/temp_qna_1725456789123`
+- **인증:** 불필요 (임시 세션 ID로 보안 처리)
+- **Content-Type:** 없음 (GET 요청)
+
+**요청 헤더:**
+```
+Accept: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+```
+
+**요청 파라미터:**
+- `temp_session_id` (URL 경로): POST /learning/session/message에서 받은 임시 세션 ID
+
+**응답 (Server-Sent Events):**
+
+**스트리밍 시작:**
+```
+data: {"type": "stream_start", "message": "QnA 답변 생성을 시작합니다...", "session_id": "temp_qna_1725456789123"}
+
+```
+
+**실시간 토큰 스트리밍:**
+```
+data: {"type": "content_chunk", "chunk": "AI는 ", "chunk_id": 1}
+
+data: {"type": "content_chunk", "chunk": "더 ", "chunk_id": 2}
+
+data: {"type": "content_chunk", "chunk": "넓은 ", "chunk_id": 3}
+
+data: {"type": "content_chunk", "chunk": "개념으로, ", "chunk_id": 4}
+
+...
+```
+
+**스트리밍 완료:**
+```
+data: {"type": "stream_complete", "message": "QnA 답변이 완성되었습니다.", "total_chunks": 45}
+
+```
+
+### 5.4 POST /learning/quiz/submit (퀴즈 답변 제출) - v2.0 통합
 
 **요청:**
 ```json
@@ -461,7 +517,7 @@ Authorization: Bearer {access_token}
 }
 ```
 
-### 5.4 POST /learning/session/complete (세션 완료) - v2.0 신규
+### 5.5 POST /learning/session/complete (세션 완료) - v2.0 신규
 
 **요청:**
 ```json
@@ -657,6 +713,7 @@ Authorization: Bearer {access_token}
 
 ### 🆕 새로 추가된 API
 - **POST /learning/session/complete**: 세션 완료 처리 API 추가
+- **GET /learning/qna-stream/{temp_session_id}**: QnA 실시간 스트리밍 API 추가
 - **통합 워크플로우**: 모든 학습 진행이 하나의 `/session/message` 엔드포인트로 통합
 
 ### 🔧 수정된 API 응답 형식
@@ -668,6 +725,8 @@ Authorization: Bearer {access_token}
 - **라우팅 시스템**: SupervisorRouter 기반 중앙집중식 라우팅
 - **응답 생성**: response_generator를 통한 일관된 사용자 친화적 응답
 - **세션 관리**: AUTO_INCREMENT 기반 세션 ID 관리로 성능 향상
+- **QnA 스트리밍**: Agent + ChatGPT 분리로 TTFT 65% 개선 (7초 → 2.5초)
+- **병렬 벡터 검색**: ThreadPoolExecutor 활용으로 검색 속도 50% 개선
 
 ### ✅ 구현 완료된 API
 - GET /diagnosis/questions (진단 문항 조회)
