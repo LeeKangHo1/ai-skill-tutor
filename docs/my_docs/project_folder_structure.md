@@ -1,4 +1,4 @@
-# 백엔드 폴더 구조 (v2.0 MVP - 2025.08.25 업데이트)
+# 백엔드 폴더 구조 (v2.0 MVP - 2025.09.02 업데이트)
 
 ```
 backend/
@@ -124,6 +124,7 @@ backend/
 │   │   │   ├── __init__.py
 │   │   │   ├── feedback_tools_chatgpt.py # ChatGPT 기반 피드백 생성 도구
 │   │   │   ├── qna_tools_chatgpt.py    # LangChain Agent 기반 QnA 답변 생성
+│   │   │   ├── qna_tools_chatgpt_stream.py # QnA 답변 생성을 스트리밍 버전으로
 │   │   │   ├── quiz_tools_chatgpt.py   # ChatGPT 기반 퀴즈 생성 도구
 │   │   │   └── theory_tools_chatgpt.py # ChatGPT 기반 이론 설명 생성
 │   │   ├── external/                 # 외부 연동 도구
@@ -161,9 +162,6 @@ backend/
 │   ├── chapters/                     # 챕터별 데이터
 │   │   ├── chapter_01.json ~ chapter_08.json # 학습 기초 데이터
 │   │   └── chapters_metadata.json    # 챕터 메타데이터
-│   ├── chat_log/                     # 사용자별 대화 로그 저장
-│   │   ├── user1/                    # user + user_id
-│   │   └── ... (생략)                 
 │   ├── chroma_db/                    # ChromaDB 벡터 데이터베이스
 │   │   ├── chroma.sqlite3            # ChromaDB SQLite 파일
 │   │   └── e126144a-9665-45db-b45a-3be8a69f21f3/ # 벡터 컬렉션 데이터
@@ -173,6 +171,9 @@ backend/
 │   ├── tutor_workflow_graph.png      # LangGraph 워크플로우 시각화
 │   └── vector_insertion_log.json     # 벡터DB 자료 삽입 로그
 ├── logs/                            # 로그 파일
+│   ├── user_chat_log/                # 사용자별 대화 로그 저장
+│   │   ├── user1/                    # user + user_id
+│   │   └── ... (생략)    
 │   ├── access.log                   # 액세스 로그
 │   ├── app.log                      # 애플리케이션 로그
 │   └── error.log                    # 에러 로그

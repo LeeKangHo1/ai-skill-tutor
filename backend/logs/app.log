@@ -8637,3 +8637,216 @@
 [2025-09-04 00:16:12] INFO [app.tools.content.theory_tools_chatgpt_stream:313] LLM 스트리밍 완료 - 총 0개 section 전송됨
 [2025-09-04 00:16:12] INFO [app.tools.content.theory_tools_chatgpt_stream:107] 이론 스트리밍 생성 완료
 [2025-09-04 00:16:12] INFO [app.tools.content.theory_tools_chatgpt_stream:152] 이론 스트리밍 도구 리소스 정리 완료
+[2025-09-04 09:24:55] INFO [app:46] 로깅 시스템이 초기화되었습니다.
+[2025-09-04 09:24:57] INFO [app.core.external.chroma_client:59] ChromaDB 클라이언트 초기화 완료: C:\workspace\project_lec\ai-skill-tutor\backend\data\chroma_db
+[2025-09-04 09:25:32] INFO [app.config.db_config:208] 연결 풀 초기화 시작 (최소: 2개)
+[2025-09-04 09:25:32] INFO [app.config.db_config:223] 연결 풀 초기화 완료 (현재: 2개)
+[2025-09-04 09:25:32] INFO [app.config.db_config:375] 헬스체크 스레드가 시작되었습니다.
+[2025-09-04 09:26:03] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 09:26:03] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 09:26:09] INFO [app.core.langraph.workflow:56] [exec_1756945569] 워크플로우 실행 시작
+[2025-09-04 09:26:09] INFO [app.core.langraph.workflow:291] [exec_1756945569] 실행 정보:
+[2025-09-04 09:26:09] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 09:26:09] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/1
+[2025-09-04 09:26:09] INFO [app.core.langraph.workflow:294]   - 세션 단계: session_start
+[2025-09-04 09:26:09] INFO [app.core.langraph.workflow:295]   - 사용자 의도: next_step
+[2025-09-04 09:26:10] INFO [app.tools.external.vector_search_tools:29] 이론 생성용 벡터 검색 시작 - 챕터 1 섹션 1
+[2025-09-04 09:26:11] INFO [app.core.external.chroma_client:95] 기존 컬렉션 조회: ai_tutor_contents
+[2025-09-04 09:26:11] INFO [app.tools.external.vector_search_tools:39] core_concept 청크 3개 발견
+[2025-09-04 09:26:11] INFO [app.tools.external.vector_search_tools:43] 기타 청크 2개 발견
+[2025-09-04 09:26:11] INFO [app.tools.external.vector_search_tools:48] 이론 생성용 벡터 검색 완료 - 총 5개 청크 반환
+[2025-09-04 09:26:11] INFO [app.tools.content.theory_tools_chatgpt:38] ChatGPT 이론 생성 도구 시작 (소스: vector, LCEL 파이프라인)
+[2025-09-04 09:26:19] INFO [app.tools.content.theory_tools_chatgpt:59] ChatGPT 이론 생성 파이프라인 완료 (소스: vector)
+[2025-09-04 09:26:19] INFO [app.core.langraph.workflow:83] [exec_1756945569] 워크플로우 실행 완료 (9.98s)
+[2025-09-04 09:26:47] INFO [app.core.langraph.workflow:56] [exec_1756945607] 워크플로우 실행 시작
+[2025-09-04 09:26:47] INFO [app.core.langraph.workflow:291] [exec_1756945607] 실행 정보:
+[2025-09-04 09:26:47] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 09:26:47] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/1
+[2025-09-04 09:26:47] INFO [app.core.langraph.workflow:294]   - 세션 단계: theory_completed
+[2025-09-04 09:26:47] INFO [app.core.langraph.workflow:295]   - 사용자 의도: next_step
+[2025-09-04 09:26:47] INFO [app.tools.content.quiz_tools_chatgpt:41] ChatGPT 퀴즈 생성 도구 시작 (LCEL 파이프라인)
+[2025-09-04 09:26:47] INFO [app.tools.content.quiz_tools_chatgpt:47] theory_draft 모드 - 섹션 데이터에서 퀴즈 타입 추출: multiple_choice
+[2025-09-04 09:26:51] INFO [app.tools.content.quiz_tools_chatgpt:67] ChatGPT 퀴즈 생성 파이프라인 완료
+[2025-09-04 09:26:51] INFO [app.core.langraph.workflow:83] [exec_1756945607] 워크플로우 실행 완료 (3.46s)
+[2025-09-04 09:27:09] INFO [app.core.langraph.workflow:56] [exec_1756945629] 워크플로우 실행 시작
+[2025-09-04 09:27:09] INFO [app.core.langraph.workflow:291] [exec_1756945629] 실행 정보:
+[2025-09-04 09:27:09] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 09:27:09] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/1
+[2025-09-04 09:27:09] INFO [app.core.langraph.workflow:294]   - 세션 단계: theory_completed
+[2025-09-04 09:27:09] INFO [app.core.langraph.workflow:295]   - 사용자 의도: quiz_answer
+[2025-09-04 09:27:09] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:45] [evaluation_feedback_agent] 평가 및 피드백 생성 시작
+[2025-09-04 09:27:09] INFO [app.tools.analysis.evaluation_tools:146] multiple_choice 퀴즈 데이터 검증 완료
+[2025-09-04 09:27:09] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:144] State에서 퀴즈 데이터 추출 및 검증 완료
+[2025-09-04 09:27:09] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:154] 객관식 평가 시작
+[2025-09-04 09:27:09] INFO [app.tools.analysis.evaluation_tools:25] 객관식 채점 시작 - 정답: 1, 사용자답변: 1
+[2025-09-04 09:27:09] INFO [app.tools.analysis.evaluation_tools:44] 객관식 채점 완료 - 결과: 정답
+[2025-09-04 09:27:09] INFO [app.tools.content.feedback_tools_chatgpt:90] ChatGPT 객관식 피드백 생성 시작
+[2025-09-04 09:27:10] INFO [app.tools.content.feedback_tools_chatgpt:105] ChatGPT 객관식 피드백 생성 완료
+[2025-09-04 09:27:10] INFO [app.tools.analysis.evaluation_tools:74] 객관식 판단 - 점수: 1, 결정: proceed
+[2025-09-04 09:27:10] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:79] [evaluation_feedback_agent] 평가 완료 - 점수: 1, 다음단계: proceed
+[2025-09-04 09:27:10] INFO [app.core.langraph.workflow:83] [exec_1756945629] 워크플로우 실행 완료 (1.39s)
+[2025-09-04 09:27:26] INFO [app.core.langraph.workflow:56] [exec_1756945646] 워크플로우 실행 시작
+[2025-09-04 09:27:26] INFO [app.core.langraph.workflow:291] [exec_1756945646] 실행 정보:
+[2025-09-04 09:27:26] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 09:27:26] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/1
+[2025-09-04 09:27:26] INFO [app.core.langraph.workflow:294]   - 세션 단계: quiz_and_feedback_completed
+[2025-09-04 09:27:26] INFO [app.core.langraph.workflow:295]   - 사용자 의도: quiz_answer
+[2025-09-04 09:27:26] INFO [app.core.langraph.workflow:83] [exec_1756945646] 워크플로우 실행 완료 (0.01s)
+[2025-09-04 09:27:26] INFO [app.tools.content.qna_tools_chatgpt_stream:32] QnA 스트리밍 답변 생성 시작 - Agent + ChatGPT 분리 방식
+[2025-09-04 09:27:28] INFO [app.tools.external.vector_search_tools:345] 병렬 벡터 검색 시작 - 쿼리 3개
+[2025-09-04 09:27:28] INFO [app.tools.external.vector_search_tools:148] QnA용 벡터 검색 시작 - 질문: GPT...
+[2025-09-04 09:27:28] INFO [app.tools.external.vector_search_tools:148] QnA용 벡터 검색 시작 - 질문: ChatGPT...
+[2025-09-04 09:27:28] INFO [app.tools.external.vector_search_tools:149] 최대 거리 임계값: 1.2
+[2025-09-04 09:27:28] INFO [app.tools.external.vector_search_tools:148] QnA용 벡터 검색 시작 - 질문: AI 개념...
+[2025-09-04 09:27:28] INFO [app.tools.external.vector_search_tools:149] 최대 거리 임계값: 1.2
+[2025-09-04 09:27:28] INFO [app.tools.external.vector_search_tools:149] 최대 거리 임계값: 1.2
+[2025-09-04 09:27:29] INFO [app.tools.external.vector_search_tools:170] 원시 검색 결과: 15개
+[2025-09-04 09:27:29] INFO [app.tools.external.vector_search_tools:199] QnA용 벡터 검색 완료 - 총 5개 청크 반환
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:170] 원시 검색 결과: 15개
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:199] QnA용 벡터 검색 완료 - 총 5개 청크 반환
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:170] 원시 검색 결과: 15개
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:199] QnA용 벡터 검색 완료 - 총 2개 청크 반환
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:366] 쿼리 'GPT' 검색 완료: 2개 결과
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:366] 쿼리 'ChatGPT' 검색 완료: 5개 결과
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:366] 쿼리 'AI 개념' 검색 완료: 5개 결과
+[2025-09-04 09:27:30] INFO [app.tools.external.vector_search_tools:373] 병렬 벡터 검색 완료 - 총 5개 결과
+[2025-09-04 09:27:30] INFO [app.tools.content.qna_tools_chatgpt_stream:42] Agent 분석 완료 - 결정: GPT에 대한 구체적인 설명이 필요하기 때문입니다.
+[2025-09-04 09:27:34] INFO [app.tools.content.qna_tools_chatgpt_stream:57] QnA 스트리밍 답변 생성 완료
+[2025-09-04 09:28:14] INFO [app.core.langraph.workflow:56] [exec_1756945694] 워크플로우 실행 시작
+[2025-09-04 09:28:14] INFO [app.core.langraph.workflow:291] [exec_1756945694] 실행 정보:
+[2025-09-04 09:28:14] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 09:28:14] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/1
+[2025-09-04 09:28:14] INFO [app.core.langraph.workflow:294]   - 세션 단계: quiz_and_feedback_completed
+[2025-09-04 09:28:14] INFO [app.core.langraph.workflow:295]   - 사용자 의도: next_step
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_manager_agent:53] [session_manager] 세션 DB 저장 시작
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_manager_agent:57] 세션 결정 결과: proceed
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_manager_agent:226] 챕터 메타데이터 로드 완료: C:\workspace\project_lec\ai-skill-tutor\backend\data\chapters\chapters_metadata.json
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_manager_agent:109] 진행 상태 계산: 1챕터 1섹션 → 1챕터 2섹션
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:52] 세션 정보 저장 완료: session_id=59
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:227] 사용자 진행 상태 업데이트 완료: user_id=10, 1챕터 1섹션 → 1챕터 2섹션
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:256] 통계 업데이트 디버깅 - user_id: 10
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:257] study_duration_seconds 값: 124
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:279] 사용자 통계 업데이트 완료: user_id=10, 학습시간 +124초
+[2025-09-04 09:28:14] INFO [app.utils.database.transaction:292] 트랜잭션 실행 성공: 10개 작업 완료
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:139] 대화 기록 저장 완료: 59 (10개)
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:173] 퀴즈 정보 저장 완료: 59
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_handlers:376] 분리 통계 재계산 완료: user_id=10, 객관식=100.00% (1/1), 주관식=0.00점 (0개)
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_manager_agent:287] 세션 데이터 DB 저장 완료: session_id=59
+[2025-09-04 09:28:14] INFO [app.agents.session_manager.session_manager_agent:80] [session_manager] 세션 DB 저장 완료 - 세션ID: 59
+[2025-09-04 09:28:14] INFO [app.core.langraph.workflow:83] [exec_1756945694] 워크플로우 실행 완료 (0.04s)
+[2025-09-04 09:28:19] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 09:28:19] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 09:29:50] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 09:29:50] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 09:39:50] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 09:39:50] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 09:49:50] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 09:49:50] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 09:59:50] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 09:59:50] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 10:09:50] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 10:09:50] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 10:19:50] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 10:19:50] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 10:29:51] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 10:29:51] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 10:39:50] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 10:39:50] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 11:19:52] INFO [app:46] 로깅 시스템이 초기화되었습니다.
+[2025-09-04 11:19:55] INFO [app.core.external.chroma_client:59] ChromaDB 클라이언트 초기화 완료: C:\workspace\project_lec\ai-skill-tutor\backend\data\chroma_db
+[2025-09-04 11:20:06] INFO [app.config.db_config:208] 연결 풀 초기화 시작 (최소: 2개)
+[2025-09-04 11:20:06] INFO [app.config.db_config:223] 연결 풀 초기화 완료 (현재: 2개)
+[2025-09-04 11:20:06] INFO [app.config.db_config:375] 헬스체크 스레드가 시작되었습니다.
+[2025-09-04 11:20:10] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 11:20:10] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10
+[2025-09-04 11:20:12] INFO [app.core.langraph.workflow:56] [exec_1756952412] 워크플로우 실행 시작
+[2025-09-04 11:20:12] INFO [app.core.langraph.workflow:291] [exec_1756952412] 실행 정보:
+[2025-09-04 11:20:12] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 11:20:12] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/2
+[2025-09-04 11:20:12] INFO [app.core.langraph.workflow:294]   - 세션 단계: session_start
+[2025-09-04 11:20:12] INFO [app.core.langraph.workflow:295]   - 사용자 의도: next_step
+[2025-09-04 11:20:12] INFO [app.tools.external.vector_search_tools:29] 이론 생성용 벡터 검색 시작 - 챕터 1 섹션 2
+[2025-09-04 11:20:12] INFO [app.core.external.chroma_client:95] 기존 컬렉션 조회: ai_tutor_contents
+[2025-09-04 11:20:13] INFO [app.tools.external.vector_search_tools:39] core_concept 청크 3개 발견
+[2025-09-04 11:20:13] INFO [app.tools.external.vector_search_tools:43] 기타 청크 2개 발견
+[2025-09-04 11:20:13] INFO [app.tools.external.vector_search_tools:48] 이론 생성용 벡터 검색 완료 - 총 5개 청크 반환
+[2025-09-04 11:20:13] INFO [app.tools.content.theory_tools_chatgpt:38] ChatGPT 이론 생성 도구 시작 (소스: vector, LCEL 파이프라인)
+[2025-09-04 11:20:23] INFO [app.tools.content.theory_tools_chatgpt:59] ChatGPT 이론 생성 파이프라인 완료 (소스: vector)
+[2025-09-04 11:20:23] INFO [app.core.langraph.workflow:83] [exec_1756952412] 워크플로우 실행 완료 (11.31s)
+[2025-09-04 11:20:32] INFO [app.core.langraph.workflow:56] [exec_1756952432] 워크플로우 실행 시작
+[2025-09-04 11:20:32] INFO [app.core.langraph.workflow:291] [exec_1756952432] 실행 정보:
+[2025-09-04 11:20:32] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 11:20:32] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/2
+[2025-09-04 11:20:32] INFO [app.core.langraph.workflow:294]   - 세션 단계: theory_completed
+[2025-09-04 11:20:32] INFO [app.core.langraph.workflow:295]   - 사용자 의도: next_step
+[2025-09-04 11:20:34] INFO [app.core.langraph.workflow:83] [exec_1756952432] 워크플로우 실행 완료 (2.04s)
+[2025-09-04 11:20:34] INFO [app.tools.content.qna_tools_chatgpt_stream:32] QnA 스트리밍 답변 생성 시작 - Agent + ChatGPT 분리 방식
+[2025-09-04 11:20:36] INFO [app.tools.external.vector_search_tools:345] 병렬 벡터 검색 시작 - 쿼리 3개
+[2025-09-04 11:20:36] INFO [app.tools.external.vector_search_tools:148] QnA용 벡터 검색 시작 - 질문: 트랜스포머...
+[2025-09-04 11:20:36] INFO [app.tools.external.vector_search_tools:148] QnA용 벡터 검색 시작 - 질문: 트랜스포머 구조...
+[2025-09-04 11:20:36] INFO [app.tools.external.vector_search_tools:149] 최대 거리 임계값: 1.2
+[2025-09-04 11:20:36] INFO [app.tools.external.vector_search_tools:148] QnA용 벡터 검색 시작 - 질문: 딥러닝 트랜스포머...
+[2025-09-04 11:20:36] INFO [app.tools.external.vector_search_tools:149] 최대 거리 임계값: 1.2
+[2025-09-04 11:20:36] INFO [app.tools.external.vector_search_tools:149] 최대 거리 임계값: 1.2
+[2025-09-04 11:20:37] INFO [app.tools.external.vector_search_tools:170] 원시 검색 결과: 15개
+[2025-09-04 11:20:37] INFO [app.tools.external.vector_search_tools:199] QnA용 벡터 검색 완료 - 총 0개 청크 반환
+[2025-09-04 11:20:38] INFO [app.tools.external.vector_search_tools:170] 원시 검색 결과: 15개
+[2025-09-04 11:20:38] INFO [app.tools.external.vector_search_tools:199] QnA용 벡터 검색 완료 - 총 3개 청크 반환
+[2025-09-04 11:20:38] INFO [app.tools.external.vector_search_tools:170] 원시 검색 결과: 15개
+[2025-09-04 11:20:38] INFO [app.tools.external.vector_search_tools:199] QnA용 벡터 검색 완료 - 총 2개 청크 반환
+[2025-09-04 11:20:38] INFO [app.tools.external.vector_search_tools:366] 쿼리 '트랜스포머' 검색 완료: 2개 결과
+[2025-09-04 11:20:38] INFO [app.tools.external.vector_search_tools:366] 쿼리 '트랜스포머 구조' 검색 완료: 3개 결과
+[2025-09-04 11:20:38] INFO [app.tools.external.vector_search_tools:373] 병렬 벡터 검색 완료 - 총 4개 결과
+[2025-09-04 11:20:38] INFO [app.tools.content.qna_tools_chatgpt_stream:42] Agent 분석 완료 - 결정: 트랜스포머는 AI와 딥러닝의 중요한 개념으로, 구체적인 설명이 필요함.
+[2025-09-04 11:20:43] INFO [app.tools.content.qna_tools_chatgpt_stream:57] QnA 스트리밍 답변 생성 완료
+[2025-09-04 11:24:37] INFO [app.core.langraph.workflow:56] [exec_1756952677] 워크플로우 실행 시작
+[2025-09-04 11:24:37] INFO [app.core.langraph.workflow:291] [exec_1756952677] 실행 정보:
+[2025-09-04 11:24:37] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 11:24:37] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/2
+[2025-09-04 11:24:37] INFO [app.core.langraph.workflow:294]   - 세션 단계: theory_completed
+[2025-09-04 11:24:37] INFO [app.core.langraph.workflow:295]   - 사용자 의도: question_streaming
+[2025-09-04 11:24:37] INFO [app.tools.content.quiz_tools_chatgpt:41] ChatGPT 퀴즈 생성 도구 시작 (LCEL 파이프라인)
+[2025-09-04 11:24:37] INFO [app.tools.content.quiz_tools_chatgpt:47] theory_draft 모드 - 섹션 데이터에서 퀴즈 타입 추출: multiple_choice
+[2025-09-04 11:24:41] INFO [app.tools.content.quiz_tools_chatgpt:67] ChatGPT 퀴즈 생성 파이프라인 완료
+[2025-09-04 11:24:41] INFO [app.core.langraph.workflow:83] [exec_1756952677] 워크플로우 실행 완료 (4.42s)
+[2025-09-04 11:24:55] INFO [app.core.langraph.workflow:56] [exec_1756952695] 워크플로우 실행 시작
+[2025-09-04 11:24:55] INFO [app.core.langraph.workflow:291] [exec_1756952695] 실행 정보:
+[2025-09-04 11:24:55] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 11:24:55] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/2
+[2025-09-04 11:24:55] INFO [app.core.langraph.workflow:294]   - 세션 단계: theory_completed
+[2025-09-04 11:24:55] INFO [app.core.langraph.workflow:295]   - 사용자 의도: quiz_answer
+[2025-09-04 11:24:55] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:45] [evaluation_feedback_agent] 평가 및 피드백 생성 시작
+[2025-09-04 11:24:55] INFO [app.tools.analysis.evaluation_tools:146] multiple_choice 퀴즈 데이터 검증 완료
+[2025-09-04 11:24:55] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:144] State에서 퀴즈 데이터 추출 및 검증 완료
+[2025-09-04 11:24:55] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:154] 객관식 평가 시작
+[2025-09-04 11:24:55] INFO [app.tools.analysis.evaluation_tools:25] 객관식 채점 시작 - 정답: 1, 사용자답변: 2
+[2025-09-04 11:24:55] INFO [app.tools.analysis.evaluation_tools:44] 객관식 채점 완료 - 결과: 오답
+[2025-09-04 11:24:55] INFO [app.tools.content.feedback_tools_chatgpt:90] ChatGPT 객관식 피드백 생성 시작
+[2025-09-04 11:24:58] INFO [app.tools.content.feedback_tools_chatgpt:105] ChatGPT 객관식 피드백 생성 완료
+[2025-09-04 11:24:58] INFO [app.tools.analysis.evaluation_tools:74] 객관식 판단 - 점수: 0, 결정: retry
+[2025-09-04 11:24:58] INFO [app.agents.evaluation_feedback.evaluation_feedback_agent:79] [evaluation_feedback_agent] 평가 완료 - 점수: 0, 다음단계: retry
+[2025-09-04 11:24:58] INFO [app.core.langraph.workflow:83] [exec_1756952695] 워크플로우 실행 완료 (2.44s)
+[2025-09-04 11:25:11] INFO [app.core.langraph.workflow:56] [exec_1756952711] 워크플로우 실행 시작
+[2025-09-04 11:25:11] INFO [app.core.langraph.workflow:291] [exec_1756952711] 실행 정보:
+[2025-09-04 11:25:11] INFO [app.core.langraph.workflow:292]   - 사용자 ID: 10
+[2025-09-04 11:25:11] INFO [app.core.langraph.workflow:293]   - 챕터/섹션: 1/2
+[2025-09-04 11:25:11] INFO [app.core.langraph.workflow:294]   - 세션 단계: quiz_and_feedback_completed
+[2025-09-04 11:25:11] INFO [app.core.langraph.workflow:295]   - 사용자 의도: next_step
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_manager_agent:53] [session_manager] 세션 DB 저장 시작
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_manager_agent:57] 세션 결정 결과: proceed
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_manager_agent:226] 챕터 메타데이터 로드 완료: C:\workspace\project_lec\ai-skill-tutor\backend\data\chapters\chapters_metadata.json
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_manager_agent:109] 진행 상태 계산: 1챕터 2섹션 → 1챕터 3섹션
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:52] 세션 정보 저장 완료: session_id=60
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:227] 사용자 진행 상태 업데이트 완료: user_id=10, 1챕터 2섹션 → 1챕터 3섹션
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:256] 통계 업데이트 디버깅 - user_id: 10
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:257] study_duration_seconds 값: 299
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:279] 사용자 통계 업데이트 완료: user_id=10, 학습시간 +299초
+[2025-09-04 11:25:11] INFO [app.utils.database.transaction:292] 트랜잭션 실행 성공: 10개 작업 완료
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:139] 대화 기록 저장 완료: 60 (10개)
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:173] 퀴즈 정보 저장 완료: 60
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_handlers:376] 분리 통계 재계산 완료: user_id=10, 객관식=50.00% (1/2), 주관식=0.00점 (0개)
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_manager_agent:287] 세션 데이터 DB 저장 완료: session_id=60
+[2025-09-04 11:25:11] INFO [app.agents.session_manager.session_manager_agent:80] [session_manager] 세션 DB 저장 완료 - 세션ID: 60
+[2025-09-04 11:25:11] INFO [app.core.langraph.workflow:83] [exec_1756952711] 워크플로우 실행 완료 (0.03s)
+[2025-09-04 11:25:14] INFO [app.routes.dashboard.overview:84] 대시보드 개요 조회 요청: user_id=10, user_type=beginner
+[2025-09-04 11:25:14] INFO [app.services.dashboard.dashboard_service:84] 대시보드 개요 조회 성공: user_id=10

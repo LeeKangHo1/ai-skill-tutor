@@ -7907,3 +7907,80 @@
 [2025-09-04 00:15:57] POST login.login - 200 - 192ms
 [2025-09-04 00:16:00] POST theory_stream.start_theory_streaming - 200 - 332ms
 [2025-09-04 00:16:02] GET theory_stream.stream_theory_response - 200
+[2025-09-04 09:25:06] OPTIONS token.refresh - 200
+[2025-09-04 09:25:07] POST token.refresh - 400
+[2025-09-04 09:25:07] GET version.version - 200
+[2025-09-04 09:25:31] OPTIONS register.check_availability - 200
+[2025-09-04 09:25:32] POST register.check_availability - 200 - 43ms
+[2025-09-04 09:25:42] OPTIONS register.check_availability - 200
+[2025-09-04 09:25:42] POST register.check_availability - 200 - 2ms
+[2025-09-04 09:25:49] OPTIONS register.register - 200
+[2025-09-04 09:25:49] POST register.register - 201 - 195ms
+[2025-09-04 09:25:53] OPTIONS diagnosis_questions.get_diagnosis_questions - 200
+[2025-09-04 09:25:53] GET diagnosis_questions.get_diagnosis_questions - 200
+[2025-09-04 09:25:59] OPTIONS diagnosis_submit.submit_diagnosis - 200
+[2025-09-04 09:25:59] POST diagnosis_submit.submit_diagnosis - 200
+[2025-09-04 09:26:01] OPTIONS diagnosis_submit.select_user_type - 200
+[2025-09-04 09:26:01] POST diagnosis_submit.select_user_type - 200 - 5ms
+[2025-09-04 09:26:03] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 09:26:03] GET dashboard_overview.get_dashboard_overview - 200 - 10ms
+[2025-09-04 09:26:07] OPTIONS diagnosis_submit.submit_diagnosis - 200
+[2025-09-04 09:26:07] POST diagnosis_submit.submit_diagnosis - 200
+[2025-09-04 09:26:09] OPTIONS session_start.start_learning_session - 200
+[2025-09-04 09:26:19] POST session_start.start_learning_session - 200 - 9987ms
+[2025-09-04 09:26:47] OPTIONS session_message.process_session_message - 200
+[2025-09-04 09:26:51] POST session_message.process_session_message - 200 - 3465ms
+[2025-09-04 09:27:09] OPTIONS quiz_submit.submit_quiz_answer - 200
+[2025-09-04 09:27:10] POST quiz_submit.submit_quiz_answer - 200 - 1388ms
+[2025-09-04 09:27:26] OPTIONS session_message.process_session_message - 200
+[2025-09-04 09:27:26] POST session_message.process_session_message - 200 - 11ms
+[2025-09-04 09:27:26] GET qna_stream.stream_qna_response - 200
+[2025-09-04 09:28:14] OPTIONS session_complete.complete_learning_session - 200
+[2025-09-04 09:28:14] POST session_complete.complete_learning_session - 200 - 41ms
+[2025-09-04 09:28:14] OPTIONS login.get_current_user - 200
+[2025-09-04 09:28:14] GET login.get_current_user - 200 - 1ms
+[2025-09-04 09:28:19] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 09:28:19] GET dashboard_overview.get_dashboard_overview - 200 - 12ms
+[2025-09-04 09:29:49] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 09:29:50] GET dashboard_overview.get_dashboard_overview - 200 - 3ms
+[2025-09-04 09:39:50] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 09:39:50] GET dashboard_overview.get_dashboard_overview - 200 - 3ms
+[2025-09-04 09:49:50] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 09:49:50] GET dashboard_overview.get_dashboard_overview - 200 - 22ms
+[2025-09-04 09:59:50] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 09:59:50] GET dashboard_overview.get_dashboard_overview - 200 - 4ms
+[2025-09-04 10:09:50] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 10:09:50] GET dashboard_overview.get_dashboard_overview - 200 - 3ms
+[2025-09-04 10:19:50] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 10:19:50] GET dashboard_overview.get_dashboard_overview - 200 - 3ms
+[2025-09-04 10:29:50] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 10:29:50] GET dashboard_overview.get_dashboard_overview - 401
+[2025-09-04 10:29:50] OPTIONS token.refresh - 200
+[2025-09-04 10:29:51] POST token.refresh - 200 - 16ms
+[2025-09-04 10:29:51] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 10:29:51] GET dashboard_overview.get_dashboard_overview - 200 - 3ms
+[2025-09-04 10:39:50] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 10:39:50] GET dashboard_overview.get_dashboard_overview - 200 - 4ms
+[2025-09-04 11:20:06] OPTIONS login.get_current_user - 200
+[2025-09-04 11:20:06] OPTIONS login.get_current_user - 200
+[2025-09-04 11:20:06] GET login.get_current_user - 200 - 7ms
+[2025-09-04 11:20:06] OPTIONS version.version - 200
+[2025-09-04 11:20:07] GET login.get_current_user - 200 - 1ms
+[2025-09-04 11:20:07] GET version.version - 200
+[2025-09-04 11:20:10] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 11:20:10] GET dashboard_overview.get_dashboard_overview - 200 - 3ms
+[2025-09-04 11:20:11] OPTIONS session_start.start_learning_session - 200
+[2025-09-04 11:20:23] POST session_start.start_learning_session - 200 - 11311ms
+[2025-09-04 11:20:32] OPTIONS session_message.process_session_message - 200
+[2025-09-04 11:20:34] POST session_message.process_session_message - 200 - 2038ms
+[2025-09-04 11:20:34] GET qna_stream.stream_qna_response - 200
+[2025-09-04 11:24:36] OPTIONS session_message.process_session_message - 200
+[2025-09-04 11:24:41] POST session_message.process_session_message - 200 - 4416ms
+[2025-09-04 11:24:55] OPTIONS quiz_submit.submit_quiz_answer - 200
+[2025-09-04 11:24:58] POST quiz_submit.submit_quiz_answer - 200 - 2441ms
+[2025-09-04 11:25:11] OPTIONS session_complete.complete_learning_session - 200
+[2025-09-04 11:25:11] POST session_complete.complete_learning_session - 200 - 35ms
+[2025-09-04 11:25:11] OPTIONS login.get_current_user - 200
+[2025-09-04 11:25:11] GET login.get_current_user - 200 - 1ms
+[2025-09-04 11:25:13] OPTIONS dashboard_overview.get_dashboard_overview - 200
+[2025-09-04 11:25:14] GET dashboard_overview.get_dashboard_overview - 200 - 3ms

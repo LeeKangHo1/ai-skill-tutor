@@ -12,7 +12,7 @@ class ChatLogger:
     대화 기록을 JSON 파일로 저장하는 유틸리티
     
     저장 구조:
-    backend/data/chat_log/user{user_id}/
+    backend/logs/user_chat_log/user{user_id}/
     ├── 20250813_143052_ch1_session001.json
     ├── 20250813_150245_ch1_session002.json
     └── 20250813_163018_ch2_session001.json
@@ -23,13 +23,13 @@ class ChatLogger:
         ChatLogger 초기화
         
         Args:
-            base_path: 기본 저장 경로 (기본값: backend/data/chat_log)
+            base_path: 기본 저장 경로 (기본값: backend/logs/user_chat_log)
         """
         if base_path is None:
-            # 프로젝트 루트에서 backend/data/chat_log 경로 설정
+            # 프로젝트 루트에서 backend/logs/user_chat_log 경로 설정
             current_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-            self.base_path = os.path.join(project_root, "data", "chat_log")
+            self.base_path = os.path.join(project_root, "logs", "user_chat_log")
         else:
             self.base_path = base_path
         
