@@ -240,21 +240,15 @@ graph TD
 ### 6.1 완성된 에이전트 구조
 
 ```
-SessionManager (✅ 완성 - 세션 생명주기 관리, DB 저장)
-└── LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및 응답 생성)
+LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및 응답 생성)
     ├── TheoryEducator (✅ 완성 - 이론 설명 대본 생성)
     ├── QuizGenerator (✅ 완성 - 퀴즈 및 힌트 동시 생성)
     ├── EvaluationFeedbackAgent (✅ 완성 - 객관식/주관식 통합 평가)
-    └── QnAResolver (⚠️ 임시 구현 - "QnAResolver가 호출되었습니다" 메시지만 반환)
+    ├── QnAResolver (⚠️ 임시 구현 - "QnAResolver가 호출되었습니다" 메시지만 반환)
+    └── SessionManager (✅ 완성 - 세션 생명주기 관리, DB 저장)
 ```
 
 ### 6.2 에이전트 상세 정보 (구현 완료 기준)
-
-**SessionManager (완전 구현)**
-- 역할: 세션 생명주기 관리, DB 저장, 챕터/섹션 자동 진행
-- 구현 상태: ✅ 완성 - 실제 DB 연동 검증 100% 성공
-- 주요 기능: learning_sessions, session_conversations, session_quizzes, user_progress 테이블 트랜잭션 기반 저장
-- 진행 로직: `backend/data/chapters/chapter_01.json` 파일 기반 섹션 수 확인
 
 **LearningSupervisor (완전 구현)**
 - 역할: 워크플로우 시작점/끝점, 의도 분석 우회 로직, response_generator 통합
@@ -285,6 +279,12 @@ SessionManager (✅ 완성 - 세션 생명주기 관리, DB 저장)
 - 구현 상태: ⚠️ 임시 - "QnAResolver가 호출되었습니다" 메시지만 반환
 - 예정 기능: Vector DB 검색, 웹 검색, 학습 관련성 판단
 - LangGraph 노드 등록: 완료 (다른 에이전트 테스트 가능)
+
+**SessionManager (완전 구현)**
+- 역할: 세션 생명주기 관리, DB 저장, 챕터/섹션 자동 진행
+- 구현 상태: ✅ 완성 - 실제 DB 연동 검증 100% 성공
+- 주요 기능: learning_sessions, session_conversations, session_quizzes, user_progress 테이블 트랜잭션 기반 저장
+- 진행 로직: `backend/data/chapters/chapter_01.json` 파일 기반 섹션 수 확인
 
 ---
 
