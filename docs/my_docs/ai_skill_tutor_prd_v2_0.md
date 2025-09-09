@@ -70,7 +70,7 @@ graph TD
 
 **중간 질문 처리 예시:**
 ```
-개념 설명 후 → 사용자: "AI와 머신러닝 차이가 뭐예요?"
+개념 설명 후 or 피드백 이후 → 사용자: "AI와 머신러닝 차이가 뭐예요?"
 → LearningSupervisor → QnAResolver → LearningSupervisor
 → 출력: "AI는 더 넓은 개념이고..." → 다시 학습 진행
 ```
@@ -115,7 +115,7 @@ graph TD
 
 ## 4. 👥 사용자 유형별 학습 경로 (구체화)
 
-### 4.1 사용자 진단 문항 구성 (5-7문)
+### 4.1 사용자 진단 문항 구성 (5문)
 
 **진단 항목:**
 1. **AI 사용 경험** - ChatGPT 등 AI 도구 사용 경험 여부
@@ -244,7 +244,7 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
     ├── TheoryEducator (✅ 완성 - 이론 설명 대본 생성)
     ├── QuizGenerator (✅ 완성 - 퀴즈 및 힌트 동시 생성)
     ├── EvaluationFeedbackAgent (✅ 완성 - 객관식/주관식 통합 평가)
-    ├── QnAResolver (⚠️ 임시 구현 - "QnAResolver가 호출되었습니다" 메시지만 반환)
+    ├── QnAResolver (✅ 완성 - 실시간 사용자 질문에 대한 답변)
     └── SessionManager (✅ 완성 - 세션 생명주기 관리, DB 저장)
 ```
 
@@ -259,7 +259,7 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
 **TheoryEducator (완전 구현)**
 - 역할: 특정 섹션 데이터만 로드하여 순수 이론 설명 대본 생성
 - 구현 상태: ✅ 완성 - LangChain LCEL 파이프라인 전환
-- 데이터 소스: JSON 파일 기반 섹션별 로드
+- 데이터 소스: 벡터DB, JSON 파일 기반 섹션별 로드(폴백)
 - 체인 구성: `PromptTemplate | ChatOpenAI | StrOutputParser`
 
 **QuizGenerator (완전 구현)**
@@ -274,11 +274,11 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
 - 평가 방식: 객관식(로컬 채점) + 주관식(ChatGPT 0-100점)
 - 세션 관리: 최대 1회 재학습 제한, 60점 기준 proceed/retry 판단
 
-**QnAResolver (임시 구현)**
-- 역할: 실시간 질문 답변 (향후 구현 예정)
-- 구현 상태: ⚠️ 임시 - "QnAResolver가 호출되었습니다" 메시지만 반환
-- 예정 기능: Vector DB 검색, 웹 검색, 학습 관련성 판단
-- LangGraph 노드 등록: 완료 (다른 에이전트 테스트 가능)
+**QnAResolver (완전 구현)**
+- 역할: 실시간 질문 답변
+- 구현 상태: ✅ 완성 - 사용자가 채팅에 친 질문에 대해 답변
+- 데이터 소스: 벡터 DB, LLM의 기본 지식
+- 출력: 실시간 응답 스트리밍
 
 **SessionManager (완전 구현)**
 - 역할: 세션 생명주기 관리, DB 저장, 챕터/섹션 자동 진행
@@ -296,6 +296,7 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
 - `theory_tools_chatgpt.py` - ChatOpenAI + StrOutputParser 기반 이론 설명
 - `quiz_tools_chatgpt.py` - ChatOpenAI + JsonOutputParser + Pydantic 스키마 퀴즈 생성
 - `feedback_tools_chatgpt.py` - ChatGPT 기반 피드백 생성 (1회 호출 최적화)
+- `vector_search_tools.py` - ChromaDB 벡터 검색 (QnAResolver, TheoryEducator)
 
 **✅ 분석/평가 Tools (완전 구현):**
 - `evaluation_tools.py` - 로컬 객관식 채점 시스템
@@ -305,11 +306,6 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
 - `session_handlers.py` - DB 저장 및 통계 관리, 완전한 예외 처리
 - `session_manager_agent.py` - 섹션 번호 기반 ID 생성
 
-**⚠️ 미구현 Tools:**
-- `vector_search_tools.py` - ChromaDB 벡터 검색 (QnAResolver용)
-- `web_search_tools.py` - 웹 검색 도구 (QnAResolver용)
-- `context_integration_tool` - 현재 학습 맥락과 질문 연결
-
 ### 7.2 현재 Tool 사용 흐름 (구현 완료)
 
 ```
@@ -318,7 +314,7 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
 퀴즈 진행: quiz_tools_chatgpt (퀴즈+힌트 동시) → evaluation_tools ✅
 평가 피드백: feedback_tools_chatgpt (1회 호출) → 재학습 판단 ✅
 세션 완료: session_handlers (DB 저장) → 진행 상태 업데이트 ✅
-질문 답변: QnAResolver (임시 메시지) ⚠️ 
+질문 답변: QnAResolver → 실시간 질문 답변 ✅
 ```
 
 ### 7.3 기술적 개선사항
@@ -345,69 +341,12 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
 | **학습 기록 저장** | 세션 완료 시 전체 진행 요약 및 DB 저장 | ✅ 완성 | MySQL 트랜잭션 + 4개 테이블 동시 저장 |
 | **의도 분석 시스템** | 사용자 입력 의도 파악 및 적절한 에이전트 라우팅 | ✅ 완성 | 25개 키워드 완전일치 + LLM 백업 분석 |
 | **LangChain 통합** | LCEL 파이프라인 기반 AI 도구 체계 | ✅ 완성 | PromptTemplate \| Model \| OutputParser 패턴 |
-| **실시간 Q&A** | ChromaDB 벡터 검색 + 웹 검색 기반 질문 답변 시스템 | ⚠️ 임시 구현 | QnAResolver 임시 메시지만 반환 |
-| **하이브리드 UX** | 자유 대화 구간과 제한 UI 구간의 적절한 조합 | 🔄 프론트엔드 구현 예정 | Vue.js 상태 관리 + UI 모드 전환 |
-
-### 주요 기술적 성과
-
-- **라우팅 버그 해결**: "질문" 입력 시 정확한 qna_resolver 라우팅 달성
-- **State 일관성**: TutorState 필드 정의 완성으로 LangGraph 안정성 확보
-- **비용 최적화**: ChatGPT 1회 호출로 채점+피드백 동시 처리
-- **DB 무결성**: 트랜잭션 기반 4개 테이블 동시 저장 시스템 완성
-- **성능 향상**: 의도 분석 2단계 시스템으로 응답 속도 개선
-
-### 개발 우선순위
-
-1. **즉시 구현 가능**: QnAResolver 실제 구현 (vector_search + web_search)
-2. **프론트엔드 연동**: Vue.js 하이브리드 UX 시스템 구현
+| **실시간 Q&A** | ChromaDB 벡터 검색 기반 질문 답변 시스템 | ✅ 완성 | QnAResolver 임시 메시지만 반환 |
+| **하이브리드 UX** | 자유 대화 구간과 제한 UI 구간의 적절한 조합 | ✅ 완성 | Vue.js 상태 관리 + UI 모드 전환 |
 
 ---
 
-## 9. 🎯 MVP 범위 - v2.0 업데이트
-
-| 항목 | 범위 | 구현 상태 |
-| --- | --- | --- |
-| **사용자 흐름** | 로그인 → 진단 → AI 입문자 유형 → 모든 챕터 완성 | ✅ 완성 (인증/진단 시스템) |
-| **학습 챕터** | AI 입문자 유형의 모든 챕터 (1-8) 완전 구현 | 🔄 JSON 데이터 구조 준비 완료 |
-| **MAS 구성** | 5개 핵심 에이전트 (SessionManager + LearningSupervisor 중심 구조) | ✅ 완성 (QnAResolver 임시 구현) |
-| **워크플로우 시스템** | LangGraph 기반 멀티에이전트 워크플로우 완전 구현 | ✅ 완성 (라우팅 버그 해결) |
-| **백엔드 API** | Flask REST API, MySQL 연동, JWT 인증 | ✅ 완성 (인증/진단/시스템 API) |
-| **AI 통합** | LangChain LCEL 파이프라인, GPT-4o-mini, 자동 LangSmith 추적 | ✅ 완성 (비용 최적화) |
-| **데이터베이스** | 4개 테이블 트랜잭션 저장 (sessions, conversations, quizzes, user_progress) | ✅ 완성 (실제 DB 테스트 성공) |
-| **학습 세션 관리** | 세션 생명주기, 진행 상태 추적, 자동 챕터/섹션 진행 | ✅ 완성 |
-| **평가 시스템** | 객관식(로컬) + 주관식(ChatGPT) 통합 평가, 재학습 판단 | ✅ 완성 (1회 호출 최적화) |
-| **프론트엔드** | Vue 3 기반 적응형 UI, Pinia 상태관리, 실시간 UI 모드 전환 | 🔄 인증/진단 완성, 학습 UI 구현 예정 |
-
-### 완성된 핵심 시스템
-
-**✅ 백엔드 완성 항목:**
-- 인증 시스템: JWT + HttpOnly 쿠키 + 단일 세션 정책
-- 사용자 진단: 5-7문항 + 점수 계산 + 유형 선택
-- LangGraph 워크플로우: 5개 에이전트 + 라우팅 시스템
-- 세션 관리: DB 저장 + 진행 상태 추적 + 자동 진행
-- AI 도구: LCEL 파이프라인 + GPT-4o-mini + 성능 모니터링
-
-**✅ 프론트엔드 완성 항목:**
-- 인증 UI: 로그인/회원가입 + 자동 토큰 갱신
-- 진단 UI: 문항 진행 + 결과 표시 + 유형 선택
-- 라우터 가드: 페이지별 접근 권한 제어
-
-**🔄 다음 구현 단계:**
-1. **학습 진행 페이지**: Vue.js 하이브리드 UX 구현
-2. **QnAResolver**: Vector DB + 웹 검색 실제 구현
-3. **챕터 컨텐츠**: 8개 챕터 상세 학습 자료 완성
-
-### 기술적 성과
-
-- **State 일관성**: TutorState 필드 정의로 LangGraph 안정성 확보
-- **라우팅 정확도**: 의도 분석 2단계 시스템으로 100% 정확한 에이전트 라우팅
-- **DB 무결성**: 트랜잭션 기반 멀티테이블 저장으로 데이터 일관성 보장
-- **비용 효율성**: ChatGPT 1회 호출로 채점+피드백 동시 처리
-- **개발 효율성**: LCEL 파이프라인으로 AI 도구 표준화
-
----
-
-## 10. 🚀 확장성 
+## 9. 🚀 확장성 
 
 | 항목 | 내용 |
 | --- | --- |
@@ -418,24 +357,18 @@ LearningSupervisor (✅ 완성 - 워크플로우 시작점/끝점, 라우팅 및
 
 ---
 
-## 11. 🤖 AI 모델 운영 전략
+## 10. 🤖 AI 모델 운영 전략
 
-### 11.1 모델 선택 기준
+### 10.1 모델 선택 기준
 
-**개발 단계:**
-- **GPT-4o-mini**: 기본 대화, 콘텐츠 생성, 간단한 추론
-- **비용 효율성 중심**: 빠른 프로토타이핑 및 테스트
+- **GPT-4o-mini**: 기본 대화, 콘텐츠 생성, 간단한 추론, 가벼운 비용
 
-**운영 단계:**
-- **GPT-4o-mini**: 모든 LLM 작업 (이론 설명, 퀴즈 생성, 평가, 피드백)
-- **복잡한 추론**: 필요시 GPT-4o로 업그레이드 가능
-
-### 11.2 임베딩 시스템
+### 10.2 임베딩 시스템
 
 **text-embedding-3-large 고정 사용:**
 - ChromaDB 벡터 저장
-- 학습 콘텐츠 유사도 검색
-- QnA 맥락 매칭
+- 학습 콘텐츠 메타 검색
+- QnA 참고 소스 유사도 검색
 
 ---
 
